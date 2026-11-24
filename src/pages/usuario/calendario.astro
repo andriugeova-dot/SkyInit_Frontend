@@ -1,0 +1,35 @@
+---
+import Layout from "../../layouts/LayoutVistas.astro";
+import CalendarioUsuario from "../../components/usuario/CalendarioUsuario.astro";
+---
+<Layout>
+  <div class="cal-page-wrap">
+    <div class="cal-page-header">
+      <h1>Calendario de actividades</h1>
+      <p>Consulta tus visitas programadas a propiedades y los mantenimientos aceptados en un solo lugar.</p>
+    </div>
+    <CalendarioUsuario />
+  </div>
+</Layout>
+
+<style>
+  .cal-page-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    font-family: 'Inter', 'Segoe UI', sans-serif;
+  }
+
+  .cal-page-header h1 {
+    color: #14532d;
+    font-size: 28px;
+    font-weight: 700;
+    margin: 0 0 6px;
+  }
+
+  .cal-page-header p {
+    color: #666;
+    margin: 0;
+    font-size: 15px;
+  }
+</style>
