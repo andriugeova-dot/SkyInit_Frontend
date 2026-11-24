@@ -1,6 +1,7 @@
 ---
 import Layout from "../../layouts/LayoutVistas.astro";
 import CalendarioMantenimiento from "../../components/funciones/CalendarioMantenimiento.astro";
+import NotifModalTrabajador from "../../components/trabajador/NotifModalTrabajador.astro";
 import "../../components/trabajador/trabajador.css";
 ---
 <Layout>
@@ -15,6 +16,7 @@ import "../../components/trabajador/trabajador.css";
       </div>
       <div class="tr-hero-acc">
         <a class="tr-hero-btn tr-hero-btn--sec" href="/trabajador"><i class="bi bi-arrow-left" aria-hidden="true"></i> Volver al panel</a>
+        <NotifModalTrabajador />
       </div>
     </header>
     <CalendarioMantenimiento mostrarCabecera={false} />

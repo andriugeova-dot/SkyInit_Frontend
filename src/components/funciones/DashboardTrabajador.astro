@@ -2,6 +2,7 @@
 /** Dashboard principal del trabajador: hero, estadísticas unificadas, recordatorio de hoy, acciones rápidas y últimas 5 notificaciones. */
 import "./funciones.css";
 import RecordatorioMantenimientoHoy from "./RecordatorioMantenimientoHoy.astro";
+import NotifModalTrabajador from "../trabajador/NotifModalTrabajador.astro";
 ---
 <section id="dashTrabRoot" class="tr-stack">
   <!-- Hero -->
@@ -17,6 +18,7 @@ import RecordatorioMantenimientoHoy from "./RecordatorioMantenimientoHoy.astro";
     <div class="tr-hero-acc">
       <a class="tr-hero-btn" href="/trabajador/calendario"><i class="bi bi-calendar3" aria-hidden="true"></i> Ver calendario</a>
       <a class="tr-hero-btn tr-hero-btn--sec" href="/trabajador/grupo"><i class="bi bi-people-fill" aria-hidden="true"></i> Mi equipo</a>
+      <NotifModalTrabajador />
     </div>
   </header>
 
