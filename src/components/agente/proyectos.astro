@@ -104,8 +104,11 @@ import PanelAgente from "./PanelAgente.astro";
 }
 </style>
 
-<script is:inline>
+<script>
+  import { MENSAJE_SIN_INMOBILIARIA, esErrorSinInmobiliaria } from "../../utils/agente";
+
   (function () {
+    var API = "/api/agente/proyectos";
     var BACKEND_PUBLIC =
       (window.__ENV__ && window.__ENV__.PUBLIC_BACKEND_URL) ||
       "/backend";
@@ -154,39 +157,59 @@ import PanelAgente from "./PanelAgente.astro";
     function ocultar(id) { var el = document.getElementById(id); if (el) { el.hidden = true; el.classList.add("d-none"); } }
 
     // ── Cargar listado ────────────────────────────────────────────
-    function cargar() {
+    async function cargar() {
         ocultar("proy-grid");
         ocultar("estado-vacio");
         ocultar("estado-error");
         ocultar("contador");
         mostrar("estado-cargando");
 
-        // fetch(BACKEND_PUBLIC + "/api/agente/panel/proyectos", { credentials: "same-origin" })
-        function getCookie(name) {
-  var match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
-  return match ? decodeURIComponent(match[2]) : null;
-}
-
-fetch(BACKEND_PUBLIC + "/api/agente/panel/proyectos", {
-  credentials: "include",   // ← cambia same-origin por include
-  headers: {
-    "Authorization": "Bearer " + getCookie("token"), // ← nombre real de  cookie JWT
-  }
-})
-            .then(function (res) { return res.json(); })
-            .then(function (json) {
-                ocultar("estado-cargando");
-                if (!json.success) throw new Error(json.error || "Error del servidor");
-                todosLosProyectos = Array.isArray(json.data) ? json.data : [];
-                actualizarStats(todosLosProyectos);
-                renderizar(todosLosProyectos);
-            })
-            .catch(function (err) {
-                ocultar("estado-cargando");
-                var msgEl = document.getElementById("estado-error-msg");
-                if (msgEl) msgEl.textContent = err.message || "No se pudo conectar con el servidor";
-                mostrar("estado-error");
+        try {
+            var res = await fetch(API, {
+                credentials: "same-origin",
+                headers: { Accept: "application/json" }
             });
+
+            if (res.status === 401 || res.status === 403) {
+                var authJson = await res.json().catch(function () { return {}; });
+                var authMsg = authJson.error || authJson.message || authJson.mensaje || "";
+                if (esErrorSinInmobiliaria(authMsg) || esErrorSinInmobiliaria(authJson)) {
+                    throw new Error(MENSAJE_SIN_INMOBILIARIA);
+                }
+                throw new Error(authJson.error || "No autorizado (401): Sesión expirada o token inválido.");
+            }
+
+            var json = await res.json().catch(function () { return {}; });
+
+            if (!res.ok || json.success === false) {
+                var errDesc = json.error || json.message || json.mensaje || "";
+                if (esErrorSinInmobiliaria(errDesc) || esErrorSinInmobiliaria(json)) {
+                    throw new Error(MENSAJE_SIN_INMOBILIARIA);
+                }
+                throw new Error(json.error || ("Error al cargar proyectos (" + res.status + ")"));
+            }
+
+            ocultar("estado-cargando");
+            todosLosProyectos = Array.isArray(json.data) ? json.data : [];
+            actualizarStats(todosLosProyectos);
+            renderizar(todosLosProyectos);
+        } catch (err) {
+            ocultar("estado-cargando");
+            ocultar("proy-grid");
+            ocultar("estado-vacio");
+            ocultar("contador");
+            var msgEl = document.getElementById("estado-error-msg");
+            if (msgEl) {
+                var mensaje = err && err.message ? err.message : "Error de red al cargar los proyectos";
+                if (esErrorSinInmobiliaria(mensaje) || esErrorSinInmobiliaria(err)) {
+                    mensaje = MENSAJE_SIN_INMOBILIARIA;
+                } else if (err && (err.name === "TypeError" || !navigator.onLine)) {
+                    mensaje = "Error de red: no se pudo conectar con el servidor";
+                }
+                msgEl.textContent = mensaje;
+            }
+            mostrar("estado-error");
+        }
     }
 
     function actualizarStats(lista) {

@@ -77,6 +77,7 @@ import "./funciones.css";
 
 <script>
   import { api, esc, fechaHora, aviso, claseEstado } from "./comun";
+  import { MENSAJE_SIN_INMOBILIARIA, esErrorSinInmobiliaria } from "../../utils/agente";
   const dlg = document.getElementById("dlgCita") as HTMLDialogElement;
   const cal = document.getElementById("cal")!;
   const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
@@ -131,7 +132,12 @@ import "./funciones.css";
 
   async function cargar() {
     try { visitas = (await api("/agenda/gestion")).visitas; pintarCalendario(); pintarLista(); }
-    catch (e) { $("agLista").innerHTML = `<div class="fn-vacio">${esc((e as Error).message)}</div>`; pintarCalendario(); }
+    catch (e) {
+      const msg = (e as Error).message;
+      const texto = esErrorSinInmobiliaria(msg) ? MENSAJE_SIN_INMOBILIARIA : esc(msg);
+      $("agLista").innerHTML = `<div class="fn-vacio">${texto}</div>`;
+      pintarCalendario();
+    }
   }
 
   async function abrirFormulario(cita: any | null, fechaInicial?: string) {

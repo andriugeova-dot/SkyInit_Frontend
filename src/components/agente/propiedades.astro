@@ -43,7 +43,7 @@ import "./propiedades.css";
   <div id="emptyState" class="estado-vacio" hidden>
     <i class="bi bi-house-add" aria-hidden="true"></i>
     <h3>No hay propiedades</h3>
-    <p>Publica la primera con “Nueva propiedad”.</p>
+    <p>Aún no tienes propiedades asignadas.</p>
   </div>
 
   <div id="sinResultados" class="estado-vacio" hidden>
@@ -142,6 +142,8 @@ import "./propiedades.css";
 </div>
 
 <script>
+  import { MENSAJE_SIN_INMOBILIARIA, esErrorSinInmobiliaria } from "../../utils/agente";
+
   interface PropiedadAgente {
     propiedadID: number;
     titulo: string;
@@ -460,9 +462,10 @@ import "./propiedades.css";
       emptyState.hidden = listado.length !== 0;
       filtrar();
     } catch (error) {
+      const msg = error instanceof Error ? error.message : "Error de conexión";
       mostrarError(
         errorState,
-        error instanceof Error ? error.message : "Error de conexión",
+        esErrorSinInmobiliaria(msg) ? MENSAJE_SIN_INMOBILIARIA : msg,
       );
     } finally {
       loadingState.hidden = true;

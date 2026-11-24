@@ -1,4 +1,5 @@
 /** Utilidades compartidas por las pantallas nuevas (agenda, organizacion, seguimiento, mapa, etc.) */
+import { MENSAJE_SIN_INMOBILIARIA, esErrorSinInmobiliaria } from "../../utils/agente";
 
 const BASE = "/backend/api";
 
@@ -20,7 +21,13 @@ export async function api<T = any>(ruta: string, metodo = "GET", cuerpo?: unknow
     throw new Error("Sesion expirada");
   }
   const datos = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(datos.error ?? datos.message ?? "No se pudo completar la operacion");
+  if (!res.ok) {
+    const rawError = datos.error ?? datos.message ?? datos.mensaje ?? "No se pudo completar la operacion";
+    if (esErrorSinInmobiliaria(rawError) || esErrorSinInmobiliaria(datos)) {
+      throw new Error(MENSAJE_SIN_INMOBILIARIA);
+    }
+    throw new Error(rawError);
+  }
   return datos as T;
 }
 

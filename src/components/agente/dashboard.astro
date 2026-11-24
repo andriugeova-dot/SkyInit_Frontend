@@ -2,6 +2,7 @@
 import ResumenPanel from "../funciones/ResumenPanel.astro";
 import "../admin/dashboard.css";
 import { COOKIE_NAME, getTokenSSR } from "../../utils/auth";
+import { MENSAJE_SIN_INMOBILIARIA, esErrorSinInmobiliaria } from "../../utils/agente";
 
 const BACKEND = import.meta.env.BACKEND_URL ?? "http://localhost:8001";
 const token = getTokenSSR(Astro.cookies);
@@ -32,14 +33,29 @@ if (token) {
         },
         });
         if (res.ok) {
-        resumen = await res.json();
+            const data = await res.json();
+            const posibleMsg = data.message || data.error || data.mensaje;
+            if (data.success === false || esErrorSinInmobiliaria(posibleMsg) || esErrorSinInmobiliaria(data)) {
+                errorCarga = MENSAJE_SIN_INMOBILIARIA;
+            } else {
+                resumen = data;
+                if (resumen && resumen.message && esErrorSinInmobiliaria(resumen.message)) {
+                    resumen.message = MENSAJE_SIN_INMOBILIARIA;
+                }
+            }
         } else {
-        errorCarga = `No se pudieron cargar las estadísticas (${res.status})`;
+            const errData = await res.json().catch(() => ({}));
+            const msgServidor = errData.error || errData.message || errData.mensaje;
+            if (esErrorSinInmobiliaria(msgServidor) || esErrorSinInmobiliaria(errData)) {
+                errorCarga = MENSAJE_SIN_INMOBILIARIA;
+            } else {
+                errorCarga = msgServidor || `No se pudieron cargar las estadísticas (${res.status})`;
+            }
         }
     } catch {
         errorCarga = "No se pudo conectar con el backend";
     }
-    } else {
+} else {
     errorCarga = "Sesión no válida";
 }
 
