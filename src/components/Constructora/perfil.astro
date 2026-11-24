@@ -81,7 +81,8 @@ import "./perfil.css"
 </div>
 
 <script>
-    const BACKEND_PUBLIC = "http://localhost:8001";
+    const BACKEND_PUBLIC = "/backend";
+function esc(v: unknown): string { return String(v ?? "").replace(/[&<>"']/g, (c) => (({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}) as Record<string, string>)[c]); }
 
     const alerta = document.getElementById("alerta") as HTMLDivElement;
     const logoImg = document.getElementById("logoImg") as HTMLImageElement;
@@ -156,11 +157,11 @@ import "./perfil.css"
                     '<article class="inmo-card">' +
                     '<div class="inmo-card-icon"><i class="bi bi-buildings"></i></div>' +
                     '<div class="inmo-card-body">' +
-                        '<p class="inmo-card-name">' + nombre + "</p>" +
-                        '<p class="inmo-card-city">' + ciudad + "</p>" +
+                        '<p class="inmo-card-name">' + esc(nombre) + "</p>" +
+                        '<p class="inmo-card-city">' + esc(ciudad) + "</p>" +
                     "</div>" +
                     (estado
-                        ? '<span class="inmo-card-badge">' + estado + "</span>"
+                        ? '<span class="inmo-card-badge">' + esc(estado) + "</span>"
                         : "") +
                     "</article>"
                 );

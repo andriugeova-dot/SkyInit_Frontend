@@ -1,4 +1,5 @@
 ---
+import ResumenPanel from "../funciones/ResumenPanel.astro";
 ---
 
 <div class="dash">
@@ -12,6 +13,7 @@
         <a href="/constructora/propiedades" class="btn-primary">Propiedades</a>
         </div>
     </header>
+    <ResumenPanel />
 
     <div id="dash-error" class="dash-alert d-none"></div>
     <div id="dash-loading" class="dash-loading">Cargando...</div>
@@ -176,6 +178,7 @@
 </style>
 
 <script>
+function esc(v: unknown): string { return String(v ?? "").replace(/[&<>"']/g, (c) => (({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}) as Record<string, string>)[c]); }
     async function cargarDashboard() {
         const loading = document.getElementById("dash-loading");
         const content = document.getElementById("dash-content");
@@ -206,7 +209,7 @@
         } else {
             for (const row of props) {
             const li = document.createElement("li");
-            li.innerHTML = `<span>${row.estado ?? "—"}</span><strong>${row.total}</strong>`;
+            li.innerHTML = `<span>${esc(row.estado ?? "—")}</span><strong>${esc(row.total)}</strong>`;
             ulProp.appendChild(li);
             }
         }
@@ -219,7 +222,7 @@
         } else {
             for (const row of proys) {
             const li = document.createElement("li");
-            li.innerHTML = `<span>${row.estado ?? "—"}</span><strong>${row.total}</strong>`;
+            li.innerHTML = `<span>${esc(row.estado ?? "—")}</span><strong>${esc(row.total)}</strong>`;
             ulProy.appendChild(li);
             }
         }

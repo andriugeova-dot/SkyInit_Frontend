@@ -1,4 +1,5 @@
 ---
+import { BACKEND_URL } from "../utils/config";
 import {
     getTokenSSR,
     obtenerRolDesdeToken,
@@ -21,7 +22,7 @@ function obtenerIniciales(nombre: string): string {
 function urlImagen(path: string | null | undefined): string | null {
     if (!path) return null;
     if (path.startsWith("http")) return path;
-    return `http://localhost:8001${path.startsWith("/") ? path : "/" + path}`;
+    return `/backend${path.startsWith("/") ? path : "/" + path}`;
 }
 
 function estaActivo(ruta: string): boolean {
@@ -43,7 +44,7 @@ async function cargarPerfil() {
 
     // Perfil genérico (nombre + foto de usuario)
     try {
-        const res = await fetch("http://localhost:8001/auth/perfil", { headers });
+        const res = await fetch(`${BACKEND_URL}/auth/perfil`, { headers });
         if (res.ok) {
             const json = await res.json();
             const u = json.usuario ?? json.data ?? json;
@@ -62,7 +63,7 @@ async function cargarPerfil() {
     if (rol === "Constructora") {
         try {
             const res = await fetch(
-                "http://localhost:8001/panel/constructora/perfil",
+                `${BACKEND_URL}/panel/constructora/perfil`,
                 { headers },
             );
             if (res.ok) {
@@ -127,6 +128,8 @@ const configuraciones: Record<
             // { href: "/usuario/propiedades",   icon: "bi-house-door-fill",       label: "Propiedades" },
             { href: "/usuario/favoritos",     icon: "bi-heart-fill",            label: "Favoritos" },
             { href: "/usuario/solicitudes",   icon: "bi-file-earmark-text-fill",label: "Solicitudes" },
+            { href: "/usuario/agenda",        icon: "bi-calendar-check-fill",   label: "Mis visitas" },
+            { href: "/notificaciones", icon: "bi-bell-fill", label: "Notificaciones" },
             { href: "/usuario/perfil",        icon: "bi-person-fill",           label: "Mi Perfil" },
             { href: "/",                      icon: "bi-arrow-left-circle-fill", label: "Volver al menú" },
         ],
@@ -147,6 +150,9 @@ const configuraciones: Record<
             { href: "/constructora",             icon: "bi-grid-1x2-fill",   label: "Dashboard" },
             { href: "/constructora/proyectos",   icon: "bi-buildings-fill",  label: "Proyectos" },
             { href: "/constructora/propiedades", icon: "bi-house-fill",      label: "Propiedades" },
+            { href: "/constructora/trabajadores", icon: "bi-people-fill",    label: "Trabajadores" },
+            { href: "/constructora/mantenimiento", icon: "bi-wrench-adjustable", label: "Mantenimiento" },
+            { href: "/notificaciones", icon: "bi-bell-fill", label: "Notificaciones" },
             { href: "/constructora/perfil",      icon: "bi-person-fill",     label: "Perfil" },
         ],
     },
@@ -171,6 +177,10 @@ const configuraciones: Record<
             { href: "/admin/constructoras",        icon: "bi-shop-window    ",  label: "Constructoras" },
             { href: "/admin/servicios",   icon: "bi-tools",          label: "Servicios" },
             { href: "/admin/solicitudes",   icon: "bi-envelope-fill",  label: "Solicitudes" },
+            { href: "/admin/mantenimiento", icon: "bi-wrench-adjustable", label: "Mantenimiento" },
+            { href: "/admin/agentes",       icon: "bi-person-badge-fill", label: "Agentes" },
+            { href: "/admin/agenda",        icon: "bi-calendar-check-fill", label: "Agenda" },
+            { href: "/notificaciones", icon: "bi-bell-fill", label: "Notificaciones" },
             { href: "/admin/perfil",       icon: "bi-person-fill",    label: "Perfil" },
         ],
     },
@@ -192,6 +202,7 @@ const configuraciones: Record<
             { href: "/superadmin/usuarios",   icon: "bi bi-people", label: "Usuarios" },
             { href: "/superadmin/constructoras", icon: "bi-hammer",     label: "Constructoras" },
             { href: "/superadmin/inmobiliarias", icon: "bi-shop",     label: "Inmobiliarias" },
+            { href: "/notificaciones", icon: "bi-bell-fill", label: "Notificaciones" },
             { href: "/superadmin/perfil",      icon: "bi-person-fill",    label: "Perfil" },
         ],
     },
@@ -211,15 +222,30 @@ const configuraciones: Record<
             { href: "/agente",             icon: "bi-grid-1x2-fill",  label: "Dashboard" },
             { href: "/agente/proyectos",   icon: "bi-buildings-fill", label: "Proyectos" },
             { href: "/agente/propiedades", icon: "bi-house-fill",     label: "Propiedades" },
+            { href: "/agente/agenda",      icon: "bi-calendar-check-fill", label: "Agenda" },
+            { href: "/notificaciones", icon: "bi-bell-fill", label: "Notificaciones" },
             { href: "/agente/perfil",      icon: "bi-person-fill",    label: "Perfil" },
+        ],
+    },
+    // ── TRABAJADOR ───────────────────────────────────
+    Trabajador: {
+        nombre: nombreMostrar,
+        descripcion: subtitulo,
+        iniciales,
+        clase: "constructora",
+        rutas: { dashboard: "/trabajador", perfil: "/trabajador" },
+        items: [
+            { href: "/trabajador",     icon: "bi-grid-1x2-fill", label: "Mi trabajo" },
+            { href: "/trabajador/perfil", icon: "bi-person-fill", label: "Perfil" },
+            { href: "/notificaciones", icon: "bi-bell-fill",     label: "Notificaciones" },
         ],
     },
 };
 
-const cfg = configuraciones[rol] ?? configuraciones["Constructora"];
+const cfg = configuraciones[rol] ?? configuraciones["Usuario"];
 ---
 
-<aside class={`sidebar ${cfg.clase}`}>
+<aside class={`sidebar ${cfg.clase}`} data-rol={rol}>
     <!-- LOGO -->
     <div class="logo">
         <div class="logo-marca">
@@ -243,6 +269,7 @@ const cfg = configuraciones[rol] ?? configuraciones["Constructora"];
             >
                 <i class={`bi ${item.icon}`}></i>
                 <span>{item.label}</span>
+                {item.href === "/notificaciones" && <b class="nav-badge" id="navNotifBadge" hidden></b>}
             </a>
         ))}
     </nav>
@@ -284,4 +311,38 @@ document.getElementById("btnLogout")?.addEventListener("click", async () => {
     }
     window.location.href = "/login";
 });
+
+// Notificaciones en tiempo casi real (contador + ventanas emergentes)
+import { iniciarAvisos } from "./funciones/avisos";
+iniciarAvisos(document.querySelector<HTMLElement>(".sidebar")?.dataset.rol ?? "Usuario", ["navNotifBadge"]);
 </script>
+
+<style is:global>
+/* Menu con muchos modulos: compacto y con desplazamiento propio para que nunca se corte */
+.sidebar .navegacion { gap: 3px; overflow-y: auto; min-height: 0; padding-right: 4px; scrollbar-width: thin; scrollbar-color: rgba(255,255,255,.25) transparent; }
+.sidebar .navegacion .nav-item { height: 44px; flex-shrink: 0; }
+.sidebar .sidebar-footer { flex-shrink: 0; }
+#avisosPila { position: fixed; top: 18px; right: 18px; z-index: 4000; display: grid; gap: 10px; width: min(360px, calc(100vw - 36px)); }
+.aviso-emergente { display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: start; padding: 14px 14px 14px 16px; border-radius: 14px;
+    background: #fff; color: #1f2937; text-decoration: none; border: 1px solid #e5e7eb; border-left: 4px solid #c8ad72;
+    box-shadow: 0 14px 40px rgba(15, 23, 42, .22); animation: avisoEntra .25s ease-out; }
+.aviso-emergente:hover { color: #1f2937; background: #fafafa; }
+.aviso-emergente > i { font-size: 1.25rem; color: #2f5d46; margin-top: 2px; }
+.aviso-emergente span { display: grid; gap: 2px; min-width: 0; }
+.aviso-emergente small { color: #6b7280; overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.aviso-emergente button { border: 0; background: none; color: #9ca3af; cursor: pointer; padding: 2px; }
+@keyframes avisoEntra { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .aviso-emergente { animation: none; } }
+.nav-badge {
+    margin-left: auto;
+    min-width: 20px;
+    padding: 0 6px;
+    border-radius: 10px;
+    background: #dc3545;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 20px;
+    text-align: center;
+}
+</style>

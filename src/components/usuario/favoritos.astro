@@ -207,7 +207,8 @@
 
 <script>
 const FAV_API = "/api/usuario/favoritos";
-const BACKEND = "http://localhost:8001";
+const BACKEND = "/backend";
+function esc(v: unknown): string { return String(v ?? "").replace(/[&<>"']/g, (c) => (({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}) as Record<string, string>)[c]); }
 
 function formatPrecio(precio: string | number): string {
     const n = Number(precio);
@@ -245,12 +246,12 @@ function renderFavoritos(lista: any[]) {
         const p = f.propiedad ?? f;
         const imgSrc = resolverImg(p.imagen ?? p.imagenes?.[0] ?? p.imagenPrincipal ?? null);
         const imgHtml = imgSrc
-            ? `<img src="${imgSrc}" alt="${p.titulo ?? ""}" loading="lazy" />`
-            : `<div class="img-placeholder">🏠</div>`;
+            ? `<img src="${esc(imgSrc)}" alt="${esc(p.titulo ?? "")}" loading="lazy" />`
+            : `<div class="img-placeholder"><i class="bi bi-house-door-fill" aria-hidden="true"></i></div>`;
 
         const tipo = p.tipo ?? p.tipoPropiedad ?? null;
         const badgeHtml = tipo
-            ? `<span class="fav-badge">${tipo}</span>`
+            ? `<span class="fav-badge">${esc(tipo)}</span>`
             : "";
 
         return `
@@ -260,13 +261,13 @@ function renderFavoritos(lista: any[]) {
                 ${badgeHtml}
             </div>
             <div class="fav-info">
-                <h4>${p.titulo ?? "Sin título"}</h4>
+                <h4>${esc(p.titulo ?? "Sin título")}</h4>
                 <p class="fav-ciudad">
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
-                    ${p.ciudad ?? p.direccion ?? "Sin ciudad"}
+                    ${esc(p.ciudad ?? p.direccion ?? "Sin ciudad")}
                 </p>
-                <p class="fav-precio">${formatPrecio(p.precio ?? 0)}</p>
-                <button class="btn-quitar" data-prop="${p.propiedadID}">
+                <p class="fav-precio">${esc(formatPrecio(p.precio ?? 0))}</p>
+                <button class="btn-quitar" data-prop="${esc(p.propiedadID)}">
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
                     Quitar de favoritos
                 </button>

@@ -1,7 +1,7 @@
+import { BACKEND_URL } from "../../utils/config";
 import type { APIRoute } from "astro";
 import { COOKIE_NAME, getTokenSSR } from "../../utils/auth";
 
-const BACKEND_URL = "http://localhost:8001";
 
 function cookieBorrada(): string {
   return [
@@ -42,9 +42,4 @@ export const POST: APIRoute = async ({ cookies }) => {
       },
     }
   );
-};
-
-/** Permite también GET /api/logout (p. ej. enlace simple) */
-export const GET: APIRoute = async (ctx) => {
-  return POST(ctx);
 };

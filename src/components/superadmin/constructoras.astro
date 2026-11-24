@@ -143,12 +143,13 @@ import "./constructoras.css";
   var lista = [];
   var inmobiliarias = [];
   var usuariosConstructora = [];
+function esc(v){return String(v ?? "").replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];});}
 
   function badgeEstado(e) {
     var s = String(e || "").toLowerCase();
     var cls =
       s.indexOf("activ") >= 0 ? "ok" : s.indexOf("pend") >= 0 ? "warn" : "off";
-    return '<span class="badge badge-' + cls + '">' + (e || "—") + "</span>";
+    return '<span class="badge badge-' + cls + '">' + esc(e || "—") + "</span>";
   }
 
   function pintarStats() {
@@ -178,34 +179,34 @@ import "./constructoras.css";
         var id = c.constructoraID;
         var inmos = c.inmobiliariaNombres || "—";
         var acceso = c.usuarioCorreo
-          ? '<span class="acceso-ok">' + c.usuarioCorreo + "</span>"
+          ? '<span class="acceso-ok">' + esc(c.usuarioCorreo) + "</span>"
           : '<span class="acceso-off">Sin cuenta</span>';
         return (
           "<tr>" +
           "<td>" +
-          id +
+          esc(id) +
           "</td>" +
           "<td><strong>" +
-          (c.nombre || "") +
+          esc(c.nombre || "") +
           "</strong></td>" +
           "<td>" +
-          (c.ciudad || "—") +
+          esc(c.ciudad || "—") +
           "</td>" +
           "<td>" +
           badgeEstado(c.estado) +
           "</td>" +
           "<td class='inmo-cell'>" +
-          inmos +
+          esc(inmos) +
           "</td>" +
           "<td>" +
           acceso +
           "</td>" +
           "<td>" +
           '<button type="button" class="btn-sm" data-edit="' +
-          id +
+          esc(id) +
           '">Editar</button> ' +
           '<button type="button" class="btn-sm btn-del" data-del="' +
-          id +
+          esc(id) +
           '">Eliminar</button>' +
           "</td>" +
           "</tr>"
@@ -273,10 +274,10 @@ import "./constructoras.css";
             return (
               '<label class="check-item">' +
               '<input type="checkbox" name="inmo" value="' +
-              id +
+              esc(id) +
               '" /> ' +
-              nom +
-              ciu +
+              esc(nom) +
+              esc(ciu) +
               "</label>"
             );
           })
@@ -317,10 +318,10 @@ import "./constructoras.css";
           var cor = u.correo || "";
           return (
             '<option value="' +
-            id +
+            esc(id) +
             '">' +
-            nom +
-            (cor ? " · " + cor : "") +
+            esc(nom) +
+            esc(cor ? " · " + cor : "") +
             "</option>"
           );
         })

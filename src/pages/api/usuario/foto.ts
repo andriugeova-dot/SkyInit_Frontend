@@ -1,7 +1,8 @@
+import { BACKEND_URL } from "../../../utils/config";
 import type { APIRoute } from "astro";
 import { COOKIE_NAME, getTokenSSR } from "../../../utils/auth";
 
-const BACKEND = "http://localhost:8001";
+const BACKEND = `${BACKEND_URL}`;
 
 /** POST /api/usuario/foto — Sube/actualiza la foto de perfil del usuario */
 export const POST: APIRoute = async ({ cookies, request }) => {

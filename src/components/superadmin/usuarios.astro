@@ -107,6 +107,7 @@ import "./usuarios.css";
   var lista = [];
   var roles = [];
   var inmobiliarias = [];
+function esc(v){return String(v ?? "").replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];});}
 
   function esSuperAdmin(u) {
     var rol = String(u.nombreRol || u.rol || "").toLowerCase();
@@ -117,9 +118,9 @@ import "./usuarios.css";
 
   function badgeEstado(e) {
     var s = String(e || "").toLowerCase();
-    if (s.indexOf("activ") >= 0) return '<span class="badge badge-ok">' + e + "</span>";
-    if (s.indexOf("susp") >= 0) return '<span class="badge badge-warn">' + e + "</span>";
-    return '<span class="badge badge-off">' + (e || "—") + "</span>";
+    if (s.indexOf("activ") >= 0) return '<span class="badge badge-ok">' + esc(e) + "</span>";
+    if (s.indexOf("susp") >= 0) return '<span class="badge badge-warn">' + esc(e) + "</span>";
+    return '<span class="badge badge-off">' + esc(e || "—") + "</span>";
   }
 
   function pintarStats() {
@@ -152,15 +153,15 @@ import "./usuarios.css";
         var acciones = bloqueado
           ? '<span class="hint-sa">Protegido</span>'
           : '<button type="button" class="btn-sm" data-edit="' +
-            id +
+            esc(id) +
             '">Editar</button>';
         return (
           "<tr>" +
-          "<td>" + id + "</td>" +
-          "<td>" + (u.nombre || "") + "</td>" +
-          "<td>" + (u.correo || "") + "</td>" +
-          "<td>" + (u.nombreRol || u.rol || "—") + "</td>" +
-          "<td>" + (u.inmobiliariaNombre || "—") + "</td>" +
+          "<td>" + esc(id) + "</td>" +
+          "<td>" + esc(u.nombre || "") + "</td>" +
+          "<td>" + esc(u.correo || "") + "</td>" +
+          "<td>" + esc(u.nombreRol || u.rol || "—") + "</td>" +
+          "<td>" + esc(u.inmobiliariaNombre || "—") + "</td>" +
           "<td>" + badgeEstado(u.estadoCuenta) + "</td>" +
           "<td>" + acciones + "</td>" +
           "</tr>"
@@ -216,7 +217,7 @@ import "./usuarios.css";
             .map(function (r) {
               var id = r.rolID || r.RolID;
               var nom = r.nombreRol || r.NombreRol || "";
-              return '<option value="' + id + '">' + nom + "</option>";
+              return '<option value="' + esc(id) + '">' + esc(nom) + "</option>";
             })
             .join("");
         var optsForm =
@@ -227,7 +228,7 @@ import "./usuarios.css";
               var nom = r.nombreRol || r.NombreRol || "";
               // No ofrecer SuperAdmin al crear/editar otros
               if (String(nom).toLowerCase().indexOf("super") >= 0) return "";
-              return '<option value="' + id + '">' + nom + "</option>";
+              return '<option value="' + esc(id) + '">' + esc(nom) + "</option>";
             })
             .join("");
         document.getElementById("filtro-rol").innerHTML = optsFiltro;
@@ -250,9 +251,9 @@ import "./usuarios.css";
             .map(function (i) {
               return (
                 '<option value="' +
-                i.inmobiliariaID +
+                esc(i.inmobiliariaID) +
                 '">' +
-                (i.nombre || "") +
+                esc(i.nombre || "") +
                 "</option>"
               );
             })

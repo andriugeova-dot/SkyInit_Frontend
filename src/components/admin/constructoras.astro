@@ -97,12 +97,13 @@ import "./propiedades.css"
 <script is:inline>
 (function () {
   var lista = [];
+function esc(v){return String(v ?? "").replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];});}
 
   function urlLogo(logo) {
     if (!logo) return "";
     if (String(logo).indexOf("http") === 0) return logo;
     return (
-      "http://localhost:8001" +
+      "/backend" +
       (logo.charAt(0) === "/" ? logo : "/" + logo)
     );
   }
@@ -143,44 +144,44 @@ import "./propiedades.css"
         var src = urlLogo(c.logo);
         var img = src
           ? '<img src="' +
-            src +
+            esc(src) +
             '" alt="' +
-            (c.nombre || "") +
+            esc(c.nombre || "") +
             '" loading="lazy" />'
           : '<div class="prop-img-vacia"><i class="bi bi-buildings" aria-hidden="true"></i><span>Sin logo</span></div>';
 
         return (
           '<article class="prop-card" data-id="' +
-          id +
+          esc(id) +
           '">' +
           '<div class="prop-img">' +
           img +
           '<span class="prop-badge ' +
           claseEstado(c.estado) +
           '">' +
-          (c.estado || "—") +
+          esc(c.estado || "—") +
           "</span>" +
           "</div>" +
           '<div class="prop-body">' +
           '<h3 class="prop-title">' +
-          (c.nombre || "") +
+          esc(c.nombre || "") +
           "</h3>" +
           '<p class="prop-loc"><i class="bi bi-geo-alt" aria-hidden="true"></i> ' +
-          (c.ciudad || "Sin ciudad") +
+          esc(c.ciudad || "Sin ciudad") +
           "</p>" +
           '<p class="prop-loc"><i class="bi bi-envelope" aria-hidden="true"></i> ' +
-          (c.correo || "Sin correo") +
+          esc(c.correo || "Sin correo") +
           "</p>" +
-          (desc ? '<p class="card-c-desc">' + desc + "</p>" : "") +
+          (desc ? '<p class="card-c-desc">' + esc(desc) + "</p>" : "") +
           '<dl class="prop-meta una-col">' +
           "<div><dt>Contacto</dt><dd>" +
-          (c.contacto || "—") +
+          esc(c.contacto || "—") +
           "</dd></div>" +
           "</dl>" +
           "</div>" +
           '<div class="prop-actions">' +
           '<button type="button" class="btn btn-sm btn-outline-primary flex-grow-1" data-edit="' +
-          id +
+          esc(id) +
           '">' +
           '<i class="bi bi-pencil" aria-hidden="true"></i> Editar' +
           "</button>" +

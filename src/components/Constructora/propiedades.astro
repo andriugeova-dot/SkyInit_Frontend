@@ -1,236 +1,406 @@
 ---
-import "./propiedades.css"; // o propiedades.css con los mismos estilos
+/** Propiedades de la constructora: misma linea visual que el panel del administrador (tarjetas + modales). */
+import "../funciones/funciones.css";
+import "./propiedades.css";
+import SelectorUbicacion from "../funciones/SelectorUbicacion.astro";
+import DialogosPanel from "./DialogosPanel.astro";
 ---
 
-<div class="page">
-    <header class="page-header">
-        <div>
-        <h1>Propiedades</h1>
-        <p>Gestiona Tus Propiedades</p>
-        </div>
-    </header>
-    <div id="grid-propiedades" class="ag-theme-quartz grid-box"></div>
-</div>
-
-<div id="modal-foto" class="sky-modal" hidden>
-    <div class="sky-modal-backdrop" data-cerrar="foto"></div>
-    <div class="sky-modal-card">
-        <h3>Fotos de la propiedad</h3>
-        <div id="galeria-fotos" class="galeria"></div>
-        <label>Agregar otra foto</label>
-        <input type="file" id="input-foto" accept="image/*" />
-        <div class="modal-actions">
-        <button type="button" class="btn-outline" data-cerrar="foto">Cerrar</button>
-        <button type="button" class="btn-primary" id="btn-subir-foto">Subir</button>
-        </div>
+<section class="fn cp" id="cpPropiedades">
+  <header class="fn-head">
+    <div>
+      <h1>Propiedades</h1>
+      <p>Publica y administra los inmuebles de tu constructora.</p>
     </div>
-</div>
+    <button type="button" class="fn-btn cp-btn-nuevo" id="propNueva"><i class="bi bi-plus-lg" aria-hidden="true"></i> Nueva propiedad</button>
+  </header>
 
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.4/styles/ag-grid.css" />
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.4/styles/ag-theme-quartz.css" />
-<script is:inline src="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.4/dist/ag-grid-community.min.noStyle.js"></script>
+  <div class="fn-stats" aria-label="Resumen de propiedades">
+    <div class="fn-stat"><span>Total</span><b id="propStatTotal">—</b></div>
+    <div class="fn-stat"><span>Disponibles</span><b id="propStatDisponibles">—</b></div>
+    <div class="fn-stat"><span>Reservadas</span><b id="propStatReservadas">—</b></div>
+    <div class="fn-stat"><span>Destacadas</span><b id="propStatDestacadas">—</b></div>
+  </div>
 
-<script is:inline>
-    (function () {
-        var BACKEND_PUBLIC = "http://localhost:8001";
-        var propiedadActiva = null;
-        var gridApi = null;
+  <div class="cp-filtros" role="search">
+    <div class="cp-buscar">
+      <i class="bi bi-search" aria-hidden="true"></i>
+      <input type="search" id="propBuscar" placeholder="Buscar por título, ciudad o dirección…" aria-label="Buscar propiedades" />
+    </div>
+    <select id="propFiltroEstado" aria-label="Filtrar por estado">
+      <option value="">Todos los estados</option>
+      <option value="Disponible">Disponible</option>
+      <option value="Reservada">Reservada</option>
+      <option value="En mantenimiento">En mantenimiento</option>
+      <option value="Fuera del mercado">Fuera del mercado</option>
+    </select>
+    <select id="propFiltroTipo" aria-label="Filtrar por tipo de operación">
+      <option value="">Todas las operaciones</option>
+      <option value="Venta">Venta</option>
+      <option value="Arriendo">Arriendo</option>
+      <option value="Empeño">Empeño</option>
+    </select>
+  </div>
 
-        function abrirModal() {
-        var el = document.getElementById("modal-foto");
-        if (el) el.hidden = false;
-        }
-        function cerrarModal() {
-        var el = document.getElementById("modal-foto");
-        if (el) el.hidden = true;
-        }
+  <p class="cp-conteo" id="propConteo" aria-live="polite"></p>
+  <div class="cp-grid" id="propGrid">
+    <div class="cp-esqueleto"></div><div class="cp-esqueleto"></div><div class="cp-esqueleto"></div>
+  </div>
+</section>
 
-        function urlImg(path) {
-        if (!path) return null;
-        if (String(path).indexOf("http") === 0) return path;
-        return BACKEND_PUBLIC + (String(path).charAt(0) === "/" ? path : "/" + path);
-        }
+<dialog class="fn-modal cp-modal" id="propDlg" aria-labelledby="propDlgTitulo">
+  <form class="cp-modal-form" id="propForm" novalidate>
+    <header class="cp-modal-cab">
+      <h2 id="propDlgTitulo"><i class="bi bi-house-door" aria-hidden="true"></i> <span>Nueva propiedad</span></h2>
+      <button type="button" class="cp-cerrar" data-cerrar aria-label="Cerrar"><i class="bi bi-x-lg" aria-hidden="true"></i></button>
+    </header>
+    <div class="cp-modal-scroll fn-form">
+      <p class="cp-nota" id="propNota" hidden><i class="bi bi-info-circle" aria-hidden="true"></i> <span></span></p>
+      <label><span>Título <em>*</em></span>
+        <input type="text" id="propTitulo" required maxlength="150" autocomplete="off" />
+      </label>
+      <label><span>Descripción</span>
+        <textarea id="propDescripcion" rows="3"></textarea>
+      </label>
+      <div class="fn-fila">
+        <label><span>Precio (COP) <em>*</em></span>
+          <input type="number" id="propPrecio" required min="1" step="any" inputmode="decimal" />
+        </label>
+        <label><span>Tipo de operación <em>*</em></span>
+          <select id="propTipo" required>
+            <option value="1">Venta</option>
+            <option value="2">Arriendo</option>
+            <option value="3">Empeño</option>
+          </select>
+        </label>
+        <label><span>Habitaciones</span>
+          <input type="number" id="propHabitaciones" min="0" step="1" inputmode="numeric" />
+        </label>
+      </div>
+      <div class="fn-fila">
+        <label><span>Dirección <em>*</em></span>
+          <input type="text" id="propDireccion" required maxlength="255" autocomplete="off" />
+        </label>
+        <label><span>Ciudad</span>
+          <input type="text" id="propCiudad" maxlength="100" autocomplete="off" />
+        </label>
+      </div>
+      <div class="fn-fila">
+        <label><span>Estado</span>
+          <select id="propEstado">
+            <option value="Disponible">Disponible</option>
+            <option value="Reservada">Reservada</option>
+            <option value="En mantenimiento">En mantenimiento</option>
+            <option value="Fuera del mercado">Fuera del mercado</option>
+          </select>
+        </label>
+        <label class="cp-check">
+          <input type="checkbox" id="propDestacada" />
+          <span>Destacar esta propiedad</span>
+        </label>
+      </div>
+      <SelectorUbicacion />
+      <p class="cp-error" id="propError" role="alert" hidden><i class="bi bi-exclamation-triangle" aria-hidden="true"></i> <span></span></p>
+    </div>
+    <footer class="cp-modal-pie">
+      <button type="button" class="fn-btn fn-btn--sec" data-cerrar>Cancelar</button>
+      <button type="submit" class="fn-btn" id="propGuardar"><i class="bi bi-check-lg" aria-hidden="true"></i> <span>Guardar</span></button>
+    </footer>
+  </form>
+</dialog>
 
-        function fotoRenderer(params) {
-        var data = params.data || {};
-        var n = 0;
-        if (typeof data.totalImagenes === "number") n = data.totalImagenes;
-        else if (data.imagenUrl) n = 1;
+<DialogosPanel />
 
-        if (n <= 0) return '<span class="foto-count">0 fotos</span>';
+<script>
+  import { esc, urlArchivo, aviso, fechaCorta } from "../funciones/comun";
+  import { pedir, cargarCoordenadas, guardarUbicacion, selector, mostrarError, prepararDialogo, confirmar, montarFotos, type Coordenadas } from "./panel";
 
-        var url = urlImg(data.imagenUrl);
-        if (url) {
-            return (
-            '<div style="display:flex;align-items:center;gap:8px;">' +
-            '<img class="thumb" src="' + url + '" alt="" />' +
-            '<span class="foto-count tiene">' + n + (n === 1 ? " foto" : " fotos") + "</span>" +
-            "</div>"
-            );
-        }
-        return '<span class="foto-count tiene">' + n + (n === 1 ? " foto" : " fotos") + "</span>";
-        }
+  type Propiedad = {
+    propiedadID: number; titulo: string; precio: string | number; habitaciones: number | null; direccion: string | null;
+    ciudad: string | null; estado: string; destacada: number | boolean | null; fechaPublicacion: string | null;
+    tipoOperacion: string; totalImagenes: number; imagenUrl: string | null;
+  };
 
-        function accionesRenderer(params) {
-        var id = params.data && params.data.propiedadID;
-        if (!id) return "";
-        return (
-            '<button type="button" class="btn-sm btn-foto" data-sky-accion="foto" data-sky-id="' +
-            id +
-            '">Foto</button>'
-        );
-        }
+  const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
+  const grid = $("propGrid");
+  const conteo = $("propConteo");
+  const buscar = $<HTMLInputElement>("propBuscar");
+  const filtroEstado = $<HTMLSelectElement>("propFiltroEstado");
+  const filtroTipo = $<HTMLSelectElement>("propFiltroTipo");
+  const dlg = $<HTMLDialogElement>("propDlg");
+  const form = $<HTMLFormElement>("propForm");
+  const guardar = $<HTMLButtonElement>("propGuardar");
+  const error = $("propError");
+  const nota = $("propNota");
+  const campo = {
+    titulo: $<HTMLInputElement>("propTitulo"), descripcion: $<HTMLTextAreaElement>("propDescripcion"),
+    precio: $<HTMLInputElement>("propPrecio"), tipo: $<HTMLSelectElement>("propTipo"),
+    habitaciones: $<HTMLInputElement>("propHabitaciones"), direccion: $<HTMLInputElement>("propDireccion"),
+    ciudad: $<HTMLInputElement>("propCiudad"), estado: $<HTMLSelectElement>("propEstado"),
+    destacada: $<HTMLInputElement>("propDestacada"),
+  };
 
-        function pintarGaleria(imagenes) {
-        var g = document.getElementById("galeria-fotos");
-        if (!g) return;
-        g.innerHTML = "";
-        var lista = (imagenes || []).map(function (item) {
-            if (typeof item === "string") return { imagenID: null, url: item };
-            return { imagenID: item.imagenID, url: item.url };
-        });
-        if (!lista.length) {
-            g.innerHTML = '<span class="vacio">Sin fotos aún. Sube la primera.</span>';
-            return;
-        }
-        lista.forEach(function (item) {
-            var src = urlImg(item.url);
-            if (!src) return;
-            var wrap = document.createElement("div");
-            wrap.className = "galeria-item";
-            var img = document.createElement("img");
-            img.src = src;
-            wrap.appendChild(img);
-            if (item.imagenID != null) {
-            var btn = document.createElement("button");
-            btn.type = "button";
-            btn.className = "btn-borrar-img";
-            btn.textContent = "×";
-            btn.setAttribute("data-sky-del-img", String(item.imagenID));
-            wrap.appendChild(btn);
-            }
-            g.appendChild(wrap);
-        });
-        }
+  const TIPOS: Record<string, number> = { Venta: 1, Arriendo: 2, "Empeño": 3 };
+  const CLASE_ESTADO: Record<string, string> = {
+    Disponible: "cp-estado--ok", Reservada: "cp-estado--aviso", "En mantenimiento": "cp-estado--info", "Fuera del mercado": "cp-estado--gris",
+  };
+  const pesos = new Intl.NumberFormat("es-CO", { maximumFractionDigits: 0 });
 
-        function cargarGaleria(id) {
-        return fetch("/api/panel/constructora/propiedad_detalle?id=" + id, {
-            credentials: "same-origin",
-        })
-            .then(function (r) { return r.json(); })
-            .then(function (json) {
-            var imgs = (json.data && json.data.imagenes) || [];
-            pintarGaleria(imgs);
-            var t = document.querySelector("#modal-foto h3");
-            if (t) t.textContent = "Fotos de la propiedad (" + imgs.length + ")";
-            })
-            .catch(function () { pintarGaleria([]); });
-        }
+  let lista: Propiedad[] = [];
+  let coords = new Map<number, Coordenadas>();
+  /** Detalles ya consultados en esta sesion (el servidor solo devuelve el detalle de las propiedades "Disponible") */
+  const detalles = new Map<number, any>();
+  // Respaldo en este navegador de lo que la lista no trae (descripcion y agente), para no perderlo al editar
+  // una propiedad que ya no esta "Disponible" (el servidor no devuelve su detalle).
+  const CLAVE = "skyinit.constructora.propiedades";
+  function recordar(id: number, d: any) {
+    detalles.set(id, d);
+    try {
+      const todo = JSON.parse(localStorage.getItem(CLAVE) || "{}");
+      todo[id] = { descripcion: d.descripcion ?? null, agenteID: d.agenteID ?? null, tipoOperacionID: d.tipoOperacionID ?? null };
+      localStorage.setItem(CLAVE, JSON.stringify(todo));
+    } catch { /* almacenamiento no disponible */ }
+  }
+  function recordado(id: number): any {
+    if (detalles.has(id)) return detalles.get(id);
+    try { return JSON.parse(localStorage.getItem(CLAVE) || "{}")[id] ?? null; } catch { return null; }
+  }
+  let editando: number | null = null;
+  let agenteActual: number | null = null;
+  let turno = 0;
 
-        function cargar() {
-        fetch("/api/panel/constructora/propiedades", { credentials: "same-origin" })
-            .then(function (r) { return r.text(); })
-            .then(function (text) {
-            var json = JSON.parse(text);
-            var rows = Array.isArray(json.data) ? json.data : [];
-            if (gridApi) gridApi.setGridOption("rowData", rows);
-            })
-            .catch(function (e) { console.error(e); });
-        }
+  const esDestacada = (p: Propiedad) => p.destacada === true || Number(p.destacada) === 1;
 
-        document.addEventListener(
-        "click",
-        function (e) {
-            var t = e.target;
-            if (!t || !t.closest) return;
+  function tarjeta(p: Propiedad): string {
+    const foto = p.imagenUrl
+      ? `<img src="${esc(urlArchivo(p.imagenUrl))}" alt="Foto de ${esc(p.titulo)}" loading="lazy" />`
+      : `<div class="cp-sin-foto"><i class="bi bi-image" aria-hidden="true"></i>Sin fotos</div>`;
+    const lugar = [p.direccion, p.ciudad].filter(Boolean).join(", ");
+    const c = coords.get(p.propiedadID);
+    const ubicada = c && c.latitud != null && c.longitud != null;
+    return `
+      <article class="cp-card">
+        <div class="cp-card-foto">
+          ${foto}
+          <span class="cp-estado ${CLASE_ESTADO[p.estado] ?? ""}">${esc(p.estado || "Sin estado")}</span>
+          <div class="cp-insignias">
+            ${esDestacada(p) ? `<span class="cp-insignia cp-insignia--oro"><i class="bi bi-star-fill" aria-hidden="true"></i> Destacada</span>` : ""}
+            <span class="cp-insignia" title="Número de fotos"><i class="bi bi-images" aria-hidden="true"></i> ${esc(p.totalImagenes ?? 0)}</span>
+          </div>
+        </div>
+        <div class="cp-card-cuerpo">
+          <h3>${esc(p.titulo)}</h3>
+          <p class="cp-lugar"><i class="bi bi-geo-alt" aria-hidden="true"></i> ${esc(lugar || "Sin dirección")}</p>
+          <p class="cp-precio">$ ${esc(pesos.format(Number(p.precio) || 0))}</p>
+          <div class="cp-datos">
+            <span class="cp-dato">${esc(p.tipoOperacion || "—")}</span>
+            ${p.habitaciones != null ? `<span class="cp-dato"><i class="bi bi-door-open" aria-hidden="true"></i> ${esc(p.habitaciones)} hab.</span>` : ""}
+            ${ubicada ? `<span class="cp-dato cp-dato--oro"><i class="bi bi-pin-map" aria-hidden="true"></i> En el mapa</span>` : ""}
+            ${p.fechaPublicacion ? `<span class="cp-dato"><i class="bi bi-calendar3" aria-hidden="true"></i> ${esc(fechaCorta(p.fechaPublicacion))}</span>` : ""}
+          </div>
+        </div>
+        <div class="cp-card-acciones">
+          <button type="button" class="fn-btn fn-btn--sec cp-accion-editar" data-accion="editar" data-id="${esc(p.propiedadID)}"><i class="bi bi-pencil" aria-hidden="true"></i> Editar</button>
+          <button type="button" class="fn-btn fn-btn--sec" data-accion="fotos" data-id="${esc(p.propiedadID)}"><i class="bi bi-images" aria-hidden="true"></i> Fotos</button>
+          <button type="button" class="fn-btn fn-btn--mal" data-accion="eliminar" data-id="${esc(p.propiedadID)}" aria-label="Eliminar ${esc(p.titulo)}" title="Eliminar"><i class="bi bi-trash" aria-hidden="true"></i></button>
+        </div>
+      </article>`;
+  }
 
-            if (t.closest("[data-cerrar]")) {
-            cerrarModal();
-            return;
-            }
+  function pintar() {
+    $("propStatTotal").textContent = String(lista.length);
+    $("propStatDisponibles").textContent = String(lista.filter((p) => p.estado === "Disponible").length);
+    $("propStatReservadas").textContent = String(lista.filter((p) => p.estado === "Reservada").length);
+    $("propStatDestacadas").textContent = String(lista.filter(esDestacada).length);
 
-            var del = t.closest("[data-sky-del-img]");
-            if (del) {
-            e.preventDefault();
-            e.stopPropagation();
-            var imagenId = del.getAttribute("data-sky-del-img");
-            if (!propiedadActiva || !imagenId) return;
-            if (!confirm("¿Eliminar esta foto?")) return;
-            fetch(
-                "/api/panel/constructora/propiedad_imagen_delete?id=" +
-                propiedadActiva +
-                "&imagenId=" +
-                imagenId,
-                { method: "DELETE", credentials: "same-origin" }
-            )
-                .then(function (res) {
-                if (!res.ok) throw new Error("Error");
-                return cargarGaleria(propiedadActiva).then(cargar);
-                })
-                .catch(function () { alert("No se pudo eliminar"); });
-            return;
-            }
+    const q = buscar.value.trim().toLowerCase();
+    const visibles = lista.filter((p) =>
+      (!q || [p.titulo, p.ciudad, p.direccion].join(" ").toLowerCase().includes(q)) &&
+      (!filtroEstado.value || p.estado === filtroEstado.value) &&
+      (!filtroTipo.value || p.tipoOperacion === filtroTipo.value));
 
-            var btn = t.closest("[data-sky-accion]");
-            if (!btn) return;
-            e.preventDefault();
-            e.stopPropagation();
-            propiedadActiva = Number(btn.getAttribute("data-sky-id"));
-            document.getElementById("input-foto").value = "";
-            pintarGaleria([]);
-            abrirModal();
-            cargarGaleria(propiedadActiva);
-        },
-        true
-        );
+    if (!lista.length) {
+      conteo.textContent = "";
+      grid.innerHTML = `<div class="fn-vacio"><i class="bi bi-house-add" aria-hidden="true"></i><strong>Aún no tienes propiedades</strong>
+        Publica tu primer inmueble con sus datos, fotos y ubicación en el mapa.<br />
+        <button type="button" class="fn-btn" data-accion="nueva"><i class="bi bi-plus-lg" aria-hidden="true"></i> Nueva propiedad</button></div>`;
+      return;
+    }
+    conteo.textContent = visibles.length === lista.length
+      ? `${lista.length} ${lista.length === 1 ? "propiedad" : "propiedades"}`
+      : `${visibles.length} de ${lista.length} propiedades`;
+    grid.innerHTML = visibles.length
+      ? visibles.map(tarjeta).join("")
+      : `<div class="fn-vacio"><i class="bi bi-funnel" aria-hidden="true"></i><strong>Ninguna propiedad coincide con el filtro</strong>
+          Prueba con otra búsqueda o quita los filtros.<br />
+          <button type="button" class="fn-btn fn-btn--sec" data-accion="limpiar"><i class="bi bi-x-circle" aria-hidden="true"></i> Quitar filtros</button></div>`;
+  }
 
-        document.getElementById("btn-subir-foto").addEventListener("click", function () {
-        if (!propiedadActiva) return;
-        var file = document.getElementById("input-foto").files &&
-            document.getElementById("input-foto").files[0];
-        if (!file) {
-            alert("Elige una imagen");
-            return;
-        }
-        var fd = new FormData();
-        fd.append("imagen", file);
-        fetch("/api/panel/constructora/propiedad_imagen?id=" + propiedadActiva, {
-            method: "POST",
-            body: fd,
-            credentials: "same-origin",
-        })
-            .then(function (res) {
-            if (!res.ok) throw new Error("fail");
-            document.getElementById("input-foto").value = "";
-            return cargarGaleria(propiedadActiva).then(cargar);
-            })
-            .catch(function () { alert("No se pudo subir la foto"); });
-        });
+  async function cargar() {
+    try {
+      const [r, c] = await Promise.all([pedir<any>("/propiedades"), cargarCoordenadas("propiedades")]);
+      lista = Array.isArray(r.data) ? r.data : [];
+      coords = c;
+      pintar();
+    } catch (e) {
+      conteo.textContent = "";
+      grid.innerHTML = `<div class="fn-vacio"><i class="bi bi-exclamation-triangle" aria-hidden="true"></i><strong>No pudimos cargar tus propiedades</strong>
+        ${esc((e as Error).message)}<br />
+        <button type="button" class="fn-btn fn-btn--sec" data-accion="reintentar"><i class="bi bi-arrow-clockwise" aria-hidden="true"></i> Reintentar</button></div>`;
+    }
+  }
 
-        function init() {
-        var gridDiv = document.getElementById("grid-propiedades");
-        if (!gridDiv || typeof agGrid === "undefined") return;
-        gridApi = agGrid.createGrid(gridDiv, {
-            columnDefs: [
-            { headerName: "Foto", field: "imagenUrl", width: 140, cellRenderer: fotoRenderer, sortable: false, filter: false },
-            { headerName: "Título", field: "titulo", flex: 1, minWidth: 160 },
-            { headerName: "Precio", field: "precio", width: 120 },
-            { headerName: "Ciudad", field: "ciudad", width: 120 },
-            { headerName: "Estado", field: "estado", width: 120 },
-            { headerName: "Tipo", field: "tipoOperacion", width: 120 },
-            { headerName: "Acciones", width: 100, cellRenderer: accionesRenderer, sortable: false, filter: false },
-            ],
-            defaultColDef: { resizable: true, sortable: true },
-            rowHeight: 56,
-            rowData: [],
-        });
-        cargar();
-        }
+  function ocupado(si: boolean, texto = "Guardar") {
+    guardar.disabled = si;
+    guardar.querySelector("span")!.textContent = texto;
+  }
 
-        if (document.readyState === "loading") {
-        document.addEventListener("DOMContentLoaded", init);
-        } else {
-        init();
-        }
-    })();
+  function abrirNueva() {
+    turno++;
+    editando = null;
+    agenteActual = null;
+    form.reset();
+    $("propDlgTitulo").querySelector("span")!.textContent = "Nueva propiedad";
+    mostrarError(error, null);
+    mostrarError(nota, null);
+    ocupado(false);
+    dlg.showModal();
+    selector()?.fijar(null, null);
+    campo.titulo.focus();
+  }
+
+  async function abrirEditar(id: number) {
+    const p = lista.find((x) => x.propiedadID === id);
+    if (!p) return;
+    const miTurno = ++turno;
+    editando = id;
+    agenteActual = null;
+    form.reset();
+    $("propDlgTitulo").querySelector("span")!.textContent = "Editar propiedad";
+    mostrarError(error, null);
+    mostrarError(nota, null);
+    campo.titulo.value = p.titulo ?? "";
+    campo.precio.value = String(Number(p.precio) || "");
+    campo.tipo.value = String(TIPOS[p.tipoOperacion] ?? 1);
+    campo.habitaciones.value = p.habitaciones != null ? String(p.habitaciones) : "";
+    campo.direccion.value = p.direccion ?? "";
+    campo.ciudad.value = p.ciudad ?? "";
+    campo.estado.value = p.estado || "Disponible";
+    campo.destacada.checked = esDestacada(p);
+    const c = coords.get(id);
+    ocupado(true, "Cargando…");
+    dlg.showModal();
+    selector()?.fijar(c?.latitud ?? null, c?.longitud ?? null);
+
+    // La lista no trae descripcion ni agente: se completan con el detalle
+    let detalle: any = null;
+    try { detalle = (await pedir<any>(`/propiedades/${id}`)).data ?? null; } catch { /* se avisa abajo */ }
+    if (miTurno !== turno) return;
+    if (detalle) recordar(id, detalle); else detalle = recordado(id);
+    if (detalle) {
+      campo.descripcion.value = detalle.descripcion ?? "";
+      if (detalle.tipoOperacionID) campo.tipo.value = String(detalle.tipoOperacionID);
+      agenteActual = detalle.agenteID ?? null;
+      if (!c && detalle.latitud != null && detalle.longitud != null) selector()?.fijar(detalle.latitud, detalle.longitud);
+    } else {
+      mostrarError(nota, "El servidor no devolvió la descripción ni el agente de esta propiedad (solo los entrega cuando está \"Disponible\"). Si guardas, la descripción quedará como la escribas aquí y se quitará el agente asignado.");
+    }
+    ocupado(false);
+  }
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    mostrarError(error, null);
+    const titulo = campo.titulo.value.trim();
+    const direccion = campo.direccion.value.trim();
+    const precio = Number(campo.precio.value);
+    if (!titulo) { mostrarError(error, "Escribe el título de la propiedad."); campo.titulo.focus(); return; }
+    if (!(precio > 0)) { mostrarError(error, "Indica un precio mayor que cero."); campo.precio.focus(); return; }
+    if (!direccion) { mostrarError(error, "Escribe la dirección de la propiedad."); campo.direccion.focus(); return; }
+    const hab = campo.habitaciones.value.trim();
+    if (hab && (!Number.isInteger(Number(hab)) || Number(hab) < 0)) { mostrarError(error, "Las habitaciones deben ser un número entero."); campo.habitaciones.focus(); return; }
+
+    const cuerpo = {
+      titulo, direccion, precio,
+      descripcion: campo.descripcion.value.trim() || null,
+      tipoOperacionID: Number(campo.tipo.value),
+      habitaciones: hab ? Number(hab) : null,
+      ciudad: campo.ciudad.value.trim() || null,
+      estado: campo.estado.value,
+      destacada: campo.destacada.checked,
+      agenteID: agenteActual,
+    };
+
+    ocupado(true, "Guardando…");
+    try {
+      let id = editando;
+      if (id) {
+        await pedir(`/propiedades/${id}`, "PUT", cuerpo);
+        recordar(id, { ...(recordado(id) ?? {}), ...cuerpo });
+      } else {
+        // El servidor no devuelve el id de la propiedad creada: se busca la nueva en la lista
+        const previas = new Set(lista.map((p) => p.propiedadID));
+        await pedir("/propiedades", "POST", cuerpo);
+        const r = await pedir<any>("/propiedades");
+        const nuevas = (Array.isArray(r.data) ? r.data : []).filter((p: Propiedad) => !previas.has(p.propiedadID) && p.titulo === titulo);
+        id = nuevas.length ? Math.max(...nuevas.map((p: Propiedad) => p.propiedadID)) : null;
+      }
+      let errorUbicacion: string | null = null;
+      if (id && !editando) recordar(id, cuerpo);
+      if (id) errorUbicacion = await guardarUbicacion("propiedades", id);
+      else if ("latitud" in (selector()?.leer() ?? {})) errorUbicacion = "no se pudo identificar la propiedad recién creada. Edítala para marcar la ubicación";
+      const eraEdicion = !!editando;
+      dlg.close();
+      if (errorUbicacion) aviso(`La propiedad se guardó, pero la ubicación no: ${errorUbicacion}`, "error");
+      else aviso(eraEdicion ? "Propiedad actualizada" : "Propiedad creada");
+      await cargar();
+    } catch (err) {
+      mostrarError(error, (err as Error).message);
+    } finally {
+      ocupado(false);
+    }
+  });
+
+  async function eliminar(id: number, boton: HTMLButtonElement) {
+    const p = lista.find((x) => x.propiedadID === id);
+    if (!p) return;
+    const ok = await confirmar({
+      titulo: "Eliminar propiedad",
+      texto: `Vas a eliminar "${p.titulo}" junto con sus fotos. Esta acción no se puede deshacer.`,
+      accion: "Eliminar propiedad",
+    });
+    if (!ok) return;
+    boton.disabled = true;
+    try {
+      await pedir(`/propiedades/${id}`, "DELETE");
+      aviso("Propiedad eliminada");
+      await cargar();
+    } catch (err) {
+      boton.disabled = false;
+      aviso((err as Error).message, "error");
+    }
+  }
+
+  const abrirFotos = montarFotos("propiedades", cargar);
+  prepararDialogo(dlg, false);
+
+  $("propNueva").addEventListener("click", abrirNueva);
+  buscar.addEventListener("input", pintar);
+  filtroEstado.addEventListener("change", pintar);
+  filtroTipo.addEventListener("change", pintar);
+  grid.addEventListener("click", (e) => {
+    const btn = (e.target as HTMLElement).closest<HTMLButtonElement>("[data-accion]");
+    if (!btn) return;
+    const id = Number(btn.dataset.id);
+    switch (btn.dataset.accion) {
+      case "nueva": abrirNueva(); break;
+      case "reintentar": cargar(); break;
+      case "limpiar": buscar.value = ""; filtroEstado.value = ""; filtroTipo.value = ""; pintar(); break;
+      case "editar": abrirEditar(id); break;
+      case "fotos": { const p = lista.find((x) => x.propiedadID === id); if (p) abrirFotos(id, p.titulo); break; }
+      case "eliminar": eliminar(id, btn); break;
+    }
+  });
+
+  cargar();
 </script>

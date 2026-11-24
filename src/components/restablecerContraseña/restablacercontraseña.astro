@@ -98,7 +98,7 @@ import "../login/login.css";
         }
 
     try {
-        const res = await fetch("http://localhost:8001/auth/restablecer-password", {
+        const res = await fetch("/backend/auth/restablecer-password", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ Token: token, Password, Confirmar }),

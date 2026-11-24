@@ -1,6 +1,7 @@
+import { BACKEND_URL } from "../../../../../utils/config";
 import type { APIRoute } from "astro";
 
-const BACKEND = "http://localhost:8001";
+const BACKEND = `${BACKEND_URL}`;
 
 /** POST: subir imagen a una propiedad */
 export const POST: APIRoute = async ({ params, request }) => {

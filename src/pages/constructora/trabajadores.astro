@@ -1,0 +1,71 @@
+---
+import Layout from "../../layouts/LayoutVistas.astro";
+import "../../components/funciones/funciones.css";
+---
+<Layout>
+  <section class="fn">
+    <div class="fn-head">
+      <div><h1>Trabajadores</h1><p>Crea las cuentas de tu equipo. Cada trabajador entra con su correo y ve solo sus tareas.</p></div>
+      <button class="fn-btn" id="btnNuevoTrab" type="button"><i class="bi bi-person-plus"></i> Nuevo trabajador</button>
+    </div>
+    <div id="trabLista"></div>
+  </section>
+  <dialog class="fn-modal" id="dlgTrab">
+    <form class="fn-modal-cuerpo fn-form" id="formTrab" autocomplete="off">
+      <h2>Nuevo trabajador</h2>
+      <label>Nombre completo <input id="trabNombre" maxlength="100" required /></label>
+      <div class="fn-fila">
+        <label>Correo <input type="email" id="trabCorreo" maxlength="100" required /></label>
+        <label>Teléfono <input id="trabTelefono" maxlength="20" /></label>
+      </div>
+      <label>Contraseña inicial
+        <input type="password" id="trabPassword" required autocomplete="new-password" />
+        <small class="fn-muted" style="font-weight:400">Mínimo 8 caracteres, con mayúscula, minúscula, número y símbolo.</small>
+      </label>
+      <div class="fn-modal-pie">
+        <button class="fn-btn fn-btn--sec" type="button" id="btnCerrarTrab">Cancelar</button>
+        <button class="fn-btn" type="submit">Crear cuenta</button>
+      </div>
+    </form>
+  </dialog>
+</Layout>
+
+<script>
+  import { api, esc, aviso } from "../../components/funciones/comun";
+  const lista = document.getElementById("trabLista")!;
+  const dlg = document.getElementById("dlgTrab") as HTMLDialogElement;
+  async function cargar() {
+    try {
+      const { trabajadores } = await api("/organizacion/trabajadores");
+      if (!trabajadores.length) {
+        lista.innerHTML = `<div class="fn-vacio"><i class="bi bi-people"></i>Aún no has creado trabajadores. Crea el primero para poder asignarle tareas.</div>`;
+        return;
+      }
+      lista.innerHTML = `<div class="fn-tabla-wrap"><table class="fn-tabla"><thead><tr><th>Nombre</th><th>Correo</th><th>Teléfono</th><th>Tareas abiertas</th><th>Estado</th><th></th></tr></thead><tbody>` +
+        trabajadores.map((t: any) => {
+          const activa = t.estadoCuenta === "Activa";
+          return `<tr><td><strong>${esc(t.nombre)}</strong></td><td>${esc(t.correo)}</td><td>${esc(t.telefono ?? "—")}</td><td>${Number(t.tareasAbiertas)}</td>
+            <td><span class="fn-chip ${activa ? "fn-chip--ok" : "fn-chip--mal"}">${esc(t.estadoCuenta)}</span></td>
+            <td><button class="fn-btn fn-btn--sec fn-btn--mini" data-id="${Number(t.usuarioID)}" data-nuevo="${activa ? "Inactiva" : "Activa"}" type="button">${activa ? "Desactivar" : "Activar"}</button></td></tr>`;
+        }).join("") + "</tbody></table></div>";
+    } catch (e) { lista.innerHTML = `<div class="fn-vacio">${esc((e as Error).message)}</div>`; }
+  }
+  lista.addEventListener("click", async (ev) => {
+    const b = (ev.target as HTMLElement).closest<HTMLElement>("[data-nuevo]");
+    if (!b) return;
+    try { await api(`/organizacion/trabajadores/${b.dataset.id}/estado`, "PATCH", { estadoCuenta: b.dataset.nuevo }); aviso("Estado actualizado"); cargar(); }
+    catch (e) { aviso((e as Error).message, "error"); }
+  });
+  document.getElementById("btnNuevoTrab")!.addEventListener("click", () => { (document.getElementById("formTrab") as HTMLFormElement).reset(); dlg.showModal(); });
+  document.getElementById("btnCerrarTrab")!.addEventListener("click", () => dlg.close());
+  document.getElementById("formTrab")!.addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    const v = (id: string) => (document.getElementById(id) as HTMLInputElement).value.trim();
+    try {
+      await api("/organizacion/trabajadores", "POST", { nombre: v("trabNombre"), correo: v("trabCorreo"), telefono: v("trabTelefono") || null,
+        password: (document.getElementById("trabPassword") as HTMLInputElement).value });
+      dlg.close(); aviso("Trabajador creado"); cargar();
+    } catch (e) { aviso((e as Error).message, "error"); }
+  });
+  cargar();
+</script>

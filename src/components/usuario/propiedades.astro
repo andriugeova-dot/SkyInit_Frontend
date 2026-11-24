@@ -359,6 +359,7 @@
 <script>
 const API = "/api/usuario/propiedades";
 const FAV_API = "/api/usuario/favoritos";
+function esc(v: unknown): string { return String(v ?? "").replace(/[&<>"']/g, (c) => (({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}) as Record<string, string>)[c]); }
 
 let propiedadesCargadas: any[] = [];
 
@@ -406,18 +407,18 @@ function renderPropiedades(lista: any[]) {
     grid.innerHTML = lista.map((p, i) => {
         const tipoClass = p.tipoOperacion?.toLowerCase().includes("arriendo") ? "tipo-arriendo" : "tipo-venta";
         const imgHtml = p.imagenes?.[0]
-            ? `<img src="http://localhost:8001${p.imagenes[0]}" alt="" />`
+            ? `<img src="/backend${esc(p.imagenes[0])}" alt="" />`
             : `<i class="bi bi-house"></i>`;
         return `
         <div class="prop-card" data-idx="${i}">
             <div class="prop-card-img">${imgHtml}</div>
             <div class="prop-card-body">
-                <span class="prop-card-tipo ${tipoClass}">${p.tipoOperacion ?? "Propiedad"}</span>
-                <p class="prop-card-titulo">${p.titulo}</p>
-                <p class="prop-card-ciudad"><i class="bi bi-geo-alt-fill"></i>${p.ciudad ?? "Sin ciudad"}</p>
+                <span class="prop-card-tipo ${tipoClass}">${esc(p.tipoOperacion ?? "Propiedad")}</span>
+                <p class="prop-card-titulo">${esc(p.titulo)}</p>
+                <p class="prop-card-ciudad"><i class="bi bi-geo-alt-fill"></i>${esc(p.ciudad ?? "Sin ciudad")}</p>
                 <div class="prop-card-footer">
-                    <span class="prop-precio">${formatPrecio(p.precio)}</span>
-                    ${p.habitaciones ? `<span class="prop-hab"><i class="bi bi-door-open-fill"></i>${p.habitaciones} hab.</span>` : ""}
+                    <span class="prop-precio">${esc(formatPrecio(p.precio))}</span>
+                    ${p.habitaciones ? `<span class="prop-hab"><i class="bi bi-door-open-fill"></i>${esc(p.habitaciones)} hab.</span>` : ""}
                 </div>
             </div>
         </div>`;
@@ -433,41 +434,41 @@ function renderPropiedades(lista: any[]) {
 
 function abrirModal(p: any) {
     const imgHtml = p.imagenes?.[0]
-        ? `<div class="modal-prop-img"><img src="http://localhost:8001${p.imagenes[0]}" alt="" /></div>`
+        ? `<div class="modal-prop-img"><img src="/backend${esc(p.imagenes[0])}" alt="" /></div>`
         : `<div class="modal-prop-img"><i class="bi bi-house"></i></div>`;
 
     document.getElementById("modalContenido")!.innerHTML = `
         ${imgHtml}
-        <p class="modal-prop-titulo">${p.titulo}</p>
-        <p class="modal-prop-precio">${formatPrecio(p.precio)}</p>
+        <p class="modal-prop-titulo">${esc(p.titulo)}</p>
+        <p class="modal-prop-precio">${esc(formatPrecio(p.precio))}</p>
         <div class="modal-detalles">
             <div class="modal-detalle-item">
                 <span class="modal-detalle-label">Ciudad</span>
-                <span class="modal-detalle-valor">${p.ciudad ?? "—"}</span>
+                <span class="modal-detalle-valor">${esc(p.ciudad ?? "—")}</span>
             </div>
             <div class="modal-detalle-item">
                 <span class="modal-detalle-label">Tipo</span>
-                <span class="modal-detalle-valor">${p.tipoOperacion ?? "—"}</span>
+                <span class="modal-detalle-valor">${esc(p.tipoOperacion ?? "—")}</span>
             </div>
             <div class="modal-detalle-item">
                 <span class="modal-detalle-label">Habitaciones</span>
-                <span class="modal-detalle-valor">${p.habitaciones ?? "—"}</span>
+                <span class="modal-detalle-valor">${esc(p.habitaciones ?? "—")}</span>
             </div>
             <div class="modal-detalle-item">
                 <span class="modal-detalle-label">Estado</span>
-                <span class="modal-detalle-valor">${p.estado ?? "—"}</span>
+                <span class="modal-detalle-valor">${esc(p.estado ?? "—")}</span>
             </div>
             ${p.agenteNombre ? `<div class="modal-detalle-item">
                 <span class="modal-detalle-label">Agente</span>
-                <span class="modal-detalle-valor">${p.agenteNombre}</span>
+                <span class="modal-detalle-valor">${esc(p.agenteNombre)}</span>
             </div>` : ""}
             ${p.constructoraNombre ? `<div class="modal-detalle-item">
                 <span class="modal-detalle-label">Constructora</span>
-                <span class="modal-detalle-valor">${p.constructoraNombre}</span>
+                <span class="modal-detalle-valor">${esc(p.constructoraNombre)}</span>
             </div>` : ""}
         </div>
-        ${p.descripcion ? `<p class="modal-descripcion">${p.descripcion}</p>` : ""}
-        <button class="btn-favorito" id="btnFavModal" data-id="${p.propiedadID}">
+        ${p.descripcion ? `<p class="modal-descripcion">${esc(p.descripcion)}</p>` : ""}
+        <button class="btn-favorito" id="btnFavModal" data-id="${esc(p.propiedadID)}">
             <i class="bi bi-heart-fill"></i> Guardar en favoritos
         </button>
     `;

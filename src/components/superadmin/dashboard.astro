@@ -1,4 +1,5 @@
 ---
+import ResumenPanel from "../funciones/ResumenPanel.astro";
 import "../admin/dashboard.css";
 import { COOKIE_NAME, getTokenSSR } from "../../utils/auth";
 
@@ -56,6 +57,7 @@ const iconoEstadoProp = (estado: string) => {
         <h1>Panel SuperAdmin</h1>
         <p>Resumen global de la plataforma SkyInit.</p>
     </div>
+    <ResumenPanel />
 
     {errorCarga && (
         <div class="alert-error" role="alert">

@@ -1,0 +1,80 @@
+---
+/**
+ * Selector de ubicacion dentro de un formulario (sin salir del panel).
+ * Uso desde el script del formulario:
+ *   window.selectorUbicacion.fijar(lat, lng)   -> carga la ubicacion guardada (null, null = sin ubicacion)
+ *   window.selectorUbicacion.leer()            -> {} si no se toco, o { latitud, longitud } para enviar al backend
+ */
+import "./funciones.css";
+---
+<div class="sel-ubi" id="selUbi">
+  <div class="sel-ubi-cab">
+    <label>Ubicación en el mapa</label>
+    <div class="fn-acciones">
+      <button type="button" class="fn-btn fn-btn--sec fn-btn--mini" id="selUbiMia"><i class="bi bi-crosshair" aria-hidden="true"></i> Usar mi ubicación</button>
+      <button type="button" class="fn-btn fn-btn--mal fn-btn--mini" id="selUbiQuitar"><i class="bi bi-x-circle" aria-hidden="true"></i> Quitar</button>
+    </div>
+  </div>
+  <div id="selUbiMapa" role="application" aria-label="Mapa para elegir la ubicación"></div>
+  <small class="fn-muted" id="selUbiTexto">Haz clic en el mapa para marcar la ubicación.</small>
+</div>
+
+<style is:global>
+  .sel-ubi { grid-column:1 / -1; display:grid; gap:6px; }
+  .sel-ubi-cab { display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap; }
+  .sel-ubi-cab label { margin:0; }
+  #selUbiMapa { height:260px; border-radius:10px; border:1px solid var(--fn-line); z-index:0; }
+  .sel-ubi-pin { width:26px; height:26px; border-radius:50% 50% 50% 0; transform:rotate(-45deg); border:2px solid #fff; background:var(--fn-acc); box-shadow:0 2px 6px rgba(0,0,0,.4); }
+</style>
+
+<script>
+  import L from "leaflet";
+  import "leaflet/dist/leaflet.css";
+
+  const CENTRO: [number, number] = [5.8268, -73.0331]; // Duitama
+  const texto = document.getElementById("selUbiTexto")!;
+  const mapa = L.map("selUbiMapa").setView(CENTRO, 13);
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, attribution: "&copy; OpenStreetMap" }).addTo(mapa);
+  const icono = L.divIcon({ className: "", html: `<div class="sel-ubi-pin"></div>`, iconSize: [26, 26], iconAnchor: [13, 26] });
+  let marcador: L.Marker | null = null;
+  let valor: { latitud: number; longitud: number } | null = null;
+  let tocado = false;
+
+  function pintar(centrar: boolean) {
+    marcador?.remove(); marcador = null;
+    if (valor) {
+      marcador = L.marker([valor.latitud, valor.longitud], { icon: icono, draggable: true }).addTo(mapa);
+      marcador.on("dragend", () => { const p = marcador!.getLatLng(); valor = { latitud: p.lat, longitud: p.lng }; tocado = true; pintar(false); });
+      if (centrar) mapa.setView([valor.latitud, valor.longitud], 16);
+      texto.textContent = `Ubicación marcada: ${valor.latitud.toFixed(5)}, ${valor.longitud.toFixed(5)}. Puedes arrastrar el marcador.`;
+    } else {
+      if (centrar) mapa.setView(CENTRO, 13);
+      texto.textContent = "Sin ubicación. Haz clic en el mapa para marcarla.";
+    }
+  }
+  mapa.on("click", (e: L.LeafletMouseEvent) => { valor = { latitud: e.latlng.lat, longitud: e.latlng.lng }; tocado = true; pintar(false); });
+  document.getElementById("selUbiQuitar")!.addEventListener("click", () => { valor = null; tocado = true; pintar(false); });
+  document.getElementById("selUbiMia")!.addEventListener("click", () => {
+    if (!navigator.geolocation) { texto.textContent = "Tu navegador no permite obtener la ubicación."; return; }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => { valor = { latitud: pos.coords.latitude, longitud: pos.coords.longitude }; tocado = true; pintar(true); },
+      () => { texto.textContent = "No pudimos obtener tu ubicación. Revisa el permiso del navegador."; },
+      { enableHighAccuracy: true, timeout: 10000 });
+  });
+  // El mapa vive dentro de un modal: se recalcula cuando el modal se muestra
+  new ResizeObserver(() => mapa.invalidateSize()).observe(document.getElementById("selUbiMapa")!);
+
+  (window as any).selectorUbicacion = {
+    fijar(lat: unknown, lng: unknown) {
+      const a = Number(lat), b = Number(lng);
+      valor = lat != null && lng != null && Number.isFinite(a) && Number.isFinite(b) ? { latitud: a, longitud: b } : null;
+      tocado = false;
+      pintar(true);
+      setTimeout(() => mapa.invalidateSize(), 150);
+    },
+    leer() {
+      if (!tocado) return {};
+      return valor ? { latitud: valor.latitud, longitud: valor.longitud } : { latitud: null, longitud: null };
+    },
+  };
+</script>

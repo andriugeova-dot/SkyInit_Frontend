@@ -1,4 +1,6 @@
 ---
+import SelectorUbicacion from "../funciones/SelectorUbicacion.astro";
+import InteresPropiedades from "../funciones/InteresPropiedades.astro";
 import "./propiedades.css";
 import { COOKIE_NAME, getTokenSSR } from "../../utils/auth";
 
@@ -24,6 +26,8 @@ type FilaPropiedad = {
     constructoraID?: number | null;
     constructoraNombre?: string | null;
     imagenPrincipal?: string | null;
+    latitud?: number | null;
+    longitud?: number | null;
 };
 
 type Opcion = { id: number; nombre: string };
@@ -63,6 +67,8 @@ if (token) {
                 constructoraID: p.constructoraID ?? null,
                 constructoraNombre: p.constructoraNombre ?? null,
                 imagenPrincipal: p.imagenPrincipal ?? null,
+                latitud: p.latitud ?? null,
+                longitud: p.longitud ?? null,
             }));
         } else {
             errorCarga = `No se pudieron cargar las propiedades (${resProps.status})`;
@@ -249,6 +255,7 @@ const filasJson = JSON.stringify(filas).replace(/</g, "\\u003c");
                             <dd>{p.constructoraNombre ?? "Sin asignar"}</dd>
                         </div>
                     </dl>
+                    <div class="prop-interes" data-interes={p.propiedadID}>Cargando interés…</div>
                 </div>
 
                 <div class="prop-actions">
@@ -268,6 +275,7 @@ const filasJson = JSON.stringify(filas).replace(/</g, "\\u003c");
 </div>
 
 <script is:inline type="application/json" id="propiedades-data" set:html={filasJson} />
+<InteresPropiedades />
 
 <!-- Modal crear / editar -->
 <div id="modal-propiedad" class="sky-modal" hidden>
@@ -350,6 +358,8 @@ const filasJson = JSON.stringify(filas).replace(/</g, "\\u003c");
                     {constructoras.map((c) => <option value={c.id}>{c.nombre}</option>)}
                 </select>
             </div>
+
+            <SelectorUbicacion />
         </form>
         <div class="modal-actions">
             <button type="button" class="btn-outline" data-cerrar="propiedad">Cancelar</button>
@@ -584,7 +594,18 @@ const filasJson = JSON.stringify(filas).replace(/</g, "\\u003c");
         campo.agente.value = "";
         campo.constructora.value = "";
         mostrarError(formError, null);
+        (window as any).selectorUbicacion?.fijar(null, null);
         get("modal-titulo").textContent = "Nueva propiedad";
+    }
+
+    function asegurarOpcion(select: HTMLSelectElement, id: number | null | undefined, nombre?: string | null) {
+        select.querySelectorAll("option[data-temporal]").forEach((op) => op.remove());
+        if (id == null || [...select.options].some((op) => op.value === String(id))) return;
+        const op = document.createElement("option");
+        op.value = String(id);
+        op.textContent = `${nombre ?? "Asignado actual"} (actual)`;
+        op.dataset.temporal = "1";
+        select.appendChild(op);
     }
 
     function rellenarFormulario(d: Prop) {
@@ -600,8 +621,13 @@ const filasJson = JSON.stringify(filas).replace(/</g, "\\u003c");
         campo.direccion.value = d.direccion ?? "";
         campo.estado.value = d.estado || "Disponible";
         campo.destacada.value = d.destacada ? "true" : "false";
+        // Si el agente o la constructora guardados ya no estan en la lista (por ejemplo, un agente de
+        // otra inmobiliaria en datos antiguos), se agrega una opcion temporal para no borrarlos al guardar.
+        asegurarOpcion(campo.agente, d.agenteID, (d as any).agenteNombre);
+        asegurarOpcion(campo.constructora, d.constructoraID, (d as any).constructoraNombre);
         campo.agente.value = d.agenteID != null ? String(d.agenteID) : "";
         campo.constructora.value = d.constructoraID != null ? String(d.constructoraID) : "";
+        (window as any).selectorUbicacion?.fijar((d as any).latitud, (d as any).longitud);
         get("modal-titulo").textContent = "Editar propiedad";
         mostrarError(formError, null);
     }
@@ -746,6 +772,8 @@ const filasJson = JSON.stringify(filas).replace(/</g, "\\u003c");
                 // Se envían siempre para que al editar no se borren
                 agenteID: campo.agente.value ? Number(campo.agente.value) : null,
                 constructoraID: campo.constructora.value ? Number(campo.constructora.value) : null,
+                // Ubicacion elegida en el mapa del formulario (solo se envia si se cambio)
+                ...((window as any).selectorUbicacion?.leer() ?? {}),
             };
 
             if (!payload.titulo || !payload.direccion) {

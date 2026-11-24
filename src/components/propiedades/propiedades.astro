@@ -102,7 +102,7 @@ const { propiedades, filtros } = Astro.props;
     <script
         id="propiedades-data"
         type="application/json"
-        set:html={JSON.stringify(propiedades)}
+        set:html={JSON.stringify(propiedades).replace(/</g, "\\u003c")}
     />
 
     <div id="properties-grid" class="properties"></div>
@@ -179,7 +179,8 @@ const { propiedades, filtros } = Astro.props;
 <FooterMenu />
 
 <script>
-    const BACKEND_URL = "http://localhost:8001";
+    const BACKEND_URL = "/backend";
+function esc(v: unknown): string { return String(v ?? "").replace(/[&<>"']/g, (c) => (({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}) as Record<string, string>)[c]); }
 
     // ── PAGINACIÓN DE PROPIEDADES ────────────────────────────────────────────
     const ITEMS_POR_PAGINA = 12;
@@ -219,9 +220,9 @@ const { propiedades, filtros } = Astro.props;
                 (p) => `
             <div class="property-card">
                 <div class="property-image">
-                    <img src="${resolverImgTarjeta(p.imagenPrincipal)}" alt="${p.titulo ?? ""}" loading="lazy" />
-                    <span class="badge-tipo ${claseBadgePag(p.tipoOperacion)}">${p.tipoOperacion}</span>
-                    <button type="button" class="btn-favorito favorito-inactivo" data-id="${p.propiedadID}" aria-label="Guardar en favoritos">
+                    <img src="${esc(resolverImgTarjeta(p.imagenPrincipal))}" alt="${esc(p.titulo ?? "")}" loading="lazy" />
+                    <span class="badge-tipo ${claseBadgePag(p.tipoOperacion)}">${esc(p.tipoOperacion)}</span>
+                    <button type="button" class="btn-favorito favorito-inactivo" data-id="${esc(p.propiedadID)}" aria-label="Guardar en favoritos">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
                         </svg>
@@ -229,20 +230,20 @@ const { propiedades, filtros } = Astro.props;
                 </div>
                 <div class="property-info">
                     <div class="precio-container">
-                        <h3>${formatoPesosPag.format(Number(p.precio))}</h3>
+                        <h3>${esc(formatoPesosPag.format(Number(p.precio)))}</h3>
                     </div>
-                    <h2>${p.titulo}</h2>
+                    <h2>${esc(p.titulo)}</h2>
                     <p class="location">
                         <svg class="icono-pin" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                             <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
                         </svg>
-                        <span>${p.ciudad ?? p.direccion}</span>
+                        <span>${esc(p.ciudad ?? p.direccion)}</span>
                     </p>
-                    <p class="description">${p.descripcion ?? ""}</p>
+                    <p class="description">${esc(p.descripcion ?? "")}</p>
                     <div class="details">
-                        <span>🛏️ ${p.habitaciones ?? 0} Habitaciones</span>
+                        <span><i class="bi bi-door-closed" aria-hidden="true"></i> ${esc(p.habitaciones ?? 0)} Habitaciones</span>
                     </div>
-                    <a href="/propiedades#propiedad-${p.propiedadID}" class="link-detalle-propiedad enlace-absoluto" data-id="${p.propiedadID}"></a>
+                    <a href="/propiedades#propiedad-${esc(p.propiedadID)}" class="link-detalle-propiedad enlace-absoluto" data-id="${esc(p.propiedadID)}"></a>
                 </div>
             </div>
         `,

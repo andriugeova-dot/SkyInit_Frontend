@@ -1,4 +1,5 @@
 ---
+import { BACKEND_URL } from "../../utils/config";
 import { COOKIE_NAME, getTokenSSR } from "../../utils/auth";
 
 const token = getTokenSSR(Astro.cookies);
@@ -14,7 +15,7 @@ let usuario = {
 
 if (token) {
     try {
-        const res = await fetch("http://localhost:8001/superadmin/perfil", {
+        const res = await fetch(`${BACKEND_URL}/superadmin/perfil`, {
             headers: { Cookie: `${COOKIE_NAME}=${token}` },
         });
         if (res.ok) {
@@ -42,7 +43,7 @@ function obtenerIniciales(nombre: string): string {
 function urlImagen(path: string | null): string | null {
     if (!path) return null;
     if (path.startsWith("http")) return path;
-    return `http://localhost:8001${path.startsWith("/") ? path : "/" + path}`;
+    return `/backend${path.startsWith("/") ? path : "/" + path}`;
 }
 
 const fotoSrc = urlImagen(usuario.fotoPerfil);
@@ -410,7 +411,7 @@ const fechaFormateada = usuario.fechaRegistro
 </style>
 
 <script>
-const BACKEND_ORIGEN = "http://localhost:8001";
+const BACKEND_ORIGEN = "/backend";
 
 function urlPublica(path: string): string {
     if (path.startsWith("http")) return path;

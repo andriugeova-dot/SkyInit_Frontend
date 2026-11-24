@@ -1,6 +1,8 @@
 ---
+import { BACKEND_URL } from "../../utils/config";
 import "../propiedades/propiedades.css";
 import "./proyectos.css";
+import "bootstrap-icons/font/bootstrap-icons.min.css";
 
 interface Proyecto {
     proyectoID: number;
@@ -45,7 +47,6 @@ function formatearFecha(fecha: string | null) {
     return `${day}/${month}/${year}`;
 }
 
-const BACKEND_URL = "http://localhost:8001";
 function resolverImagenTarjeta(url: string | null) {
     if (!url) return "/img/no-image.png";
     return url.startsWith("/uploads") ? `${BACKEND_URL}${url}` : url;
@@ -64,7 +65,7 @@ function resolverImagenTarjeta(url: string | null) {
 <header id="header">
     <div class="topbar">
         <div class="logo">SkyInit</div>
-        <div class="menu-toggle" id="menuToggle">&#9776;</div>
+        <div class="menu-toggle" id="menuToggle"><i class="bi bi-list" aria-hidden="true"></i></div>
         <nav id="menu">
             <a href="/">Inicio</a>
             <a href="/propiedades">Propiedades</a>
@@ -84,9 +85,9 @@ function resolverImagenTarjeta(url: string | null) {
                         />
                         <div id="user-menu" class="user-menu">
                             <div class="user-menu-name">{usuario.nombre}</div>
-                            <a href="/usuario">⚙️ Ajustes</a>
+                            <a href="/usuario"><i class="bi bi-gear-fill" aria-hidden="true"></i> Ajustes</a>
                             <a href="#" id="btnLogout">
-                                🚪 Cerrar sesión
+                                <i class="bi bi-box-arrow-right" aria-hidden="true"></i> Cerrar sesión
                             </a>
                         </div>
                     </div>
@@ -145,7 +146,7 @@ function resolverImagenTarjeta(url: string | null) {
     <script
         id="proyectos-data"
         type="application/json"
-        set:html={JSON.stringify(proyectos)}
+        set:html={JSON.stringify(proyectos).replace(/</g, "\\u003c")}
     />
 
     <div id="proyectos-grid" class="properties"></div>
@@ -250,7 +251,8 @@ function resolverImagenTarjeta(url: string | null) {
 />
 
 <script>
-    const BACKEND_URL = "http://localhost:8001";
+    const BACKEND_URL = "/backend";
+function esc(v: unknown): string { return String(v ?? "").replace(/[&<>"']/g, (c) => (({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}) as Record<string, string>)[c]); }
 
     // ── PAGINACIÓN DE PROYECTOS ───────────────────────────────────────────────
     const ITEMS_POR_PAGINA_PROY = 12;
@@ -291,18 +293,18 @@ function resolverImagenTarjeta(url: string | null) {
                 (p) => `
             <div class="property-card">
                 <div class="property-image">
-                    <img src="${resolverImgProy(p.imagenPrincipal)}" alt="${p.nombre ?? ""}" loading="lazy" />
-                    <span class="badge-tipo ${claseBadgeEstadoPag(p.estadoProyecto)}">${p.estadoProyecto}</span>
+                    <img src="${esc(resolverImgProy(p.imagenPrincipal))}" alt="${esc(p.nombre ?? "")}" loading="lazy" />
+                    <span class="badge-tipo ${claseBadgeEstadoPag(p.estadoProyecto)}">${esc(p.estadoProyecto)}</span>
                 </div>
                 <div class="property-info">
-                    <h2>${p.nombre}</h2>
+                    <h2>${esc(p.nombre)}</h2>
                     <p class="location">
                         <svg class="icono-pin" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                             <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
                         </svg>
-                        <span>${p.ubicacion ?? "Ubicación no definida"}</span>
+                        <span>${esc(p.ubicacion ?? "Ubicación no definida")}</span>
                     </p>
-                    <p class="description">${p.descripcion ?? ""}</p>
+                    <p class="description">${esc(p.descripcion ?? "")}</p>
                     <div class="avance-container">
                         <div class="avance-barra">
                             <div class="avance-relleno" style="width:${Number(p.porcentajeAvance)}%"></div>
@@ -310,11 +312,11 @@ function resolverImagenTarjeta(url: string | null) {
                         <p class="avance-texto">${Number(p.porcentajeAvance)}% de avance</p>
                     </div>
                     <div class="details">
-                        <span>📅 Inicio: ${formatearFechaPag(p.fechaInicio)}</span>
-                        <span>🏁 Fin: ${formatearFechaPag(p.fechaFin)}</span>
+                        <span><i class="bi bi-calendar-event" aria-hidden="true"></i> Inicio: ${esc(formatearFechaPag(p.fechaInicio))}</span>
+                        <span><i class="bi bi-flag-fill" aria-hidden="true"></i> Fin: ${esc(formatearFechaPag(p.fechaFin))}</span>
                     </div>
-                    ${p.constructoraNombre ? `<div class="details"><span>🏗️ ${p.constructoraNombre}</span></div>` : ""}
-                    <a href="/proyectos#proyecto-${p.proyectoID}" class="link-detalle-proyecto enlace-absoluto" data-id="${p.proyectoID}"></a>
+                    ${p.constructoraNombre ? `<div class="details"><span><i class="bi bi-building-gear" aria-hidden="true"></i> ${esc(p.constructoraNombre)}</span></div>` : ""}
+                    <a href="/proyectos#proyecto-${esc(p.proyectoID)}" class="link-detalle-proyecto enlace-absoluto" data-id="${esc(p.proyectoID)}"></a>
                 </div>
             </div>
         `,
@@ -453,15 +455,15 @@ function resolverImagenTarjeta(url: string | null) {
     ) {
         const contenedor = document.getElementById(contenedorId) as HTMLElement;
         if (!lista || lista.length === 0) {
-            contenedor.innerHTML = `<p class="modal-seccion-vacio">${vacioTexto}</p>`;
+            contenedor.innerHTML = `<p class="modal-seccion-vacio">${esc(vacioTexto)}</p>`;
             return;
         }
         contenedor.innerHTML = lista
             .map(
                 (p) => `
-                    <div class="mini-proyecto-item" data-id="${p.proyectoID}">
-                        <span class="mini-proyecto-nombre">${p.nombre}</span>
-                        <span class="mini-proyecto-meta">${p.estadoProyecto ?? ""} · ${Number(p.porcentajeAvance ?? 0)}%</span>
+                    <div class="mini-proyecto-item" data-id="${esc(p.proyectoID)}">
+                        <span class="mini-proyecto-nombre">${esc(p.nombre)}</span>
+                        <span class="mini-proyecto-meta">${esc(p.estadoProyecto ?? "")} · ${Number(p.porcentajeAvance ?? 0)}%</span>
                     </div>`,
             )
             .join("");

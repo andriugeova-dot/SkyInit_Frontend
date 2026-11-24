@@ -156,12 +156,13 @@ import "./usuarios.css";
 
     /* ── refs (el modal NO se mueve del DOM) ────────── */
     function el(id) { return document.getElementById(id); }
+function esc(v){return String(v ?? "").replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];});}
 
     /* ── badges ─────────────────────────────────────── */
     function badge(e) {
         var s = (e || "").toLowerCase();
         var c = s === "activa" ? "ok" : s === "pendiente" ? "warn" : "off";
-        return '<span class="badge badge-' + c + '">' + (e || "—") + "</span>";
+        return '<span class="badge badge-' + c + '">' + esc(e || "—") + "</span>";
     }
 
     /* ── stats ──────────────────────────────────────── */
@@ -182,18 +183,18 @@ import "./usuarios.css";
         tbody.innerHTML = inmList.map(function(inm) {
             var users = inm.usuariosAsignados || [];
             var chips = users.length
-                ? users.map(function(u){ return '<span class="chip" title="'+u.nombreRol+'">'+u.nombre+"</span>"; }).join("")
+                ? users.map(function(u){ return '<span class="chip" title="'+esc(u.nombreRol)+'">'+esc(u.nombre)+"</span>"; }).join("")
                 : '<span class="chip-none">—</span>';
             return "<tr>" +
-                "<td>"+inm.inmobiliariaID+"</td>" +
-                "<td><strong>"+(inm.nombre||"")+"</strong></td>" +
-                "<td>"+(inm.ciudad||"—")+"</td>" +
-                "<td>"+(inm.contacto||"—")+"</td>" +
+                "<td>"+esc(inm.inmobiliariaID)+"</td>" +
+                "<td><strong>"+esc(inm.nombre||"")+"</strong></td>" +
+                "<td>"+esc(inm.ciudad||"—")+"</td>" +
+                "<td>"+esc(inm.contacto||"—")+"</td>" +
                 "<td>"+badge(inm.estado)+"</td>" +
                 '<td><div class="usuarios-chips">'+chips+"</div></td>" +
                 '<td class="acciones">' +
-                '<button class="btn-sm btn-edit" data-edit="'+inm.inmobiliariaID+'">Editar</button> ' +
-                '<button class="btn-sm" style="color:#5b4fc7;border-color:#c4b5fd;" data-asignar="'+inm.inmobiliariaID+'">Usuarios</button>' +
+                '<button class="btn-sm btn-edit" data-edit="'+esc(inm.inmobiliariaID)+'">Editar</button> ' +
+                '<button class="btn-sm" style="color:#5b4fc7;border-color:#c4b5fd;" data-asignar="'+esc(inm.inmobiliariaID)+'">Usuarios</button>' +
                 "</td></tr>";
         }).join("");
     }
@@ -256,10 +257,10 @@ import "./usuarios.css";
         el("si-picker-list").innerHTML = fuente.map(function(u) {
     var marcado = asigNuevos.indexOf(u.usuarioID) >= 0;
     return '<label class="user-picker-item'+(marcado?" up-selected":"")+'">' +
-        '<input type="checkbox" class="up-chk" data-uid="'+u.usuarioID+'"'+(marcado?" checked":"")+' />' +
+        '<input type="checkbox" class="up-chk" data-uid="'+esc(u.usuarioID)+'"'+(marcado?" checked":"")+' />' +
         '<span class="up-info">' +
-          '<span class="up-name">'+(u.nombre||"")+"</span>" +
-          '<span class="up-meta">'+(u.correo||"")+" · "+(u.nombreRol||"")+"</span>" +
+          '<span class="up-name">'+esc(u.nombre||"")+"</span>" +
+          '<span class="up-meta">'+esc(u.correo||"")+" · "+esc(u.nombreRol||"")+"</span>" +
         "</span></label>";
 }).join("");
     }
@@ -274,8 +275,8 @@ import "./usuarios.css";
         var todos = usuList.concat(inmList.flatMap(function(i){ return i.usuariosAsignados||[]; }));
         wrap.innerHTML = asigNuevos.map(function(uid) {
             var u = todos.find(function(x){ return x.usuarioID === uid; });
-            return '<span class="chip-rm">'+(u ? u.nombre : "ID "+uid)+
-                '<button type="button" data-rm="'+uid+'">×</button></span>';
+            return '<span class="chip-rm">'+esc(u ? u.nombre : "ID "+uid)+
+                '<button type="button" data-rm="'+esc(uid)+'">×</button></span>';
         }).join("");
     }
 
@@ -318,7 +319,7 @@ import "./usuarios.css";
         pickerVisible = true;
         el("si-picker-wrap").style.display = "block";
         el("si-picker-search").value = "";
-        el("si-toggle-picker").textContent = "▲ Cerrar lista";
+        el("si-toggle-picker").textContent = "Cerrar lista";
         renderPicker("");
     }
     function ocultarPicker() {

@@ -1,4 +1,5 @@
 ---
+import { BACKEND_URL } from "../../utils/config";
 import { isAuthenticatedSSR } from "../../utils/auth";
 
 const autenticado = isAuthenticatedSSR(Astro.cookies);
@@ -18,7 +19,7 @@ type PropiedadDestacada = {
 let propiedades: PropiedadDestacada[] = [];
 
 try {
-  const res = await fetch("http://localhost:8001/api/propiedades/destacadas");
+  const res = await fetch(`${BACKEND_URL}/api/propiedades/destacadas`);
   if (res.ok) {
     const json = await res.json();
     propiedades = json.propiedades ?? json.data ?? json ?? [];
@@ -89,14 +90,14 @@ function formatPrecio(n: number | string) {
             const sufijo = tipo.includes("arriendo") ? "/ mes" : "COP";
             const imgRaw = (p as any).imagenPrincipal ?? p.imagenes?.[0] ?? null;
             const imagen = imgRaw
-              ? (imgRaw.startsWith("http") ? imgRaw : `http://localhost:8001${imgRaw}`)
+              ? (imgRaw.startsWith("http") ? imgRaw : `/backend${imgRaw}`)
               : "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=800&q=80";
             const ubicacion = p.ciudad || p.direccion || "Colombia";
 
             return (
               <div class="card">
                 <div class="card-img-container">
-                  <img src={imagen} alt={p.titulo} loading="lazy" />
+                  <img src={imagen} alt={p.titulo} loading="lazy" data-detalle={`propiedad:${p.propiedadID}`} />
                   <span class={`badge-tipo ${badgeClass}`}>{p.tipoOperacion ?? "Propiedad"}</span>
                   <button
                     type="button"
@@ -114,7 +115,7 @@ function formatPrecio(n: number | string) {
                     <span class="precio-valor">{formatPrecio(p.precio)}</span>
                     <span class="precio-moneda">{sufijo}</span>
                   </div>
-                  <h3 class="card-titulo">{p.titulo}</h3>
+                  <h3 class="card-titulo" data-detalle={`propiedad:${p.propiedadID}`}>{p.titulo}</h3>
                   <div class="ubicacion-container">
                     <svg class="icono-pin" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                       <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"></path>
@@ -145,7 +146,7 @@ function formatPrecio(n: number | string) {
 <!-- Modal login para favoritos -->
 <div id="modalRegistro" class="modal-overlay">
   <div class="modal-box modal-box-login">
-    <button type="button" class="modal-close" id="cerrarModal">✕</button>
+    <button type="button" class="modal-close" id="cerrarModal"><i class="bi bi-x-lg" aria-hidden="true"></i></button>
     <div class="modal-info">
       <h2>Debes estar registrado</h2>
       <p>Para guardar favoritos debes iniciar sesión</p>
