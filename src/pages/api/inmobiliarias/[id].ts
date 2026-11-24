@@ -1,7 +1,7 @@
+import { BACKEND_URL } from "../../../utils/config";
 import type { APIRoute } from "astro";
 import { COOKIE_NAME, getTokenSSR } from "../../../utils/auth";
 
-const BACKEND_URL = "http://localhost:8001";
 
 // Perfil publico de una inmobiliaria: no exige sesion (cualquiera puede
 // consultar quien ofrece un servicio de mantenimiento).

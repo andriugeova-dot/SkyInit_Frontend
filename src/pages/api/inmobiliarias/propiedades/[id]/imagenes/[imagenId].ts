@@ -1,6 +1,7 @@
+import { BACKEND_URL } from "../../../../../../utils/config";
 import type { APIRoute } from "astro";
 
-const BACKEND = "http://localhost:8001";
+const BACKEND = `${BACKEND_URL}`;
 
 /** DELETE: eliminar una imagen de la propiedad */
 export const DELETE: APIRoute = async ({ params, request }) => {

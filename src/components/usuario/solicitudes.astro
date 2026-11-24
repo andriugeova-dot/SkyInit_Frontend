@@ -253,6 +253,7 @@
 
 <script>
 const SOL_API = "/api/usuario/solicitudes";
+function esc(v: unknown): string { return String(v ?? "").replace(/[&<>"']/g, (c) => (({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}) as Record<string, string>)[c]); }
 
 function formatFecha(fecha: string): string {
     if (!fecha) return "";
@@ -299,25 +300,25 @@ function renderSolicitudes(lista: any[]) {
     <div class="sol-card-top ${topClass(estado)}"></div>
     <div class="sol-icono">
         ${s.imagenServicio
-            ? `<img src="${s.imagenServicio}" alt="${s.nombreServicio ?? ''}" class="sol-icono-img" />`
+            ? `<img src="${esc(s.imagenServicio)}" alt="${esc(s.nombreServicio ?? '')}" class="sol-icono-img" />`
             : `<i class="bi bi-tools"></i>`
         }
     </div>
     <div class="sol-card-body">
         <div class="sol-card-head">
-            <span class="sol-estado ${estadoClass(estado)}">${estado}</span>
+            <span class="sol-estado ${estadoClass(estado)}">${esc(estado)}</span>
         </div>
-        <p class="sol-servicio">${s.nombreServicio ?? s.servicio ?? "Servicio de mantenimiento"}</p>
+        <p class="sol-servicio">${esc(s.nombreServicio ?? s.servicio ?? "Servicio de mantenimiento")}</p>
         <p class="sol-inmobiliaria">
             <i class="bi bi-building"></i>
-            ${s.inmobiliaria ?? s.nombreInmobiliaria ?? "Inmobiliaria"}
+            ${esc(s.inmobiliaria ?? s.nombreInmobiliaria ?? "Inmobiliaria")}
         </p>
-        ${s.notas ? `<p class="sol-notas">"${s.notas}"</p>` : ""}
+        ${s.notas ? `<p class="sol-notas">"${esc(s.notas)}"</p>` : ""}
         ${fecha ? `
         <div class="sol-card-footer">
             <span class="sol-fecha">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" style="color:#9ca3af"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/></svg>
-                ${fecha}
+                ${esc(fecha)}
             </span>
         </div>` : ""}
     </div>

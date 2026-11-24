@@ -1,0 +1,205 @@
+---
+/** Agenda del agente / administrador: calendario semanal, crear, editar y cancelar citas. */
+import "./funciones.css";
+---
+<section class="fn">
+  <div class="fn-head">
+    <div><h1>Agenda de citas</h1><p>Crea, edita y cancela citas con clientes. Los recordatorios se envían solos cuando la cita está próxima.</p></div>
+    <button class="fn-btn" id="btnNuevaCita" type="button"><i class="bi bi-calendar-plus" aria-hidden="true"></i> Nueva cita</button>
+  </div>
+  <div class="fn-stats" id="agStats"></div>
+
+  <div class="fn-card" style="margin-bottom:18px">
+    <div class="cal-barra">
+      <div class="fn-acciones">
+        <button class="fn-btn fn-btn--sec fn-btn--mini" id="calPrev" type="button" aria-label="Semana anterior"><i class="bi bi-chevron-left" aria-hidden="true"></i></button>
+        <button class="fn-btn fn-btn--sec fn-btn--mini" id="calHoy" type="button">Hoy</button>
+        <button class="fn-btn fn-btn--sec fn-btn--mini" id="calNext" type="button" aria-label="Semana siguiente"><i class="bi bi-chevron-right" aria-hidden="true"></i></button>
+      </div>
+      <strong id="calTitulo"></strong>
+    </div>
+    <div class="cal-leyenda" aria-label="Colores del calendario">
+      <span><i class="cal-color cal-color--pend"></i> Pendiente</span>
+      <span><i class="cal-color cal-color--conf"></i> Confirmada</span>
+      <span><i class="cal-color cal-color--fin"></i> Finalizada</span>
+      <span><i class="cal-color cal-color--cancel"></i> Cancelada</span>
+    </div>
+    <div class="cal-wrap"><div class="cal" id="cal" role="grid" aria-label="Calendario semanal"></div></div>
+  </div>
+
+  <h2 style="font-size:1.1rem;font-weight:700;margin:0 0 10px">Todas las citas</h2>
+  <div id="agLista"></div>
+
+  <dialog class="fn-modal" id="dlgCita">
+    <form class="fn-modal-cuerpo fn-form" id="formCita">
+      <h2 id="citaTitulo">Nueva cita</h2>
+      <label>Propiedad <select id="citaPropiedad" required></select></label>
+      <label>Fecha y hora <input type="datetime-local" id="citaFecha" required /></label>
+      <fieldset id="citaCliente" style="border:0;padding:0;margin:0;display:grid;gap:12px">
+        <label>Correo del cliente (si tiene cuenta, recibirá las notificaciones)
+          <input type="email" id="citaCorreo" maxlength="100" placeholder="cliente@correo.com" /></label>
+        <div class="fn-fila">
+          <label>Nombre del cliente <input id="citaNombre" maxlength="100" /></label>
+          <label>Teléfono de contacto <input id="citaContacto" maxlength="100" /></label>
+        </div>
+      </fieldset>
+      <label>Notas <textarea id="citaNotas" rows="2" maxlength="300"></textarea></label>
+      <div class="fn-acciones" id="citaEstado"></div>
+      <div class="fn-modal-pie">
+        <button class="fn-btn fn-btn--sec" type="button" id="btnCerrarCita">Cerrar</button>
+        <button class="fn-btn" type="submit" id="btnGuardarCita">Guardar cita</button>
+      </div>
+    </form>
+  </dialog>
+</section>
+
+<style is:global>
+  .cal-barra { display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:12px; }
+  .cal-wrap { overflow-x:auto; }
+  .cal { display:grid; grid-template-columns:56px repeat(7,minmax(118px,1fr)); min-width:880px; border:1px solid var(--fn-line); border-radius:10px; overflow:hidden; }
+  .cal-cab { background:#f6f7f9; padding:8px 6px; text-align:center; font-size:.8rem; font-weight:600; border-bottom:1px solid var(--fn-line); border-left:1px solid var(--fn-line); }
+  .cal-cab:first-child { border-left:0; }
+  .cal-cab--hoy { background:var(--fn-acc); color:#fff; }
+  .cal-hora { font-size:.72rem; color:var(--fn-muted); text-align:right; padding:4px 6px; border-top:1px solid var(--fn-line); font-variant-numeric:tabular-nums; }
+  .cal-celda { min-height:46px; border-top:1px solid var(--fn-line); border-left:1px solid var(--fn-line); padding:2px; display:grid; gap:2px; align-content:start; cursor:pointer; }
+  .cal-celda:hover { background:#f9fafb; }
+  .cal-cita { border:0; border-left:3px solid var(--fn-acc); background:#eef3f8; border-radius:6px; padding:3px 6px; font-size:.74rem; text-align:left; cursor:pointer; line-height:1.25; color:inherit; width:100%; }
+  .cal-cita b { display:block; }
+  .cal-cita--pend { border-left-color:#c08a12; background:#fbf3df; }
+  .cal-cita--conf { border-left-color:#1f5fa8; background:#e3eefb; }
+  .cal-cita--fin { border-left-color:#1b6e3c; background:#dcefe3; }
+  .cal-leyenda { display:flex; flex-wrap:wrap; gap:6px 16px; font-size:.8rem; color:var(--fn-muted); margin-bottom:10px; }
+  .cal-leyenda span { display:inline-flex; align-items:center; gap:6px; }
+  .cal-color { width:12px; height:12px; border-radius:3px; display:inline-block; }
+  .cal-color--pend { background:#c08a12; } .cal-color--conf { background:#1f5fa8; } .cal-color--fin { background:#1b6e3c; } .cal-color--cancel { background:#b3261e; }
+  .cal-cita--cancel { border-left-color:#b3261e; background:#fbe9e7; text-decoration:line-through; opacity:.75; }
+</style>
+
+<script>
+  import { api, esc, fechaHora, aviso, claseEstado } from "./comun";
+  const dlg = document.getElementById("dlgCita") as HTMLDialogElement;
+  const cal = document.getElementById("cal")!;
+  const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
+  let visitas: any[] = [];
+  let editando: any = null;
+  let lunes = inicioSemana(new Date());
+  const HORAS = Array.from({ length: 13 }, (_, i) => i + 7); // 7:00 a 19:00
+
+  function inicioSemana(d: Date) { const r = new Date(d); r.setHours(0, 0, 0, 0); r.setDate(r.getDate() - ((r.getDay() + 6) % 7)); return r; }
+  const aLocal = (d: Date) => { const c = new Date(d); c.setMinutes(c.getMinutes() - c.getTimezoneOffset()); return c.toISOString().slice(0, 16); };
+  const hora = (v: string) => new Date(v).toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit" });
+
+  function pintarCalendario() {
+    const dias = Array.from({ length: 7 }, (_, i) => { const d = new Date(lunes); d.setDate(d.getDate() + i); return d; });
+    const hoy = new Date(); hoy.setHours(0, 0, 0, 0);
+    $("calTitulo").textContent = `${dias[0].toLocaleDateString("es-CO", { day: "numeric", month: "short" })} – ${dias[6].toLocaleDateString("es-CO", { day: "numeric", month: "short", year: "numeric" })}`;
+    let html = `<div class="cal-cab"></div>` + dias.map((d) =>
+      `<div class="cal-cab ${d.getTime() === hoy.getTime() ? "cal-cab--hoy" : ""}">${esc(d.toLocaleDateString("es-CO", { weekday: "short", day: "numeric" }))}</div>`).join("");
+    for (const h of HORAS) {
+      html += `<div class="cal-hora">${String(h).padStart(2, "0")}:00</div>`;
+      for (const d of dias) {
+        const citas = visitas.filter((v) => { const f = new Date(v.fechaVisita); return f.toDateString() === d.toDateString() && (f.getHours() === h || (h === 7 && f.getHours() < 7) || (h === 19 && f.getHours() > 19)); });
+        const inicio = new Date(d); inicio.setHours(h, 0, 0, 0);
+        html += `<div class="cal-celda" data-nueva="${aLocal(inicio)}" role="gridcell">` + citas.map((v) =>
+          `<button type="button" class="cal-cita ${({ Pendiente: "cal-cita--pend", Confirmada: "cal-cita--conf", Finalizada: "cal-cita--fin", Cancelada: "cal-cita--cancel" } as Record<string, string>)[v.estado] ?? ""}" title="${esc(v.estado)}" data-cita="${Number(v.agendaID)}">
+             <b>${esc(hora(v.fechaVisita))} · ${esc(v.solicitante)}</b>${esc(v.propiedad)}<br><em style="font-style:normal;opacity:.8">${esc(v.estado)}</em></button>`).join("") + `</div>`;
+      }
+    }
+    cal.innerHTML = html;
+  }
+
+  function pintarLista() {
+    const cuenta = (e: string) => visitas.filter((v) => v.estado === e).length;
+    const proximas = visitas.filter((v) => (v.estado === "Pendiente" || v.estado === "Confirmada") && new Date(v.fechaVisita) > new Date()).length;
+    $("agStats").innerHTML = `<div class="fn-stat"><b>${proximas}</b><span>Próximas</span></div>` +
+      ["Pendiente", "Confirmada", "Finalizada", "Cancelada"].map((e) => `<div class="fn-stat ${e === "Pendiente" && cuenta(e) ? "fn-stat--alerta" : ""}"><b>${cuenta(e)}</b><span>${e}s</span></div>`).join("");
+    const lista = $("agLista");
+    if (!visitas.length) { lista.innerHTML = `<div class="fn-vacio"><i class="bi bi-calendar-week" aria-hidden="true"></i>Aún no hay citas. Crea la primera con “Nueva cita” o haz clic en una hora del calendario.</div>`; return; }
+    lista.innerHTML = `<div class="fn-tabla-wrap"><table class="fn-tabla"><thead><tr><th>Fecha</th><th>Propiedad</th><th>Cliente</th><th>Notas</th><th>Estado</th><th></th></tr></thead><tbody>` +
+      visitas.map((v) => {
+        const id = Number(v.agendaID), activa = v.estado === "Pendiente" || v.estado === "Confirmada";
+        return `<tr><td>${esc(fechaHora(v.fechaVisita))}</td><td><strong>${esc(v.propiedad)}</strong><br><small class="fn-muted">${esc(v.direccion)}</small></td>
+          <td>${esc(v.solicitante)}<br><small class="fn-muted">${esc(v.telefono ?? v.correo ?? "")}</small></td><td>${esc(v.notas ?? "—")}</td>
+          <td><span class="fn-chip ${claseEstado(v.estado)}">${esc(v.estado)}</span></td>
+          <td><div class="fn-acciones">${activa ? `
+            ${v.estado === "Pendiente" ? `<button class="fn-btn fn-btn--mini" data-estado="2" data-id="${id}" type="button"><i class="bi bi-check-lg" aria-hidden="true"></i> Confirmar</button>` : ""}
+            ${v.estado === "Confirmada" ? `<button class="fn-btn fn-btn--mini" data-estado="4" data-id="${id}" type="button"><i class="bi bi-flag-fill" aria-hidden="true"></i> Finalizar</button>` : ""}
+            <button class="fn-btn fn-btn--sec fn-btn--mini" data-cita="${id}" type="button"><i class="bi bi-pencil" aria-hidden="true"></i> Editar</button>
+            <button class="fn-btn fn-btn--mal fn-btn--mini" data-estado="3" data-id="${id}" type="button"><i class="bi bi-x-lg" aria-hidden="true"></i> Cancelar</button>` : ""}</div></td></tr>`;
+      }).join("") + "</tbody></table></div>";
+  }
+
+  async function cargar() {
+    try { visitas = (await api("/agenda/gestion")).visitas; pintarCalendario(); pintarLista(); }
+    catch (e) { $("agLista").innerHTML = `<div class="fn-vacio">${esc((e as Error).message)}</div>`; pintarCalendario(); }
+  }
+
+  async function abrirFormulario(cita: any | null, fechaInicial?: string) {
+    editando = cita;
+    const sel = $<HTMLSelectElement>("citaPropiedad");
+    if (!sel.options.length) {
+      const { propiedades } = await api("/agenda/propiedades");
+      sel.innerHTML = propiedades.map((p: any) => `<option value="${Number(p.propiedadID)}">${esc(p.titulo)}${p.ciudad ? " · " + esc(p.ciudad) : ""}</option>`).join("");
+    }
+    ($("formCita") as HTMLFormElement).reset();
+    $("citaTitulo").textContent = cita ? "Editar cita" : "Nueva cita";
+    sel.disabled = !!cita;
+    const clienteFijo = !!cita && cita.usuarioID !== null; // cliente con cuenta: sus datos no se editan aqui
+    $<HTMLInputElement>("citaCorreo").closest("label")!.hidden = !!cita;
+    ($("citaCliente") as HTMLFieldSetElement).disabled = clienteFijo;
+    if (cita) {
+      sel.value = String(cita.propiedadID);
+      $<HTMLInputElement>("citaFecha").value = aLocal(new Date(cita.fechaVisita));
+      $<HTMLInputElement>("citaNombre").value = cita.solicitante ?? "";
+      $<HTMLInputElement>("citaContacto").value = cita.telefono ?? "";
+      $<HTMLTextAreaElement>("citaNotas").value = cita.notas ?? "";
+    } else if (fechaInicial) $<HTMLInputElement>("citaFecha").value = fechaInicial;
+    // Estado actual y siguiente paso (Pendiente -> Confirmada -> Finalizada)
+    const soloLectura = !!cita && (cita.estado === "Cancelada" || cita.estado === "Finalizada");
+    $("citaEstado").innerHTML = cita ? `<span class="fn-chip ${claseEstado(cita.estado)}">${esc(cita.estado)}</span>
+      ${cita.estado === "Pendiente" ? `<button class="fn-btn fn-btn--mini" data-estado="2" data-id="${Number(cita.agendaID)}" type="button"><i class="bi bi-check-lg" aria-hidden="true"></i> Confirmar</button>` : ""}
+      ${cita.estado === "Confirmada" ? `<button class="fn-btn fn-btn--mini" data-estado="4" data-id="${Number(cita.agendaID)}" type="button"><i class="bi bi-flag-fill" aria-hidden="true"></i> Marcar como finalizada</button>` : ""}
+      ${!soloLectura ? `<button class="fn-btn fn-btn--mal fn-btn--mini" data-estado="3" data-id="${Number(cita.agendaID)}" type="button"><i class="bi bi-x-lg" aria-hidden="true"></i> Cancelar cita</button>` : ""}` : "";
+    ($("btnGuardarCita") as HTMLButtonElement).hidden = soloLectura;
+    if (!sel.options.length) return aviso("No tienes propiedades asignadas para crear citas", "error");
+    dlg.showModal();
+  }
+
+  document.addEventListener("click", async (ev) => {
+    const t = ev.target as HTMLElement;
+    const cita = t.closest<HTMLElement>("[data-cita]");
+    if (cita) { const v = visitas.find((x) => Number(x.agendaID) === Number(cita.dataset.cita)); if (v) abrirFormulario(v).catch((e) => aviso(e.message, "error")); return; }
+    const est = t.closest<HTMLButtonElement>("[data-estado]");
+    if (est) {
+      est.disabled = true;
+      try { const r = await api(`/agenda/${est.dataset.id}/estado`, "PATCH", { estadoAgendaID: Number(est.dataset.estado) }); aviso(r.mensaje); if (dlg.open) dlg.close(); cargar(); }
+      catch (e) { aviso((e as Error).message, "error"); est.disabled = false; }
+      return;
+    }
+    const celda = t.closest<HTMLElement>("[data-nueva]");
+    if (celda && new Date(celda.dataset.nueva!) > new Date()) abrirFormulario(null, celda.dataset.nueva).catch((e) => aviso(e.message, "error"));
+  });
+  $("btnNuevaCita").addEventListener("click", () => abrirFormulario(null).catch((e) => aviso(e.message, "error")));
+  $("btnCerrarCita").addEventListener("click", () => dlg.close());
+  $("calPrev").addEventListener("click", () => { lunes.setDate(lunes.getDate() - 7); pintarCalendario(); });
+  $("calNext").addEventListener("click", () => { lunes.setDate(lunes.getDate() + 7); pintarCalendario(); });
+  $("calHoy").addEventListener("click", () => { lunes = inicioSemana(new Date()); pintarCalendario(); });
+  $("formCita").addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    const v = (id: string) => $<HTMLInputElement>(id).value.trim();
+    const fechaVisita = new Date(v("citaFecha")).toISOString();
+    try {
+      if (editando) {
+        await api(`/agenda/${editando.agendaID}`, "PUT", { fechaVisita, notas: v("citaNotas") || null,
+          ...(editando.usuarioID === null ? { clienteNombre: v("citaNombre"), clienteContacto: v("citaContacto") } : {}) });
+        aviso("Cita actualizada");
+      } else {
+        const r = await api("/agenda/citas", "POST", { propiedadID: Number($<HTMLSelectElement>("citaPropiedad").value), fechaVisita,
+          notas: v("citaNotas") || null, clienteCorreo: v("citaCorreo") || null, clienteNombre: v("citaNombre") || null, clienteContacto: v("citaContacto") || null });
+        aviso(r.clienteConCuenta ? "Cita creada como pendiente. El cliente fue notificado." : "Cita creada como pendiente");
+      }
+      dlg.close(); cargar();
+    } catch (e) { aviso((e as Error).message, "error"); }
+  });
+  cargar();
+</script>

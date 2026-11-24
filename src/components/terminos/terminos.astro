@@ -78,6 +78,7 @@ import "./terminos.css";
 
 <script>
   import { obtenerTerminosRequest, registroRequest, rutaPorRol } from "../../utils/api";
+function esc(v: unknown): string { return String(v ?? "").replace(/[&<>"']/g, (c) => (({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}) as Record<string, string>)[c]); }
 
   // Carrusel de fondo (igual que registro)
   const imgs = document.querySelectorAll(".bg-img");
@@ -127,7 +128,7 @@ import "./terminos.css";
       const data = await obtenerTerminosRequest();
       if (data.error || !data.terminos) {
         meta.textContent = "";
-        contenido.innerHTML = `<p class="error-inline">${data.error || "No se pudieron cargar los términos"}</p>`;
+        contenido.innerHTML = `<p class="error-inline">${esc(data.error || "No se pudieron cargar los términos")}</p>`;
         return;
       }
       const t = data.terminos;

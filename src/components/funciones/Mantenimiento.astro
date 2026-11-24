@@ -1,0 +1,165 @@
+---
+/**
+ * Flujo de mantenimiento en tres vistas:
+ *  admin        -> la inmobiliaria recibe la solicitud y la reenvia a una constructora asociada
+ *  constructora -> asigna el grupo de trabajadores
+ *  trabajador   -> ve sus trabajos, registra avances y finaliza
+ */
+import "./funciones.css";
+interface Props { modo: "admin" | "constructora" | "trabajador"; titulo?: boolean }
+const { modo, titulo = true } = Astro.props;
+const textos = {
+  admin: ["Mantenimiento", "Solicitudes de servicio de tus clientes. Reenvíalas a una constructora asociada para que las atienda."],
+  constructora: ["Trabajos de mantenimiento", "Solicitudes que te reenviaron las inmobiliarias. Asigna el grupo de trabajadores que las atenderá."],
+  trabajador: ["Trabajos de mantenimiento", "Servicios que te asignaron. Registra el avance y márcalos como finalizados."],
+}[modo];
+---
+<section class="fn" id="mantRoot" data-modo={modo}>
+  {titulo ? (
+    <div class="fn-head"><div><h1>{textos[0]}</h1><p>{textos[1]}</p></div></div>
+  ) : (
+    <div class="fn-head" style="margin-top:28px"><div><h2 style="font-size:1.2rem;font-weight:700;margin:0">{textos[0]}</h2><p>{textos[1]}</p></div></div>
+  )}
+  <div class="fn-stats" id="mantStats"></div>
+  <div class="fn-grid" id="mantLista" style="grid-template-columns:repeat(auto-fill,minmax(320px,1fr))"></div>
+
+  <dialog class="fn-modal" id="dlgMant">
+    <div class="fn-modal-cuerpo">
+      <div><h2 id="mantTitulo"></h2><small class="fn-muted" id="mantSub"></small></div>
+      <div id="mantDetalle" class="fn-muted" style="font-size:.9rem"></div>
+      <form class="fn-form" id="mantForm"></form>
+      <div><strong>Historial</strong><ul class="fn-linea" id="mantHistorial" style="margin-top:8px"></ul></div>
+      <div class="fn-modal-pie"><button class="fn-btn fn-btn--sec" type="button" id="mantCerrar">Cerrar</button></div>
+    </div>
+  </dialog>
+</section>
+
+<style is:global>
+  .mant-card { display:grid; gap:8px; align-content:start; }
+  .mant-card h3 { font-size:1rem; font-weight:700; margin:0; }
+  .mant-card ul { margin:0; padding:0; list-style:none; display:grid; gap:4px; font-size:.88rem; }
+  .mant-card li { display:flex; gap:8px; align-items:baseline; }
+  .mant-card li i { color:var(--fn-acc); }
+  .mant-paso { display:flex; gap:6px; flex-wrap:wrap; font-size:.75rem; }
+  .mant-paso span { padding:2px 8px; border-radius:99px; background:#eef0f2; color:#6b7280; }
+  .mant-paso span.ok { background:#dcefe3; color:#1b6e3c; font-weight:600; }
+  .mant-check { display:flex !important; align-items:center; gap:8px; font-weight:400 !important; }
+  .mant-check input { width:auto; }
+</style>
+
+<script>
+  import { api, esc, fechaHora, aviso } from "./comun";
+  const modo = document.getElementById("mantRoot")!.dataset.modo as "admin" | "constructora" | "trabajador";
+  const lista = document.getElementById("mantLista")!;
+  const dlg = document.getElementById("dlgMant") as HTMLDialogElement;
+  const form = document.getElementById("mantForm") as HTMLFormElement;
+  let items: any[] = [];
+  let constructoras: any[] = [];
+  let actual: any = null;
+
+  const FINAL = [3, 6];
+  const estadoTexto = (s: any) => s.estado ?? "Pendiente";
+  const claseEstado = (s: any) => FINAL.includes(s.estadoReparacionID) ? "fn-chip--ok" : s.estadoReparacionID === 2 ? "fn-chip--prog" : "fn-chip--pend";
+  const li = (icono: string, t: unknown) => t ? `<li><i class="bi ${icono}" aria-hidden="true"></i><span>${esc(t)}</span></li>` : "";
+
+  function tarjeta(s: any): string {
+    const fin = FINAL.includes(s.estadoReparacionID);
+    const boton = modo === "admin"
+      ? `<button class="fn-btn fn-btn--mini" data-abrir="${Number(s.solicitudID)}" type="button"><i class="bi bi-send" aria-hidden="true"></i> ${s.constructoraID ? "Ver / cambiar constructora" : "Reenviar a constructora"}</button>`
+      : modo === "constructora"
+      ? `<button class="fn-btn fn-btn--mini" data-abrir="${Number(s.solicitudID)}" type="button"><i class="bi bi-people" aria-hidden="true"></i> ${s.trabajadores.length ? "Ver / cambiar grupo" : "Asignar trabajadores"}</button>`
+      : `<button class="fn-btn fn-btn--mini" data-abrir="${Number(s.solicitudID)}" type="button"><i class="bi bi-clipboard-check" aria-hidden="true"></i> ${fin ? "Ver historial" : "Registrar avance"}</button>`;
+    return `<article class="fn-card mant-card">
+      <div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start"><h3>${esc(s.servicio)}</h3><span class="fn-chip ${claseEstado(s)}">${esc(estadoTexto(s))}</span></div>
+      <div class="mant-paso"><span class="ok">Solicitada</span><span class="${s.constructoraID ? "ok" : ""}">Constructora</span><span class="${s.trabajadores.length ? "ok" : ""}">Trabajadores</span><span class="${fin ? "ok" : ""}">Finalizada</span></div>
+      <ul>
+        ${li("bi-person", `${s.cliente}${s.clienteTelefono ? " · " + s.clienteTelefono : ""}`)}
+        ${li("bi-geo-alt", [s.propiedad, s.direccion, s.ciudad].filter(Boolean).join(", "))}
+        ${li("bi-chat-left-text", s.notas)}
+        ${li("bi-calendar3", "Solicitada el " + fechaHora(s.fechaSolicitud))}
+        ${modo !== "admin" ? li("bi-building", s.inmobiliaria) : ""}
+        ${li("bi-hammer", s.constructora ? "Constructora: " + s.constructora : "")}
+        ${li("bi-people", s.trabajadores.length ? "Grupo: " + s.trabajadores.map((t: any) => t.nombre).join(", ") : "")}
+      </ul>
+      <div class="fn-acciones">${boton}</div></article>`;
+  }
+
+  async function cargar() {
+    try {
+      const d = await api(modo === "admin" ? "/mantenimiento/admin" : modo === "constructora" ? "/mantenimiento/constructora" : "/mantenimiento/trabajador");
+      items = d.solicitudes ?? d.trabajos ?? []; constructoras = d.constructoras ?? [];
+      const fin = items.filter((s) => FINAL.includes(s.estadoReparacionID)).length;
+      const sinAsignar = modo === "admin" ? items.filter((s) => !s.constructoraID && !FINAL.includes(s.estadoReparacionID)).length
+        : items.filter((s) => !s.trabajadores.length && !FINAL.includes(s.estadoReparacionID)).length;
+      document.getElementById("mantStats")!.innerHTML = `
+        <div class="fn-stat"><b>${items.length}</b><span>${modo === "trabajador" ? "Trabajos asignados" : "Solicitudes"}</span></div>
+        ${modo !== "trabajador" ? `<div class="fn-stat ${sinAsignar ? "fn-stat--alerta" : ""}"><b>${sinAsignar}</b><span>${modo === "admin" ? "Sin reenviar" : "Sin grupo asignado"}</span></div>` : ""}
+        <div class="fn-stat"><b>${items.length - fin}</b><span>En curso</span></div>
+        <div class="fn-stat"><b>${fin}</b><span>Finalizadas</span></div>`;
+      lista.innerHTML = items.length ? items.map(tarjeta).join("") : `<div class="fn-vacio" style="grid-column:1/-1"><i class="bi bi-tools" aria-hidden="true"></i>${
+        modo === "admin" ? "Aún no hay solicitudes de servicio de tus clientes."
+        : modo === "constructora" ? "Ninguna inmobiliaria te ha reenviado solicitudes todavía."
+        : "Aún no te han asignado trabajos de mantenimiento."}</div>`;
+    } catch (e) { lista.innerHTML = `<div class="fn-vacio" style="grid-column:1/-1">${esc((e as Error).message)}</div>`; }
+  }
+
+  async function abrir(id: number) {
+    actual = items.find((s) => Number(s.solicitudID) === id);
+    if (!actual) return;
+    const fin = FINAL.includes(actual.estadoReparacionID);
+    document.getElementById("mantTitulo")!.textContent = actual.servicio;
+    document.getElementById("mantSub")!.textContent = `${actual.cliente} · ${estadoTexto(actual)}`;
+    document.getElementById("mantDetalle")!.textContent = actual.servicioDescripcion ?? "";
+    if (fin) form.innerHTML = `<p class="fn-muted" style="margin:0">Este servicio ya fue finalizado.</p>`;
+    else if (modo === "admin") {
+      form.innerHTML = constructoras.length ? `
+        <label>Constructora asociada
+          <select id="mantConstructora" required>${constructoras.map((c) => `<option value="${Number(c.constructoraID)}" ${c.constructoraID === actual.constructoraID ? "selected" : ""}>${esc(c.nombre)}</option>`).join("")}</select></label>
+        <div><button class="fn-btn" type="submit"><i class="bi bi-send" aria-hidden="true"></i> ${actual.constructoraID ? "Cambiar constructora" : "Reenviar solicitud"}</button></div>`
+        : `<p class="fn-muted" style="margin:0">Tu inmobiliaria no tiene constructoras asociadas activas. Asócialas en el módulo Constructoras.</p>`;
+    } else if (modo === "constructora") {
+      const { trabajadores } = await api("/organizacion/trabajadores");
+      const activos = trabajadores.filter((t: any) => t.estadoCuenta === "Activa");
+      const ya = new Set(actual.trabajadores.map((t: any) => t.usuarioID));
+      form.innerHTML = activos.length ? `
+        <fieldset style="border:0;padding:0;margin:0;display:grid;gap:6px"><legend style="font-size:.85rem;font-weight:600">Grupo de trabajadores</legend>
+          ${activos.map((t: any) => `<label class="mant-check"><input type="checkbox" name="trab" value="${Number(t.usuarioID)}" ${ya.has(t.usuarioID) ? "checked" : ""} /> ${esc(t.nombre)} <small class="fn-muted">(${Number(t.tareasAbiertas)} tareas abiertas)</small></label>`).join("")}
+        </fieldset>
+        <div><button class="fn-btn" type="submit"><i class="bi bi-people" aria-hidden="true"></i> Guardar grupo</button></div>`
+        : `<p class="fn-muted" style="margin:0">No tienes trabajadores activos. Créalos en el módulo Trabajadores.</p>`;
+    } else {
+      form.innerHTML = `
+        <label>Estado del trabajo
+          <select id="mantEstado"><option value="2" ${actual.estadoReparacionID === 2 ? "selected" : ""}>En proceso</option><option value="3">Finalizado</option></select></label>
+        <label>Comentario <textarea id="mantComentario" rows="3" maxlength="2000" placeholder="¿Qué se hizo? ¿Qué falta?"></textarea></label>
+        <div><button class="fn-btn" type="submit"><i class="bi bi-check2-circle" aria-hidden="true"></i> Guardar avance</button></div>`;
+    }
+    const hist = document.getElementById("mantHistorial")!;
+    hist.innerHTML = `<li class="fn-muted" style="border-color:transparent">Cargando…</li>`;
+    if (!dlg.open) dlg.showModal();
+    try {
+      const { historial } = await api(`/mantenimiento/${id}/historial`);
+      hist.innerHTML = historial.length ? historial.map((h: any) => `<li>${esc(h.comentario)}${h.estado ? ` <span class="fn-chip fn-chip--prog">${esc(h.estado)}</span>` : ""}<small>${esc(h.autor ?? "Sistema")} · ${esc(fechaHora(h.fecha))}</small></li>`).join("")
+        : `<li class="fn-muted" style="border-color:transparent">Sin movimientos todavía.</li>`;
+    } catch (e) { hist.innerHTML = `<li class="fn-muted" style="border-color:transparent">${esc((e as Error).message)}</li>`; }
+  }
+
+  lista.addEventListener("click", (ev) => {
+    const b = (ev.target as HTMLElement).closest<HTMLElement>("[data-abrir]");
+    if (b) abrir(Number(b.dataset.abrir)).catch((e) => aviso(e.message, "error"));
+  });
+  document.getElementById("mantCerrar")!.addEventListener("click", () => dlg.close());
+  form.addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    if (!actual) return;
+    const id = Number(actual.solicitudID);
+    try {
+      let r;
+      if (modo === "admin") r = await api(`/mantenimiento/admin/${id}/reenviar`, "POST", { constructoraID: Number((document.getElementById("mantConstructora") as HTMLSelectElement).value) });
+      else if (modo === "constructora") r = await api(`/mantenimiento/constructora/${id}/asignar`, "POST", { trabajadores: [...form.querySelectorAll<HTMLInputElement>('input[name="trab"]:checked')].map((c) => Number(c.value)) });
+      else r = await api(`/mantenimiento/trabajador/${id}/avance`, "POST", { comentario: (document.getElementById("mantComentario") as HTMLTextAreaElement).value.trim(), estadoReparacionID: Number((document.getElementById("mantEstado") as HTMLSelectElement).value) });
+      aviso(r.mensaje); await cargar(); await abrir(id);
+    } catch (e) { aviso((e as Error).message, "error"); }
+  });
+  cargar();
+</script>

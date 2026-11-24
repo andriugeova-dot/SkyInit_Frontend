@@ -1,4 +1,5 @@
 ---
+import SelectorUbicacion from "../funciones/SelectorUbicacion.astro";
 import "../admin/propiedades.css";
 import "./proyectosAdmin.css";
 import { COOKIE_NAME, getTokenSSR } from "../../utils/auth";
@@ -60,6 +61,8 @@ if (token) {
                 constructoraID: p.constructoraID ?? null,
                 constructoraNombre: p.constructoraNombre ?? null,
                 imagenPrincipal: p.imagenPrincipal ?? null,
+                latitud: p.latitud ?? null,
+                longitud: p.longitud ?? null,
             }));
         } else {
             errorCarga = `No se pudieron cargar los proyectos (${resProy.status})`;
@@ -399,6 +402,8 @@ const filasJson = JSON.stringify(filas).replace(/</g, "\\u003c");
                 <label for="campo-fin">Fecha de fin</label>
                 <input type="date" id="campo-fin" />
             </div>
+
+            <SelectorUbicacion />
         </form>
         <div class="modal-actions">
             <button type="button" class="btn-outline" data-cerrar="proyecto"
@@ -661,6 +666,7 @@ const filasJson = JSON.stringify(filas).replace(/</g, "\\u003c");
         campo.estado.value = "1";
         campo.constructora.value = "";
         mostrarError(formError, null);
+        (window as any).selectorUbicacion?.fijar(null, null);
         get("modal-titulo").textContent = "Nuevo proyecto";
     }
 
@@ -677,6 +683,7 @@ const filasJson = JSON.stringify(filas).replace(/</g, "\\u003c");
         campo.inicio.value = p.fechaInicio ?? "";
         campo.fin.value = p.fechaFin ?? "";
         mostrarError(formError, null);
+        (window as any).selectorUbicacion?.fijar((p as any).latitud, (p as any).longitud);
         get("modal-titulo").textContent = "Editar proyecto";
     }
 
@@ -883,6 +890,7 @@ const filasJson = JSON.stringify(filas).replace(/</g, "\\u003c");
                 fechaInicio: campo.inicio.value || null,
                 fechaFin: campo.fin.value || null,
                 constructoraID: campo.constructora.value ? Number(campo.constructora.value) : null,
+                ...((window as any).selectorUbicacion?.leer() ?? {}),
             };
 
             btnGuardar.textContent = "Guardando…";

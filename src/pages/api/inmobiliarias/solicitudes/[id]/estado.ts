@@ -1,6 +1,7 @@
+import { BACKEND_URL } from "../../../../../utils/config";
 import type { APIRoute } from "astro";
 
-const BACKEND = "http://localhost:8001/api/inmobiliaria/solicitudes";
+const BACKEND = `${BACKEND_URL}/api/inmobiliaria/solicitudes`;
 
 export const PUT: APIRoute = async ({ request, params }) => {
   try {

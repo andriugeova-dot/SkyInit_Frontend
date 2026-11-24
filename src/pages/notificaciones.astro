@@ -1,0 +1,77 @@
+---
+import Layout from "../layouts/LayoutVistas.astro";
+import "../components/funciones/funciones.css";
+---
+<Layout>
+  <section class="fn">
+    <div class="fn-head">
+      <div><h1>Notificaciones</h1><p id="notifResumen">Cargando…</p></div>
+      <div class="fn-acciones">
+        <button class="fn-btn fn-btn--sec" id="btnPermiso" type="button" hidden><i class="bi bi-bell" aria-hidden="true"></i> Activar avisos del navegador</button>
+        <button class="fn-btn fn-btn--sec" id="btnLeerTodas" type="button"><i class="bi bi-check2-all" aria-hidden="true"></i> Marcar todas como leídas</button>
+      </div>
+    </div>
+    <div id="notifLista" class="fn-linea"></div>
+  </section>
+</Layout>
+
+<style is:global>
+  .notif { background:#fff; border:1px solid #e2ddd0; border-radius:12px; padding:14px 16px; display:flex; gap:12px; align-items:flex-start; }
+  .notif--nueva { border-left:4px solid #c8ad72; background:#fffdf6; }
+  .notif i { font-size:1.2rem; color:#2f5d46; margin-top:2px; }
+  .notif div { flex:1; min-width:0; }
+  .notif p { margin:2px 0; overflow-wrap:anywhere; }
+</style>
+
+<script>
+  import { api, esc, fechaHora, aviso } from "../components/funciones/comun";
+  import { enlaceNotificacion, iconoNotificacion } from "../components/funciones/avisos";
+  const rol = document.querySelector<HTMLElement>(".sidebar")?.dataset.rol ?? "Usuario";
+  const lista = document.getElementById("notifLista")!;
+  const resumen = document.getElementById("notifResumen")!;
+
+  async function cargar() {
+    try {
+      const d = await api("/notificaciones");
+      resumen.textContent = d.noLeidas ? `${d.noLeidas} sin leer` : "Estás al día";
+      if (!d.notificaciones.length) {
+        lista.innerHTML = `<div class="fn-vacio"><i class="bi bi-bell"></i>Aún no tienes notificaciones. Aquí verás visitas, tareas y seguimiento.</div>`;
+        return;
+      }
+      lista.innerHTML = d.notificaciones.map((n: any) => `
+        <article class="notif ${n.leida ? "" : "notif--nueva"}">
+          <i class="bi ${iconoNotificacion(n.tipoNotificacion)}" aria-hidden="true"></i>
+          <div><strong>${esc(n.titulo)}</strong><p>${esc(n.mensaje)}</p><small class="fn-muted">${esc(fechaHora(n.fechaCreacion))}</small>
+            ${enlaceNotificacion(n.tipoNotificacion, rol) !== "/notificaciones" ? `<br><a href="${esc(enlaceNotificacion(n.tipoNotificacion, rol))}" data-ir="${Number(n.notificacionID)}">Ver detalle <i class="bi bi-arrow-right" aria-hidden="true"></i></a>` : ""}</div>
+          ${n.leida ? "" : `<button class="fn-btn fn-btn--sec fn-btn--mini" data-leer="${Number(n.notificacionID)}" type="button">Leída</button>`}
+        </article>`).join("");
+    } catch (e) { resumen.textContent = (e as Error).message; }
+  }
+  lista.addEventListener("click", async (ev) => {
+    const id = (ev.target as HTMLElement).closest<HTMLElement>("[data-leer]")?.dataset.leer;
+    if (!id) return;
+    try { await api(`/notificaciones/${id}/leida`, "PATCH"); cargar(); } catch (e) { aviso((e as Error).message, "error"); }
+  });
+  document.getElementById("btnLeerTodas")!.addEventListener("click", async () => {
+    try { await api("/notificaciones/leer-todas", "POST"); aviso("Notificaciones marcadas como leídas"); cargar(); }
+    catch (e) { aviso((e as Error).message, "error"); }
+  });
+  // Abrir el detalle marca la notificacion como leida
+  lista.addEventListener("click", (ev) => {
+    const ir = (ev.target as HTMLElement).closest<HTMLElement>("[data-ir]");
+    if (ir) api(`/notificaciones/${ir.dataset.ir}/leida`, "PATCH").catch(() => {});
+  });
+  // La lista se refresca sola cuando llega una notificacion nueva
+  document.addEventListener("avisos:actualizados", () => cargar());
+  // Avisos del navegador (aparecen aunque la pestaña este en segundo plano)
+  const btnPermiso = document.getElementById("btnPermiso") as HTMLButtonElement;
+  if ("Notification" in window && Notification.permission === "default") {
+    btnPermiso.hidden = false;
+    btnPermiso.addEventListener("click", async () => {
+      const r = await Notification.requestPermission();
+      btnPermiso.hidden = true;
+      aviso(r === "granted" ? "Avisos del navegador activados" : "No se activaron los avisos del navegador", r === "granted" ? "ok" : "error");
+    });
+  }
+  cargar();
+</script>

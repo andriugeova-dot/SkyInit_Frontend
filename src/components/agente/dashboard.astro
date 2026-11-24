@@ -1,4 +1,5 @@
 ---
+import ResumenPanel from "../funciones/ResumenPanel.astro";
 import "../admin/dashboard.css";
 import { COOKIE_NAME, getTokenSSR } from "../../utils/auth";
 
@@ -64,6 +65,7 @@ const iconoEstadoProy = (id: number) => {
         <h1>Panel agente</h1>
         <p>Resumen de tu inmobiliaria y propiedades a cargo.</p>
     </div>
+    <ResumenPanel />
 
     {errorCarga && (
         <div class="alert-error" role="alert">

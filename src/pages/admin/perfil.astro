@@ -1,4 +1,5 @@
 ---
+import CambiarPassword from "../../components/funciones/CambiarPassword.astro";
 import Layout from "../../layouts/LayoutVistas.astro";
 import PerfilAdmin from "../../components/admin/perfil.astro";
 import { getTokenSSR, obtenerRolDesdeToken } from "../../utils/auth";
@@ -13,4 +14,5 @@ if (!token || (rol !== "Administrador" && rol !== "SuperAdmin")) {
 
 <Layout>
     <PerfilAdmin />
+	<CambiarPassword />
 </Layout>

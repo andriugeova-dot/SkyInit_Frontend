@@ -1,7 +1,8 @@
+import { BACKEND_URL } from "../../../utils/config";
 import type { APIRoute } from "astro";
 import { COOKIE_NAME, getTokenSSR } from "../../../utils/auth";
 
-const BACKEND = "http://localhost:8001";
+const BACKEND = `${BACKEND_URL}`;
 
 /** PUT /api/usuario/perfil — Actualiza nombre, teléfono y/o contraseña */
 export const PUT: APIRoute = async ({ cookies, request }) => {

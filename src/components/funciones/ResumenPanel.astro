@@ -1,0 +1,22 @@
+---
+/** Franja de resumen del dashboard (lo pendiente segun el rol). Va debajo del titulo de cada panel. */
+import "./funciones.css";
+---
+<div class="fn-resumen" id="resumenPanel" aria-live="polite" hidden></div>
+<script>
+  import { api, esc } from "./comun";
+  (async () => {
+    const caja = document.getElementById("resumenPanel");
+    if (!caja) return;
+    try {
+      const { tarjetas } = await api("/cuenta/resumen");
+      if (!tarjetas.length) return;
+      caja.innerHTML = `<div class="fn-resumen-titulo"><i class="bi bi-lightning-charge-fill" aria-hidden="true"></i> Pendientes</div>` +
+        tarjetas.map((t: any) => `
+        <a href="${esc(t.enlace)}" class="${t.alerta ? "alerta" : ""}" title="${t.alerta ? "Requiere atención" : ""}">
+          <i class="bi ${esc(t.icono)}" aria-hidden="true"></i><b>${Number(t.valor)}</b><span>${esc(t.etiqueta)}</span>
+        </a>`).join("");
+      caja.hidden = false;
+    } catch { /* sin resumen: el dashboard sigue igual */ }
+  })();
+</script>

@@ -108,7 +108,7 @@ import PanelAgente from "./PanelAgente.astro";
   (function () {
     var BACKEND_PUBLIC =
       (window.__ENV__ && window.__ENV__.PUBLIC_BACKEND_URL) ||
-      "http://localhost:8001";
+      "/backend";
     var todosLosProyectos = [];
 
     function esc(v) {
@@ -235,8 +235,8 @@ fetch(BACKEND_PUBLIC + "/api/agente/panel/proyectos", {
                         '<div class="proy-avance-bar"><div class="proy-avance-fill" style="width:' + pct + '%"></div></div>' +
                     '</div>' +
                     '<div class="proy-chips">' +
-                        '<span class="chip"><i class="bi bi-calendar-event"></i> ' + fmtFecha(p.fechaInicio) + '</span>' +
-                        '<span class="chip"><i class="bi bi-flag"></i> ' + fmtFecha(p.fechaFin) + '</span>' +
+                        '<span class="chip"><i class="bi bi-calendar-event"></i> ' + esc(fmtFecha(p.fechaInicio)) + '</span>' +
+                        '<span class="chip"><i class="bi bi-flag"></i> ' + esc(fmtFecha(p.fechaFin)) + '</span>' +
                     '</div>' +
                     '<dl class="proy-meta">' +
                         '<dt>Constructora</dt>' +

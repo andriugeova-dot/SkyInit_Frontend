@@ -1,4 +1,5 @@
 ---
+import { BACKEND_URL } from "../../utils/config";
 import Layout from "../../layouts/LayoutVistas.astro";
 import ServicioCard from "../../components/inmobiliaria/servicioCard.astro";
 import ServicioModal from "../../components/inmobiliaria/serviciomodal.astro";
@@ -18,7 +19,7 @@ let serviciosIniciales: ServicioInmobiliaria[] = [];
 let errorCargaInicial: string | null = null;
 
 try {
-  const response = await fetch("http://localhost:8001/api/inmobiliaria/servicios", {
+  const response = await fetch(`${BACKEND_URL}/api/inmobiliaria/servicios`, {
     headers: { Cookie: cookieHeader },
   });
   if (response.ok) {
@@ -145,7 +146,7 @@ const inactivosCount = serviciosIniciales.filter((s) => s.Estado === "Inactivo")
 <script define:vars={{ initialServices: serviciosIniciales }}>
   document.addEventListener("DOMContentLoaded", () => {
     const API = "/api/inmobiliarias/servicios";
-    const BACKEND_PUBLIC = "http://localhost:8001";
+    const BACKEND_PUBLIC = "/backend";
     let listadoServicios = initialServices || [];
     const bsModalForm = new bootstrap.Modal(document.getElementById("modalServicio"));
     const bsModalConfirm = new bootstrap.Modal(document.getElementById("modalConfirmar"));
@@ -226,8 +227,8 @@ const inactivosCount = serviciosIniciales.filter((s) => s.Estado === "Inactivo")
         const imgUrl = urlImagenServicio(s.Imagen);
         card.innerHTML = `
           <div class="service-img-wrapper">
-            <img src="${imgUrl}" alt="" loading="lazy">
-            <span class="badge-status ${s.Estado === "Activo" ? "badge-activo" : "badge-inactivo"}">${s.Estado}</span>
+            <img src="${escapeHTML(imgUrl)}" alt="" loading="lazy">
+            <span class="badge-status ${s.Estado === "Activo" ? "badge-activo" : "badge-inactivo"}">${escapeHTML(s.Estado)}</span>
           </div>
           <div class="service-card-body">
             <h3 class="service-title"></h3>
@@ -235,9 +236,9 @@ const inactivosCount = serviciosIniciales.filter((s) => s.Estado === "Inactivo")
             <div class="service-price">${formatter.format(Number(s.Precio))}</div>
           </div>
           <div class="service-actions">
-            <button class="btn btn-sm btn-outline-primary flex-grow-1 btn-editar" data-id="${s.ServicioID}" type="button"><i class="bi bi-pencil me-1"></i> Editar</button>
-            <button class="btn btn-sm btn-outline-secondary btn-estado" data-id="${s.ServicioID}" data-estado="${s.Estado}" type="button">${s.Estado === "Activo" ? "Desactivar" : "Activar"}</button>
-            <button class="btn btn-sm btn-outline-danger btn-eliminar" data-id="${s.ServicioID}" data-nombre="" type="button"><i class="bi bi-trash"></i></button>
+            <button class="btn btn-sm btn-outline-primary flex-grow-1 btn-editar" data-id="${escapeHTML(s.ServicioID)}" type="button"><i class="bi bi-pencil me-1"></i> Editar</button>
+            <button class="btn btn-sm btn-outline-secondary btn-estado" data-id="${escapeHTML(s.ServicioID)}" data-estado="${escapeHTML(s.Estado)}" type="button">${s.Estado === "Activo" ? "Desactivar" : "Activar"}</button>
+            <button class="btn btn-sm btn-outline-danger btn-eliminar" data-id="${escapeHTML(s.ServicioID)}" data-nombre="" type="button"><i class="bi bi-trash"></i></button>
           </div>`;
         card.querySelector(".service-title").textContent = s.Nombre;
         card.querySelector(".service-desc").textContent = s.Descripcion;

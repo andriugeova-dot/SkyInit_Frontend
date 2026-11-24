@@ -1,0 +1,40 @@
+---
+/** Dialogos compartidos por Propiedades y Proyectos del panel de constructora: fotos y confirmacion. */
+---
+<dialog class="fn-modal cp-modal" id="cpFotos" aria-labelledby="cpFotosTitulo">
+  <header class="cp-modal-cab">
+    <h2 id="cpFotosTitulo"><i class="bi bi-images" aria-hidden="true"></i> <span>Fotos</span></h2>
+    <button type="button" class="cp-cerrar" data-cerrar aria-label="Cerrar"><i class="bi bi-x-lg" aria-hidden="true"></i></button>
+  </header>
+  <div class="cp-modal-scroll">
+    <div class="cp-fotos-bloque">
+      <p class="cp-nota" id="cpFotosNota" hidden><i class="bi bi-info-circle" aria-hidden="true"></i> <span></span></p>
+      <div class="cp-fotos" id="cpFotosLista" aria-live="polite"></div>
+      <p class="cp-error" id="cpFotosError" role="alert" hidden><i class="bi bi-exclamation-triangle" aria-hidden="true"></i> <span></span></p>
+    </div>
+    <div class="cp-subir">
+      <label for="cpFotosArchivo">Agregar fotos <span class="cp-ayuda">(JPG, PNG o WebP · máximo 5 MB cada una)</span></label>
+      <div class="cp-subir-fila">
+        <input type="file" id="cpFotosArchivo" accept="image/jpeg,image/png,image/webp" multiple />
+        <button type="button" class="fn-btn" id="cpFotosSubir"><i class="bi bi-upload" aria-hidden="true"></i> <span>Subir</span></button>
+      </div>
+    </div>
+  </div>
+  <footer class="cp-modal-pie">
+    <button type="button" class="fn-btn fn-btn--sec" data-cerrar>Cerrar</button>
+  </footer>
+</dialog>
+
+<dialog class="fn-modal cp-modal cp-modal--chico" id="cpConfirmar" aria-labelledby="cpConfirmarTitulo" aria-describedby="cpConfirmarTexto">
+  <header class="cp-modal-cab">
+    <h2 id="cpConfirmarTitulo"><i class="bi bi-exclamation-triangle" aria-hidden="true"></i> <span>Confirmar</span></h2>
+    <button type="button" class="cp-cerrar" data-cerrar aria-label="Cerrar"><i class="bi bi-x-lg" aria-hidden="true"></i></button>
+  </header>
+  <div class="cp-modal-scroll">
+    <p class="cp-confirmar-texto" id="cpConfirmarTexto"></p>
+  </div>
+  <footer class="cp-modal-pie">
+    <button type="button" class="fn-btn fn-btn--sec" data-cerrar>Cancelar</button>
+    <button type="button" class="fn-btn fn-btn--peligro" id="cpConfirmarSi"><i class="bi bi-trash" aria-hidden="true"></i> <span>Eliminar</span></button>
+  </footer>
+</dialog>

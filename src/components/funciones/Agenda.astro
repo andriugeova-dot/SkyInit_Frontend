@@ -1,0 +1,117 @@
+---
+import "./funciones.css";
+interface Props { modo: "usuario" | "gestion" }
+const { modo } = Astro.props;
+---
+<section class="fn" id="agendaRoot" data-modo={modo}>
+  <div class="fn-head">
+    <div>
+      <h1>{modo === "usuario" ? "Mis visitas" : "Agenda de visitas"}</h1>
+      <p>{modo === "usuario" ? "Agenda una visita a una propiedad y sigue su estado." : "Confirma o cancela las visitas solicitadas a tus propiedades."}</p>
+    </div>
+    {modo === "usuario" && <button class="fn-btn" id="btnNuevaVisita" type="button"><i class="bi bi-calendar-plus"></i> Agendar visita</button>}
+  </div>
+  <div class="fn-stats" id="agendaStats"></div>
+  <div id="agendaLista"></div>
+
+  <dialog class="fn-modal" id="dlgVisita">
+    <form class="fn-modal-cuerpo fn-form" id="formVisita">
+      <h2>Agendar visita</h2>
+      <label>Propiedad
+        <select id="visitaPropiedad" required></select>
+      </label>
+      <label>Fecha y hora
+        <input type="datetime-local" id="visitaFecha" required />
+      </label>
+      <label>Notas (opcional)
+        <textarea id="visitaNotas" rows="3" maxlength="300" placeholder="Ej.: prefiero en la tarde"></textarea>
+      </label>
+      <div class="fn-modal-pie">
+        <button class="fn-btn fn-btn--sec" type="button" id="btnCerrarVisita">Cancelar</button>
+        <button class="fn-btn" type="submit">Solicitar visita</button>
+      </div>
+    </form>
+  </dialog>
+</section>
+
+<script>
+  import { api, esc, fechaHora, aviso, claseEstado } from "./comun";
+  const root = document.getElementById("agendaRoot")!;
+  const modo = root.dataset.modo as "usuario" | "gestion";
+  const lista = document.getElementById("agendaLista")!;
+  const stats = document.getElementById("agendaStats")!;
+  const dlg = document.getElementById("dlgVisita") as HTMLDialogElement;
+
+  async function cargar() {
+    try {
+      const { visitas } = await api(modo === "usuario" ? "/agenda/mias" : "/agenda/gestion");
+      const cuenta = (e: string) => visitas.filter((v: any) => v.estado === e).length;
+      stats.innerHTML = ["Pendiente", "Confirmada", "Finalizada", "Cancelada"].map((e) =>
+        `<div class="fn-stat"><b>${cuenta(e)}</b><span>${e}s</span></div>`).join("");
+      if (!visitas.length) {
+        lista.innerHTML = `<div class="fn-vacio"><i class="bi bi-calendar-week"></i>${modo === "usuario"
+          ? "Todavía no has agendado visitas. Usa “Agendar visita” para elegir una propiedad."
+          : "No hay visitas solicitadas a tus propiedades."}</div>`;
+        return;
+      }
+      lista.innerHTML = `<div class="fn-tabla-wrap"><table class="fn-tabla"><thead><tr>
+        <th>Fecha</th><th>Propiedad</th>${modo === "gestion" ? "<th>Solicitante</th>" : ""}<th>Notas</th><th>Estado</th><th></th></tr></thead><tbody>` +
+        visitas.map((v: any) => {
+          const id = Number(v.agendaID);
+          const acciones: string[] = [];
+          if (v.estado !== "Cancelada" && v.estado !== "Finalizada") {
+            if (modo === "gestion" && v.estado === "Pendiente") acciones.push(`<button class="fn-btn fn-btn--mini" data-estado="2" data-id="${id}" type="button">Confirmar</button>`);
+            acciones.push(`<button class="fn-btn fn-btn--mal fn-btn--mini" data-estado="3" data-id="${id}" type="button">Cancelar</button>`);
+          }
+          return `<tr><td>${esc(fechaHora(v.fechaVisita))}</td>
+            <td><strong>${esc(v.propiedad)}</strong><br><small class="fn-muted">${esc(v.direccion)}${v.ciudad ? ", " + esc(v.ciudad) : ""}</small></td>
+            ${modo === "gestion" ? `<td>${esc(v.solicitante)}<br><small class="fn-muted">${esc(v.telefono ?? v.correo)}</small></td>` : ""}
+            <td>${esc(v.notas ?? "—")}</td>
+            <td><span class="fn-chip ${claseEstado(v.estado)}">${esc(v.estado)}</span></td>
+            <td><div class="fn-acciones">${acciones.join("")}</div></td></tr>`;
+        }).join("") + "</tbody></table></div>";
+    } catch (e) { lista.innerHTML = `<div class="fn-vacio">${esc((e as Error).message)}</div>`; }
+  }
+
+  lista.addEventListener("click", async (ev) => {
+    const btn = (ev.target as HTMLElement).closest<HTMLButtonElement>("[data-estado]");
+    if (!btn) return;
+    btn.disabled = true;
+    try {
+      const r = await api(`/agenda/${btn.dataset.id}/estado`, "PATCH", { estadoAgendaID: Number(btn.dataset.estado) });
+      aviso(r.mensaje); cargar();
+    } catch (e) { aviso((e as Error).message, "error"); btn.disabled = false; }
+  });
+
+  if (modo === "usuario") {
+    const sel = document.getElementById("visitaPropiedad") as HTMLSelectElement;
+    const fecha = document.getElementById("visitaFecha") as HTMLInputElement;
+    async function abrir(preseleccion?: string | null) {
+      if (!sel.options.length) {
+        const res = await fetch("/backend/api/propiedades");
+        const props = res.ok ? await res.json() : [];
+        sel.innerHTML = props.map((p: any) => `<option value="${Number(p.propiedadID)}">${esc(p.titulo)}${p.ciudad ? " · " + esc(p.ciudad) : ""}</option>`).join("");
+      }
+      if (preseleccion) sel.value = preseleccion;
+      const min = new Date(Date.now() + 2 * 3600 * 1000); min.setMinutes(min.getMinutes() - min.getTimezoneOffset());
+      fecha.min = min.toISOString().slice(0, 16);
+      dlg.showModal();
+    }
+    document.getElementById("btnNuevaVisita")!.addEventListener("click", () => abrir());
+    document.getElementById("btnCerrarVisita")!.addEventListener("click", () => dlg.close());
+    document.getElementById("formVisita")!.addEventListener("submit", async (ev) => {
+      ev.preventDefault();
+      try {
+        const r = await api("/agenda", "POST", {
+          propiedadID: Number(sel.value),
+          fechaVisita: new Date(fecha.value).toISOString(),
+          notas: (document.getElementById("visitaNotas") as HTMLTextAreaElement).value.trim() || undefined,
+        });
+        dlg.close(); aviso(r.mensaje); cargar();
+      } catch (e) { aviso((e as Error).message, "error"); }
+    });
+    const pre = new URLSearchParams(location.search).get("propiedad");
+    if (pre) abrir(pre);
+  }
+  cargar();
+</script>

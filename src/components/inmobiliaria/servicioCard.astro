@@ -1,4 +1,5 @@
 ---
+import { BACKEND_URL } from "../../utils/config";
 interface Props {
   servicio: {
     ServicioID: number;
@@ -12,7 +13,7 @@ interface Props {
 
 const { servicio } = Astro.props;
 
-const BACKEND_PUBLIC = "http://localhost:8001";
+const BACKEND_PUBLIC = `${BACKEND_URL}`;
 const raw = (servicio.Imagen ?? "").trim();
 const imagenUrl = !raw
   ? "/img/servicios-placeholder.webp"

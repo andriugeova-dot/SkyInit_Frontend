@@ -1,10 +1,10 @@
+import { BACKEND_URL } from "../../utils/config";
 import type { APIRoute } from "astro";
 import { COOKIE_NAME } from "../../utils/auth";
 
-const BACKEND_URL = "http://localhost:8001";
 const TOKEN_MAX_AGE = 60 * 60 // 1 hora
 
-export const POST: APIRoute = async ({request}) => {
+export const POST: APIRoute = async ({request, clientAddress}) => {
     try {
         const body = await request.json();
         const {Nombre, Correo, Password, Confirmar, Telefono, AceptoTerminos} = body;
@@ -18,7 +18,7 @@ export const POST: APIRoute = async ({request}) => {
 
         const backendRes = await fetch (`${BACKEND_URL}/auth/registro`, {
             method: "POST",
-            headers: {"Content-Type" : "application/json"},
+            headers: {"Content-Type" : "application/json", "X-Forwarded-For": clientAddress},
             body: JSON.stringify({Nombre, Correo, Password, Confirmar, Telefono: Telefono ?? null, AceptoTerminos})
         });
 
@@ -46,6 +46,7 @@ export const POST: APIRoute = async ({request}) => {
                 `${COOKIE_NAME}=${token}`,
                 "HttpOnly",
                 "SameSite=Lax",
+                ...(import.meta.env.PROD ? ["Secure"] : []),
                 "Path=/",
                 `Max-Age=${TOKEN_MAX_AGE}`,
             ].join("; ");

@@ -1,7 +1,8 @@
+import { BACKEND_URL as BASE_BACKEND } from "../../../../utils/config";
 import type { APIRoute } from "astro";
 import { COOKIE_NAME, getTokenSSR } from "../../../../utils/auth";
 
-const BACKEND_URL = "http://localhost:8001/api/inmobiliaria/servicios/imagen";
+const BACKEND_URL = `${BASE_BACKEND}/api/inmobiliaria/servicios/imagen`;
 
 export const POST: APIRoute = async ({ cookies, request }) => {
   const token = getTokenSSR(cookies);

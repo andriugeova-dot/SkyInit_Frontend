@@ -20,7 +20,7 @@ const autenticado = isAuthenticatedSSR(Astro.cookies);
     <!-- ▌PERFIL DE LA INMOBILIARIA ▐ -->
     <section class="contenedor" id="perfilInmobiliaria">
       <div class="empty-state">
-        <span>⏳</span>
+        <span><i class="bi bi-hourglass-split" aria-hidden="true"></i></span>
         Cargando inmobiliaria...
       </div>
     </section>
@@ -59,7 +59,7 @@ const autenticado = isAuthenticatedSSR(Astro.cookies);
             </div>
             <div class="modal-footer">
               <button type="button" class="btn-secondary" id="btnCancelarModal">Cancelar</button>
-              <button type="submit" class="btn-confirm">✅ Enviar solicitud</button>
+              <button type="submit" class="btn-confirm"><i class="bi bi-check-circle-fill" aria-hidden="true"></i> Enviar solicitud</button>
             </div>
           </form>
         </div>
@@ -90,7 +90,7 @@ const autenticado = isAuthenticatedSSR(Astro.cookies);
         return new Intl.NumberFormat('es-CO').format(Number(precio));
       }
 
-      const BACKEND_PUBLIC = "http://localhost:8001";
+      const BACKEND_PUBLIC = "/backend";
 
       function urlPublica(ruta) {
         if (!ruta || !String(ruta).trim()) return "";
@@ -112,7 +112,7 @@ const autenticado = isAuthenticatedSSR(Astro.cookies);
           if (!res.ok || !json.ok || !json.data) {
             cont.innerHTML = `
               <div class="empty-state">
-                <span>🔍</span>
+                <span><i class="bi bi-search" aria-hidden="true"></i></span>
                 No encontramos esta inmobiliaria.
               </div>`;
             return;
@@ -122,13 +122,13 @@ const autenticado = isAuthenticatedSSR(Astro.cookies);
           const nombreSeguro = escapeHtml(inm.nombre);
 
           const logoHtml = inm.logo
-            ? `<img src="${urlPublica(inm.logo)}" alt="${nombreSeguro}" class="perfil-logo">`
-            : `<span class="perfil-logo perfil-logo--placeholder">${iniciales(inm.nombre)}</span>`;
+            ? `<img src="${escapeHtml(urlPublica(inm.logo))}" alt="${nombreSeguro}" class="perfil-logo">`
+            : `<span class="perfil-logo perfil-logo--placeholder">${escapeHtml(iniciales(inm.nombre))}</span>`;
 
           const filasContacto = [
-            inm.ciudad   ? `<span>📍 ${escapeHtml(inm.ciudad)}</span>`   : '',
-            inm.telefono ? `<span>📞 ${escapeHtml(inm.telefono)}</span>` : '',
-            inm.correo   ? `<span>✉️ ${escapeHtml(inm.correo)}</span>`   : '',
+            inm.ciudad   ? `<span><i class="bi bi-geo-alt-fill" aria-hidden="true"></i> ${escapeHtml(inm.ciudad)}</span>`   : '',
+            inm.telefono ? `<span><i class="bi bi-telephone-fill" aria-hidden="true"></i> ${escapeHtml(inm.telefono)}</span>` : '',
+            inm.correo   ? `<span><i class="bi bi-envelope-fill" aria-hidden="true"></i> ${escapeHtml(inm.correo)}</span>`   : '',
           ].filter(Boolean).join('');
 
           cont.innerHTML = `
@@ -145,7 +145,7 @@ const autenticado = isAuthenticatedSSR(Astro.cookies);
           if (!servicios.length) {
             grid.innerHTML = `
               <div class="empty-state">
-                <span>🛠️</span>
+                <span><i class="bi bi-tools" aria-hidden="true"></i></span>
                 Esta inmobiliaria aún no tiene servicios de mantenimiento activos.
               </div>`;
             return;
@@ -156,8 +156,8 @@ const autenticado = isAuthenticatedSSR(Astro.cookies);
               <div class="card-img-container">
                 ${
                   s.imagen
-                    ? `<img src="${urlPublica(s.imagen)}" alt="${escapeHtml(s.nombre)}" loading="lazy">`
-                    : `<div class="card-icon-placeholder">🛠️</div>`
+                    ? `<img src="${escapeHtml(urlPublica(s.imagen))}" alt="${escapeHtml(s.nombre)}" loading="lazy">`
+                    : `<div class="card-icon-placeholder"><i class="bi bi-tools" aria-hidden="true"></i></div>`
                 }
                 <span class="badge-tipo">Disponible</span>
               </div>
@@ -168,8 +168,8 @@ const autenticado = isAuthenticatedSSR(Astro.cookies);
                   <p class="price-tag"><span class="price-eyebrow">Desde</span>$${formatoPrecio(s.precio)}</p>
                   ${
                     autenticado
-                      ? `<button type="button" class="btn-solicitar" data-id="${s.servicioID}" data-nombre="${escapeHtml(s.nombre)}">Solicitar</button>`
-                      : `<a href="/login?redirect=/inmobiliarias/${id}&solicitar=${s.servicioID}&nombre=${encodeURIComponent(s.nombre ?? '')}" class="btn-login-required">Inicia sesión</a>`
+                      ? `<button type="button" class="btn-solicitar" data-id="${escapeHtml(String(s.servicioID))}" data-nombre="${escapeHtml(s.nombre)}">Solicitar</button>`
+                      : `<a href="/login?redirect=/inmobiliarias/${escapeHtml(String(id))}&solicitar=${escapeHtml(String(s.servicioID))}&nombre=${encodeURIComponent(s.nombre ?? '')}" class="btn-login-required">Inicia sesión</a>`
                   }
                 </div>
               </div>
@@ -183,7 +183,7 @@ const autenticado = isAuthenticatedSSR(Astro.cookies);
         } catch (e) {
           cont.innerHTML = `
             <div class="empty-state">
-              <span>⚠️</span>
+              <span><i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i></span>
               Ocurrió un error al cargar la inmobiliaria. Intenta nuevamente.
             </div>`;
           console.error(e);
@@ -238,7 +238,7 @@ const autenticado = isAuthenticatedSSR(Astro.cookies);
             if (!res.ok) throw new Error(data.message ?? 'No se pudo enviar la solicitud');
             cerrarModal('modalSolicitud');
             form.reset();
-            mostrarToast('Solicitud enviada correctamente ✅');
+            mostrarToast('Solicitud enviada correctamente');
           } catch (err) {
             mostrarToast(err.message ?? 'Error al enviar la solicitud', 'error');
           }

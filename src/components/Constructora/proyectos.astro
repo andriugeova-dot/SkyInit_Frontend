@@ -1,396 +1,334 @@
 ---
+/** Proyectos de la constructora: misma linea visual que el panel del administrador (tarjetas + modales). */
+import "../funciones/funciones.css";
 import "./proyectos.css";
+import SelectorUbicacion from "../funciones/SelectorUbicacion.astro";
+import DialogosPanel from "./DialogosPanel.astro";
 ---
 
+<section class="fn cp" id="cpProyectos">
+  <header class="fn-head">
+    <div>
+      <h1>Proyectos</h1>
+      <p>Administra los proyectos de tu constructora, sus fotos y su estado.</p>
+    </div>
+    <button type="button" class="fn-btn cp-btn-nuevo" id="proyNuevo"><i class="bi bi-plus-lg" aria-hidden="true"></i> Nuevo proyecto</button>
+  </header>
 
+  <div class="fn-stats" aria-label="Resumen de proyectos">
+    <div class="fn-stat"><span>Total</span><b id="proyStatTotal">—</b></div>
+    <div class="fn-stat"><span>Planificados</span><b id="proyStatPlan">—</b></div>
+    <div class="fn-stat"><span>En construcción</span><b id="proyStatObra">—</b></div>
+    <div class="fn-stat"><span>Finalizados</span><b id="proyStatFin">—</b></div>
+  </div>
 
-<div class="page">
-    <header class="page-header">
-        <div>
-        <h1>Proyectos</h1>
-        <p>Consulta tus Proyectos</p>
-        </div>
+  <div class="cp-filtros cp-filtros--dos" role="search">
+    <div class="cp-buscar">
+      <i class="bi bi-search" aria-hidden="true"></i>
+      <input type="search" id="proyBuscar" placeholder="Buscar por nombre, ubicación o descripción…" aria-label="Buscar proyectos" />
+    </div>
+    <select id="proyFiltroEstado" aria-label="Filtrar por estado">
+      <option value="">Todos los estados</option>
+      <option value="1">Planificado</option>
+      <option value="2">En construcción</option>
+      <option value="3">Finalizado</option>
+    </select>
+  </div>
+
+  <p class="cp-conteo" id="proyConteo" aria-live="polite"></p>
+  <div class="cp-grid" id="proyGrid">
+    <div class="cp-esqueleto"></div><div class="cp-esqueleto"></div><div class="cp-esqueleto"></div>
+  </div>
+</section>
+
+<dialog class="fn-modal cp-modal" id="proyDlg" aria-labelledby="proyDlgTitulo">
+  <form class="cp-modal-form" id="proyForm" novalidate>
+    <header class="cp-modal-cab">
+      <h2 id="proyDlgTitulo"><i class="bi bi-building" aria-hidden="true"></i> <span>Nuevo proyecto</span></h2>
+      <button type="button" class="cp-cerrar" data-cerrar aria-label="Cerrar"><i class="bi bi-x-lg" aria-hidden="true"></i></button>
     </header>
-
-    <div class="toolbar">
-        <input type="search" id="filtro-q" placeholder="Buscar proyecto o ubicación…" />
-        <select id="filtro-estado">
-            <option value="">Todos los estados</option>
-            <option value="Planificado">Planificado</option>
-            <option value="En construcción">En construcción</option>
-            <option value="Finalizado">Finalizado</option>
-        </select>
+    <div class="cp-modal-scroll fn-form">
+      <label><span>Nombre <em>*</em></span>
+        <input type="text" id="proyNombre" required maxlength="150" autocomplete="off" />
+      </label>
+      <label><span>Descripción</span>
+        <textarea id="proyDescripcion" rows="3"></textarea>
+      </label>
+      <label><span>Ubicación <span class="cp-ayuda">(dirección o sector)</span></span>
+        <input type="text" id="proyUbicacion" maxlength="255" autocomplete="off" />
+      </label>
+      <div class="fn-fila">
+        <label><span>Estado</span>
+          <select id="proyEstado">
+            <option value="1">Planificado</option>
+            <option value="2">En construcción</option>
+            <option value="3">Finalizado</option>
+          </select>
+        </label>
+        <label><span>Fecha de inicio</span>
+          <input type="date" id="proyInicio" />
+        </label>
+        <label><span>Fecha de fin</span>
+          <input type="date" id="proyFin" />
+        </label>
+      </div>
+      <SelectorUbicacion />
+      <p class="cp-error" id="proyError" role="alert" hidden><i class="bi bi-exclamation-triangle" aria-hidden="true"></i> <span></span></p>
     </div>
+    <footer class="cp-modal-pie">
+      <button type="button" class="fn-btn fn-btn--sec" data-cerrar>Cancelar</button>
+      <button type="submit" class="fn-btn" id="proyGuardar"><i class="bi bi-check-lg" aria-hidden="true"></i> <span>Guardar</span></button>
+    </footer>
+  </form>
+</dialog>
 
-    <div id="grid-proyectos" class="ag-theme-quartz grid-box"></div>
-</div>
+<DialogosPanel />
 
+<script>
+  import { esc, urlArchivo, aviso, fechaCorta } from "../funciones/comun";
+  import { pedir, cargarCoordenadas, guardarUbicacion, selector, mostrarError, prepararDialogo, confirmar, montarFotos, type Coordenadas } from "./panel";
 
+  type Proyecto = {
+    proyectoID: number; nombre: string; estadoProyectoID: number; estado: string | null; porcentajeAvance: string | number | null;
+    fechaInicio: string | null; fechaFin: string | null; descripcion: string | null; ubicacion: string | null;
+    totalImagenes: number; imagenUrl: string | null;
+  };
 
-<!-- MODAL FOTO (div, no dialog) -->
-<div id="modal-foto" class="sky-modal" hidden>
-    <div class="sky-modal-backdrop" data-cerrar="foto"></div>
-    <div class="sky-modal-card">
-        <h3>Fotos del proyecto</h3>
-        <div id="galeria-fotos" class="galeria"></div>
-        <label>Agregar otra foto</label>
-        <input type="file" id="input-foto" accept="image/*" />
-        <div class="modal-actions">
-        <button type="button" class="btn-outline" data-cerrar="foto">Cerrar</button>
-        <button type="button" class="btn-primary" id="btn-subir-foto">Subir</button>
+  const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
+  const grid = $("proyGrid");
+  const conteo = $("proyConteo");
+  const buscar = $<HTMLInputElement>("proyBuscar");
+  const filtroEstado = $<HTMLSelectElement>("proyFiltroEstado");
+  const dlg = $<HTMLDialogElement>("proyDlg");
+  const form = $<HTMLFormElement>("proyForm");
+  const guardar = $<HTMLButtonElement>("proyGuardar");
+  const error = $("proyError");
+  const campo = {
+    nombre: $<HTMLInputElement>("proyNombre"), descripcion: $<HTMLTextAreaElement>("proyDescripcion"),
+    ubicacion: $<HTMLInputElement>("proyUbicacion"), estado: $<HTMLSelectElement>("proyEstado"),
+    inicio: $<HTMLInputElement>("proyInicio"), fin: $<HTMLInputElement>("proyFin"),
+  };
+
+  const ESTADOS: Record<number, { nombre: string; clase: string }> = {
+    1: { nombre: "Planificado", clase: "cp-estado--info" },
+    2: { nombre: "En construcción", clase: "cp-estado--aviso" },
+    3: { nombre: "Finalizado", clase: "cp-estado--ok" },
+  };
+
+  let lista: Proyecto[] = [];
+  let coords = new Map<number, Coordenadas>();
+  let editando: number | null = null;
+  let estadoPrevio = 1;
+
+  const soloFecha = (v: string | null | undefined) => (v ? String(v).slice(0, 10) : "");
+  const avance = (p: Proyecto) => Math.max(0, Math.min(100, Number(p.porcentajeAvance) || 0));
+
+  function tarjeta(p: Proyecto): string {
+    const foto = p.imagenUrl
+      ? `<img src="${esc(urlArchivo(p.imagenUrl))}" alt="Foto de ${esc(p.nombre)}" loading="lazy" />`
+      : `<div class="cp-sin-foto"><i class="bi bi-image" aria-hidden="true"></i>Sin fotos</div>`;
+    const est = ESTADOS[p.estadoProyectoID];
+    const c = coords.get(p.proyectoID);
+    const ubicado = c && c.latitud != null && c.longitud != null;
+    const pct = avance(p);
+    return `
+      <article class="cp-card">
+        <div class="cp-card-foto">
+          ${foto}
+          <span class="cp-estado ${est?.clase ?? ""}">${esc(est?.nombre ?? p.estado ?? "Sin estado")}</span>
+          <div class="cp-insignias">
+            <span class="cp-insignia" title="Número de fotos"><i class="bi bi-images" aria-hidden="true"></i> ${esc(p.totalImagenes ?? 0)}</span>
+          </div>
         </div>
-    </div>
-</div>
-
-<!-- MODAL AVANCE -->
-<div id="modal-avance" class="sky-modal" hidden>
-    <div class="sky-modal-backdrop" data-cerrar="avance"></div>
-    <div class="sky-modal-card">
-        <h3>Registrar avance</h3>
-        <label>Porcentaje (0–100)</label>
-        <input type="number" id="input-porcentaje" min="0" max="100" step="0.01" />
-        <label>Nota</label>
-        <textarea id="input-nota" rows="3"></textarea>
-        <div class="modal-actions">
-        <button type="button" class="btn-outline" data-cerrar="avance">Cancelar</button>
-        <button type="button" class="btn-primary" id="btn-guardar-avance">Guardar</button>
+        <div class="cp-card-cuerpo">
+          <h3>${esc(p.nombre)}</h3>
+          <p class="cp-lugar"><i class="bi bi-geo-alt" aria-hidden="true"></i> ${esc(p.ubicacion || "Sin ubicación")}</p>
+          ${p.descripcion ? `<p class="cp-descripcion">${esc(p.descripcion)}</p>` : ""}
+          <div class="cp-avance">
+            <div class="cp-avance-cab"><span>Avance</span><b>${esc(pct)}%</b></div>
+            <div class="cp-avance-barra" role="progressbar" aria-label="Avance del proyecto" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${esc(pct)}"><span style="width:${esc(pct)}%"></span></div>
+          </div>
+          <div class="cp-datos cp-fechas">
+            <span class="cp-dato" title="Fecha de inicio"><i class="bi bi-calendar3" aria-hidden="true"></i> ${esc(p.fechaInicio ? fechaCorta(soloFecha(p.fechaInicio)) : "Sin inicio")}</span>
+            <span class="cp-dato" title="Fecha de fin"><i class="bi bi-flag" aria-hidden="true"></i> ${esc(p.fechaFin ? fechaCorta(soloFecha(p.fechaFin)) : "Sin fin")}</span>
+            ${ubicado ? `<span class="cp-dato cp-dato--oro"><i class="bi bi-pin-map" aria-hidden="true"></i> En el mapa</span>` : ""}
+          </div>
         </div>
-    </div>
-</div>
+        <div class="cp-card-acciones">
+          <button type="button" class="fn-btn fn-btn--sec cp-accion-editar" data-accion="editar" data-id="${esc(p.proyectoID)}"><i class="bi bi-pencil" aria-hidden="true"></i> Editar</button>
+          <button type="button" class="fn-btn fn-btn--sec" data-accion="fotos" data-id="${esc(p.proyectoID)}"><i class="bi bi-images" aria-hidden="true"></i> Fotos</button>
+          <button type="button" class="fn-btn fn-btn--mal" data-accion="eliminar" data-id="${esc(p.proyectoID)}" aria-label="Eliminar ${esc(p.nombre)}" title="Eliminar"><i class="bi bi-trash" aria-hidden="true"></i></button>
+        </div>
+      </article>`;
+  }
 
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.4/styles/ag-grid.css" />
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.4/styles/ag-theme-quartz.css" />
-<script is:inline src="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.4/dist/ag-grid-community.min.noStyle.js"></script>
+  function pintar() {
+    const cuenta = (id: number) => String(lista.filter((p) => p.estadoProyectoID === id).length);
+    $("proyStatTotal").textContent = String(lista.length);
+    $("proyStatPlan").textContent = cuenta(1);
+    $("proyStatObra").textContent = cuenta(2);
+    $("proyStatFin").textContent = cuenta(3);
 
-<script is:inline>
-    (function () {
-        var BACKEND_PUBLIC = "http://localhost:8001";
-        var proyectoActivo = null;
-        var gridApi = null;
+    const q = buscar.value.trim().toLowerCase();
+    const visibles = lista.filter((p) =>
+      (!q || [p.nombre, p.ubicacion, p.descripcion].join(" ").toLowerCase().includes(q)) &&
+      (!filtroEstado.value || String(p.estadoProyectoID) === filtroEstado.value));
 
-        function abrirModal(cual) {
-        var el = document.getElementById(cual === "foto" ? "modal-foto" : "modal-avance");
-        if (el) el.hidden = false;
-        }
-        function cerrarModal(cual) {
-        var el = document.getElementById(cual === "foto" ? "modal-foto" : "modal-avance");
-        if (el) el.hidden = true;
-        }
+    if (!lista.length) {
+      conteo.textContent = "";
+      grid.innerHTML = `<div class="fn-vacio"><i class="bi bi-building-add" aria-hidden="true"></i><strong>Aún no tienes proyectos</strong>
+        Crea tu primer proyecto con su descripción, fechas, fotos y ubicación en el mapa.<br />
+        <button type="button" class="fn-btn" data-accion="nuevo"><i class="bi bi-plus-lg" aria-hidden="true"></i> Nuevo proyecto</button></div>`;
+      return;
+    }
+    conteo.textContent = visibles.length === lista.length
+      ? `${lista.length} ${lista.length === 1 ? "proyecto" : "proyectos"}`
+      : `${visibles.length} de ${lista.length} proyectos`;
+    grid.innerHTML = visibles.length
+      ? visibles.map(tarjeta).join("")
+      : `<div class="fn-vacio"><i class="bi bi-funnel" aria-hidden="true"></i><strong>Ningún proyecto coincide con el filtro</strong>
+          Prueba con otra búsqueda o quita los filtros.<br />
+          <button type="button" class="fn-btn fn-btn--sec" data-accion="limpiar"><i class="bi bi-x-circle" aria-hidden="true"></i> Quitar filtros</button></div>`;
+  }
 
-        function urlImg(path) {
-        if (!path) return null;
-        if (String(path).indexOf("http") === 0) return path;
-        return BACKEND_PUBLIC + (String(path).charAt(0) === "/" ? path : "/" + path);
-        }
+  async function cargar() {
+    try {
+      const [r, c] = await Promise.all([pedir<any>("/proyectos"), cargarCoordenadas("proyectos")]);
+      lista = Array.isArray(r.data) ? r.data : [];
+      coords = c;
+      pintar();
+    } catch (e) {
+      conteo.textContent = "";
+      grid.innerHTML = `<div class="fn-vacio"><i class="bi bi-exclamation-triangle" aria-hidden="true"></i><strong>No pudimos cargar tus proyectos</strong>
+        ${esc((e as Error).message)}<br />
+        <button type="button" class="fn-btn fn-btn--sec" data-accion="reintentar"><i class="bi bi-arrow-clockwise" aria-hidden="true"></i> Reintentar</button></div>`;
+    }
+  }
 
-        function fotoRenderer(params) {
-            var data = params.data || {};
-            var n = 0;
+  function ocupado(si: boolean, texto = "Guardar") {
+    guardar.disabled = si;
+    guardar.querySelector("span")!.textContent = texto;
+  }
 
-            if (typeof data.totalImagenes === "number") {
-                n = data.totalImagenes;
-            } else if (data.imagenes && data.imagenes.length) {
-                n = data.imagenes.length;
-            } else if (data.imagenUrl) {
-                n = 1;
-            }
+  function abrir(id: number | null) {
+    const p = id ? lista.find((x) => x.proyectoID === id) : null;
+    if (id && !p) return;
+    editando = p ? p.proyectoID : null;
+    form.reset();
+    $("proyDlgTitulo").querySelector("span")!.textContent = p ? "Editar proyecto" : "Nuevo proyecto";
+    mostrarError(error, null);
+    ocupado(false);
+    estadoPrevio = p?.estadoProyectoID ?? 1;
+    if (p) {
+      campo.nombre.value = p.nombre ?? "";
+      campo.descripcion.value = p.descripcion ?? "";
+      campo.ubicacion.value = p.ubicacion ?? "";
+      campo.estado.value = String(ESTADOS[p.estadoProyectoID] ? p.estadoProyectoID : 1);
+      campo.inicio.value = soloFecha(p.fechaInicio);
+      campo.fin.value = soloFecha(p.fechaFin);
+    }
+    const c = p ? coords.get(p.proyectoID) : undefined;
+    dlg.showModal();
+    selector()?.fijar(c?.latitud ?? null, c?.longitud ?? null);
+    campo.nombre.focus();
+  }
 
-            if (n <= 0) {
-                return '<span class="foto-count">0 fotos</span>';
-            }
-            // miniatura + texto
-            var url = urlImg(data.imagenUrl || (data.imagenes && data.imagenes[0]));
-            if (url) {
-                return (
-                '<div style="display:flex;align-items:center;gap:8px;">' +
-                '<img class="thumb" src="' + url + '" alt="" />' +
-                '<span class="foto-count tiene">' + n + (n === 1 ? " foto" : " fotos") + "</span>" +
-                "</div>"
-                );
-            }
-            return '<span class="foto-count tiene">' + n + (n === 1 ? " foto" : " fotos") + "</span>";
-        }
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    mostrarError(error, null);
+    const nombre = campo.nombre.value.trim();
+    if (!nombre) { mostrarError(error, "Escribe el nombre del proyecto."); campo.nombre.focus(); return; }
+    if (campo.inicio.value && campo.fin.value && campo.fin.value < campo.inicio.value) {
+      mostrarError(error, "La fecha de fin no puede ser anterior a la de inicio."); campo.fin.focus(); return;
+    }
+    const cuerpo = {
+      nombre,
+      descripcion: campo.descripcion.value.trim() || null,
+      ubicacion: campo.ubicacion.value.trim() || null,
+      // Con hora de mediodia: el servidor convierte la fecha a Date y, sin hora, la guarda un dia antes
+      fechaInicio: campo.inicio.value ? campo.inicio.value + "T12:00:00" : null,
+      fechaFin: campo.fin.value ? campo.fin.value + "T12:00:00" : null,
+    };
+    const estado = Number(campo.estado.value);
 
-        // HTML string + data-attributes (más simple)
-        function accionesRenderer(params) {
-        var id = params.data && params.data.proyectoID;
-        if (!id) return "";
-        return (
-            '<button type="button" class="btn-sm btn-foto" data-sky-accion="foto" data-sky-id="' +
-            id +
-            '">Foto</button> ' +
-            '<button type="button" class="btn-sm btn-avance" data-sky-accion="avance" data-sky-id="' +
-            id +
-            '">Avance</button>'
-        );
-        }
+    ocupado(true, "Guardando…");
+    try {
+      let id = editando;
+      const eraEdicion = !!id;
+      if (id) {
+        await pedir(`/proyectos/${id}`, "PUT", cuerpo);
+      } else {
+        // El id que devuelve el servidor al crear no es fiable (devuelve las filas afectadas):
+        // se identifica el proyecto nuevo comparando la lista de antes y la de despues
+        const previos = new Set(lista.map((p) => p.proyectoID));
+        await pedir("/proyectos", "POST", cuerpo);
+        const r = await pedir<any>("/proyectos");
+        const nuevos = (Array.isArray(r.data) ? r.data : []).filter((p: Proyecto) => !previos.has(p.proyectoID) && p.nombre === nombre);
+        id = nuevos.length ? Math.max(...nuevos.map((p: Proyecto) => p.proyectoID)) : null;
+        estadoPrevio = 1;
+      }
+      // A partir de aqui el proyecto ya existe: los fallos secundarios se avisan sin perder lo guardado
+      const pendientes: string[] = [];
+      if (id && estado !== estadoPrevio) {
+        try { await pedir(`/proyectos/${id}/estado`, "PATCH", { estadoProyectoID: estado }); }
+        catch (err) { pendientes.push("el estado (" + (err as Error).message + ")"); }
+      }
+      if (id) {
+        const errorUbicacion = await guardarUbicacion("proyectos", id);
+        if (errorUbicacion) pendientes.push("la ubicación (" + errorUbicacion + ")");
+      } else if (estado !== 1 || "latitud" in (selector()?.leer() ?? {})) {
+        pendientes.push("el estado ni la ubicación (no se pudo identificar el proyecto recién creado; edítalo para completarlos)");
+      }
+      dlg.close();
+      if (pendientes.length) aviso(`El proyecto se guardó, pero no se pudo guardar ${pendientes.join(" ni ")}`, "error");
+      else aviso(eraEdicion ? "Proyecto actualizado" : "Proyecto creado");
+      await cargar();
+    } catch (err) {
+      mostrarError(error, (err as Error).message);
+    } finally {
+      ocupado(false);
+    }
+  });
 
-        function pintarGaleria(imagenes) {
-            var g = document.getElementById("galeria-fotos");
-            if (!g) return;
-            g.innerHTML = "";
+  async function eliminar(id: number, boton: HTMLButtonElement) {
+    const p = lista.find((x) => x.proyectoID === id);
+    if (!p) return;
+    const ok = await confirmar({
+      titulo: "Eliminar proyecto",
+      texto: `Vas a eliminar "${p.nombre}" junto con sus fotos. Esta acción no se puede deshacer.`,
+      accion: "Eliminar proyecto",
+    });
+    if (!ok) return;
+    boton.disabled = true;
+    try {
+      await pedir(`/proyectos/${id}`, "DELETE");
+      aviso("Proyecto eliminado");
+      await cargar();
+    } catch (err) {
+      boton.disabled = false;
+      aviso((err as Error).message, "error");
+    }
+  }
 
-            // compatible: string[] o { imagenID, url }[]
-            var lista = (imagenes || []).map(function (item) {
-                if (typeof item === "string") return { imagenID: null, url: item };
-                return { imagenID: item.imagenID, url: item.url };
-            });
+  const abrirFotos = montarFotos("proyectos", cargar);
+  prepararDialogo(dlg, false);
 
-            if (!lista.length) {
-                g.innerHTML = '<span class="vacio">Sin fotos aún. Sube la primera.</span>';
-                return;
-            }
+  $("proyNuevo").addEventListener("click", () => abrir(null));
+  buscar.addEventListener("input", pintar);
+  filtroEstado.addEventListener("change", pintar);
+  grid.addEventListener("click", (e) => {
+    const btn = (e.target as HTMLElement).closest<HTMLButtonElement>("[data-accion]");
+    if (!btn) return;
+    const id = Number(btn.dataset.id);
+    switch (btn.dataset.accion) {
+      case "nuevo": abrir(null); break;
+      case "reintentar": cargar(); break;
+      case "limpiar": buscar.value = ""; filtroEstado.value = ""; pintar(); break;
+      case "editar": abrir(id); break;
+      case "fotos": { const p = lista.find((x) => x.proyectoID === id); if (p) abrirFotos(id, p.nombre); break; }
+      case "eliminar": eliminar(id, btn); break;
+    }
+  });
 
-            lista.forEach(function (item) {
-                var src = urlImg(item.url);
-                if (!src) return;
-
-                var wrap = document.createElement("div");
-                wrap.className = "galeria-item";
-
-                var img = document.createElement("img");
-                img.src = src;
-                img.alt = "";
-                img.onerror = function () {
-                img.style.opacity = "0.3";
-                };
-                wrap.appendChild(img);
-
-                if (item.imagenID != null) {
-                var btn = document.createElement("button");
-                btn.type = "button";
-                btn.className = "btn-borrar-img";
-                btn.title = "Eliminar";
-                btn.textContent = "×";
-                btn.setAttribute("data-sky-del-img", String(item.imagenID));
-                wrap.appendChild(btn);
-                }
-
-                g.appendChild(wrap);
-                });
-            }
-
-        function cargarGaleriaProyecto(id) {
-                return fetch("/api/panel/constructora/proyecto_detalle?id=" + id, {
-                    credentials: "same-origin",
-                })
-                    .then(function (r) {
-                    return r.json();
-                    })
-                    .then(function (json) {
-                    var imgs = (json.data && json.data.imagenes) || [];
-                    pintarGaleria(imgs);
-                    var titulo = document.querySelector("#modal-foto h3");
-                    if (titulo) {
-                        titulo.textContent = "Fotos del proyecto (" + imgs.length + ")";
-                    }
-                    })
-                    .catch(function () {
-                    pintarGaleria([]);
-                    });
-        }
-        
-        function aplicarFiltroProyectos() {
-            var qEl = document.getElementById("filtro-q");
-            var eEl = document.getElementById("filtro-estado");
-            if (!qEl) return;
-            var q = (qEl.value || "").toLowerCase().trim();
-            var est = eEl ? eEl.value : "";
-            var filtrados = (window._listaProyectos || []).filter(function (p) {
-                var texto = [
-                p.nombre,
-                p.ubicacion,
-                p.estado,
-                p.estadoNombre,
-                ]
-                .join(" ")
-                .toLowerCase();
-                var okQ = !q || texto.indexOf(q) >= 0;
-                var okE =
-                !est ||
-                String(p.estado || p.estadoNombre || "") === est;
-                return okQ && okE;
-            });
-            if (window.gridApi) {
-                window.gridApi.setGridOption("rowData", filtrados);
-            }
-        }
-
-            // Al cargar proyectos:
-            // window._listaProyectos = data;
-            // aplicarFiltroProyectos();
-
-            document.getElementById("filtro-q") &&
-            document
-                .getElementById("filtro-q")
-                .addEventListener("input", aplicarFiltroProyectos);
-            document.getElementById("filtro-estado") &&
-            document
-                .getElementById("filtro-estado")
-                .addEventListener("change", aplicarFiltroProyectos);
-
-        function cargar() {
-        fetch("/api/panel/constructora/proyectos", { credentials: "same-origin" })
-            .then(function (res) {
-            return res.text();
-            })
-            .then(function (text) {
-            var json;
-            try {
-                json = JSON.parse(text);
-            } catch (e) {
-                console.error("API no JSON", text.slice(0, 200));
-                return;
-            }
-            var rows = Array.isArray(json.data) ? json.data : [];
-            if (gridApi) gridApi.setGridOption("rowData", rows);
-            });
-        }
-
-        // CAPTURE en document: AG Grid no se come el click
-        document.addEventListener(
-        "click",
-        function (e) {
-            var t = e.target;
-            if (!t || !t.closest) return;
-
-            var cerrar = t.closest("[data-cerrar]");
-            if (cerrar) {
-            cerrarModal(cerrar.getAttribute("data-cerrar"));
-            return;
-            }
-
-            var del = t.closest("[data-sky-del-img]");
-                if (del) {
-                e.preventDefault();
-                e.stopPropagation();
-                var imagenId = del.getAttribute("data-sky-del-img");
-                if (!proyectoActivo || !imagenId) return;
-                if (!confirm("¿Eliminar esta foto?")) return;
-
-                fetch(
-                    "/api/panel/constructora/proyecto_imagen_delete?id=" +
-                    proyectoActivo +
-                    "&imagenId=" +
-                    imagenId,
-                    { method: "DELETE", credentials: "same-origin" }
-                )
-                    .then(function (res) {
-                    if (!res.ok) throw new Error("No se pudo eliminar");
-                    return cargarGaleriaProyecto(proyectoActivo).then(function () {
-                        cargar(); // refresca contador del grid
-                    });
-                    })
-                    .catch(function (err) {
-                    alert(err.message || "Error al eliminar");
-                    });
-                return;
-                }
-
-            var btn = t.closest("[data-sky-accion]");
-            if (!btn) return;
-
-            e.preventDefault();
-            e.stopPropagation();
-
-            proyectoActivo = Number(btn.getAttribute("data-sky-id"));
-            var accion = btn.getAttribute("data-sky-accion");
-            console.log("Accion grid:", accion, proyectoActivo);
-
-            if (accion === "foto") {
-                proyectoActivo = Number(btn.getAttribute("data-sky-id"));
-                document.getElementById("input-foto").value = "";
-                pintarGaleria([]); // limpia mientras carga
-                abrirModal("foto");
-                cargarGaleriaProyecto(proyectoActivo);
-                }
-
-
-
-            if (accion === "avance") {
-            document.getElementById("input-porcentaje").value = "";
-            document.getElementById("input-nota").value = "";
-            abrirModal("avance");
-            }
-        },
-        true
-        );
-
-        document.getElementById("btn-subir-foto").addEventListener("click", function () {
-        if (!proyectoActivo) return;
-        var fileInput = document.getElementById("input-foto");
-        var file = fileInput.files && fileInput.files[0];
-        if (!file) {
-            alert("Elige una imagen");
-            return;
-        }
-        var fd = new FormData();
-        fd.append("imagen", file);
-        fetch("/api/panel/constructora/proyecto_imagen?id=" + proyectoActivo, {
-            method: "POST",
-            body: fd,
-            credentials: "same-origin",
-        })
-            .then(function (res) {
-                if (!res.ok) throw new Error("fail");
-                document.getElementById("input-foto").value = "";
-                return cargarGaleriaProyecto(proyectoActivo).then(function () {
-                    cargar();
-                });
-                })
-                .catch(function () {
-                alert("No se pudo subir la foto");
-                });
-            });
-
-        document.getElementById("btn-guardar-avance").addEventListener("click", function () {
-        if (!proyectoActivo) return;
-        var porcentaje = Number(document.getElementById("input-porcentaje").value);
-        var nota = document.getElementById("input-nota").value;
-        fetch("/api/panel/constructora/proyecto_avance?id=" + proyectoActivo, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            credentials: "same-origin",
-            body: JSON.stringify({ porcentaje: porcentaje, nota: nota }),
-        })
-            .then(function (res) {
-            return res.json().then(function (data) {
-                if (!res.ok) throw new Error(data.message || data.error || "Error");
-                cerrarModal("avance");
-                cargar();
-            });
-            })
-            .catch(function (err) {
-            alert(err.message || "No se pudo guardar el avance");
-            });
-        });
-
-        function init() {
-        var gridDiv = document.getElementById("grid-proyectos");
-        if (!gridDiv || typeof agGrid === "undefined") {
-            console.error("Grid o agGrid no listos");
-            return;
-        }
-        gridApi = agGrid.createGrid(gridDiv, {
-            columnDefs: [
-            { headerName: "Foto", field: "imagenUrl", width: 140, cellRenderer: fotoRenderer, sortable: false, filter: false },
-            { headerName: "Nombre", field: "nombre", flex: 1, minWidth: 160 },
-            { headerName: "Estado", field: "estado", width: 140 },
-            { headerName: "Avance %", field: "porcentajeAvance", width: 110 },
-            { headerName: "Ubicación", field: "ubicacion", flex: 1, minWidth: 140 },
-            { headerName: "Acciones", width: 180, cellRenderer: accionesRenderer, sortable: false, filter: false },
-            ],
-            defaultColDef: { resizable: true, sortable: true },
-            rowHeight: 56,
-            rowData: [],
-        });
-        cargar();
-        }
-
-        if (document.readyState === "loading") {
-        document.addEventListener("DOMContentLoaded", init);
-        } else {
-        init();
-        }
-    })();
+  cargar();
 </script>

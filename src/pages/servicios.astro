@@ -41,7 +41,7 @@ import "../components/menu/menu.css";
 		<!-- ▌SERVICIOS AGRUPADOS POR INMOBILIARIA (se llena por JS con /api/servicios) ▐ -->
 		<section class="contenedor" id="serviciosGrid">
 			<div class="empty-state">
-				<span>⏳</span>
+				<span><i class="bi bi-hourglass-split" aria-hidden="true"></i></span>
 				Cargando servicios...
 			</div>
 		</section>
@@ -72,7 +72,7 @@ import "../components/menu/menu.css";
 
 						<div class="modal-footer">
 							<button type="button" class="btn-secondary" id="btnCancelarModal">Cancelar</button>
-							<button type="submit" class="btn-confirm">✅ Enviar solicitud</button>
+							<button type="submit" class="btn-confirm"><i class="bi bi-check-circle-fill" aria-hidden="true"></i> Enviar solicitud</button>
 						</div>
 					</form>
 				</div>
@@ -89,7 +89,7 @@ import "../components/menu/menu.css";
 				type ServicioMantenimiento,
 			} from '../utils/api';
 
-const BACKEND_PUBLIC = "http://localhost:8001";
+const BACKEND_PUBLIC = "/backend";
 
 function urlPublica(ruta: string | null | undefined) {
   if (!ruta || !ruta.trim()) return "";
@@ -132,16 +132,16 @@ function renderUserMenu() {
 
   if (usuarioAutenticado) {
     const avatar = fotoPerfil
-      ? `<img src="${fotoPerfil}" alt="Perfil" class="profile-pic" id="profilePic" />`
-      : `<button type="button" class="profile-pic profile-iniciales" id="profilePic">${iniciales(nombreUsuario)}</button>`;
+      ? `<img src="${escapeHtml(fotoPerfil)}" alt="Perfil" class="profile-pic" id="profilePic" />`
+      : `<button type="button" class="profile-pic profile-iniciales" id="profilePic">${escapeHtml(iniciales(nombreUsuario))}</button>`;
 
     nav.innerHTML = `
       <div class="user-profile">
         ${avatar}
         <div id="user-menu" class="user-menu">
-          <div class="user-menu-name">${nombreUsuario}</div>
-          <a href="/usuario">⚙️ Ajustes</a>
-          <button type="button" id="btnLogout">🚪 Cerrar sesión</button>
+          <div class="user-menu-name">${escapeHtml(nombreUsuario)}</div>
+          <a href="/usuario"><i class="bi bi-gear-fill" aria-hidden="true"></i> Ajustes</a>
+          <button type="button" id="btnLogout"><i class="bi bi-box-arrow-right" aria-hidden="true"></i> Cerrar sesión</button>
         </div>
       </div>`;
 
@@ -177,8 +177,8 @@ function renderProveedorChip(inmobiliariaID: number | null, nombre: string, logo
     const contenido = `
         ${
             logo
-                ? `<img src="${urlPublica(logo)}" alt="${nombreSeguro}" class="proveedor-logo" loading="lazy">`
-                : `<span class="proveedor-logo proveedor-logo--placeholder">${iniciales(nombre)}</span>`
+                ? `<img src="${escapeHtml(urlPublica(logo))}" alt="${nombreSeguro}" class="proveedor-logo" loading="lazy">`
+                : `<span class="proveedor-logo proveedor-logo--placeholder">${escapeHtml(iniciales(nombre))}</span>`
         }
         <span class="proveedor-nombre">${nombreSeguro}</span>
         ${inmobiliariaID ? `<span class="proveedor-flecha" aria-hidden="true"></span>` : ''}
@@ -189,7 +189,7 @@ function renderProveedorChip(inmobiliariaID: number | null, nombre: string, logo
     }
 
     return `
-        <a href="/inmobiliarias/${inmobiliariaID}" class="proveedor-chip" title="Ver perfil de ${nombreSeguro}">
+        <a href="/inmobiliarias/${escapeHtml(String(inmobiliariaID))}" class="proveedor-chip" title="Ver perfil de ${nombreSeguro}">
             ${contenido}
         </a>`;
 }
@@ -199,17 +199,18 @@ function renderCardServicio(s: ServicioMantenimiento, grupo: GrupoServiciosInmob
     const nombreSeguro = escapeHtml(s.nombre);
     return `
     <div class="card">
-        <div class="card-img-container">
+        <div class="card-img-container" data-detalle="servicio:${Number(s.servicioID)}">
             ${
                 s.imagen
-                    ? `<img src="${urlPublica(s.imagen)}" alt="${nombreSeguro}" loading="lazy">`
-                    : `<div class="card-icon-placeholder">🛠️</div>`
+                    ? `<img src="${escapeHtml(urlPublica(s.imagen))}" alt="${nombreSeguro}" loading="lazy">`
+                    : `<div class="card-icon-placeholder"><i class="bi bi-tools" aria-hidden="true"></i></div>`
             }
             <span class="badge-tipo">Disponible</span>
         </div>
         <div class="card-content">
-            <h3>${nombreSeguro}</h3>
+            <h3 data-detalle="servicio:${Number(s.servicioID)}">${nombreSeguro}</h3>
             <p>${escapeHtml(s.descripcion)}</p>
+            <button type="button" class="fn-btn fn-btn--sec fn-btn--mini" data-detalle="servicio:${Number(s.servicioID)}" style="justify-self:start;margin-bottom:8px"><i class="bi bi-star" aria-hidden="true"></i> Ver detalle y opiniones</button>
 
             ${renderProveedorChip(grupo.inmobiliariaID, grupo.inmobiliaria, grupo.inmobiliariaLogo)}
 
@@ -217,8 +218,8 @@ function renderCardServicio(s: ServicioMantenimiento, grupo: GrupoServiciosInmob
                 <p class="price-tag"><span class="price-eyebrow">Desde</span>$${formatoPrecio(s.precio)}</p>
                 ${
                     usuarioAutenticado
-                    ? `<button type="button" class="btn-solicitar" data-id="${s.servicioID}" data-nombre="${nombreSeguro}">Solicitar</button>`
-                    : `<a href="/login?redirect=/servicios&solicitar=${s.servicioID}&nombre=${encodeURIComponent(s.nombre ?? '')}" class="btn-login-required">Inicia sesión para solicitar</a>`
+                    ? `<button type="button" class="btn-solicitar" data-id="${escapeHtml(String(s.servicioID))}" data-nombre="${nombreSeguro}">Solicitar</button>`
+                    : `<a href="/login?redirect=/servicios&solicitar=${escapeHtml(String(s.servicioID))}&nombre=${encodeURIComponent(s.nombre ?? '')}" class="btn-login-required">Inicia sesión para solicitar</a>`
                 }
             </div>
         </div>
@@ -231,8 +232,8 @@ function renderGrupo(grupo: GrupoServiciosInmobiliaria) {
     const textoCantidad = `${cantidad} ${cantidad === 1 ? 'servicio disponible' : 'servicios disponibles'}`;
 
     const logoHtml = grupo.inmobiliariaLogo
-        ? `<img src="${urlPublica(grupo.inmobiliariaLogo)}" alt="${nombreSeguro}" class="grupo-logo">`
-        : `<span class="grupo-logo grupo-logo-placeholder">${iniciales(grupo.inmobiliaria)}</span>`;
+        ? `<img src="${escapeHtml(urlPublica(grupo.inmobiliariaLogo))}" alt="${nombreSeguro}" class="grupo-logo">`
+        : `<span class="grupo-logo grupo-logo-placeholder">${escapeHtml(iniciales(grupo.inmobiliaria))}</span>`;
 
     const headerInner = `
         ${logoHtml}
@@ -244,7 +245,7 @@ function renderGrupo(grupo: GrupoServiciosInmobiliaria) {
     `;
 
     const header = grupo.inmobiliariaID
-        ? `<a href="/inmobiliarias/${grupo.inmobiliariaID}" class="grupo-header" title="Ver perfil de ${nombreSeguro}">${headerInner}</a>`
+        ? `<a href="/inmobiliarias/${escapeHtml(String(grupo.inmobiliariaID))}" class="grupo-header" title="Ver perfil de ${nombreSeguro}">${headerInner}</a>`
         : `<div class="grupo-header grupo-header--sin-link">${headerInner}</div>`;
 
     return `
@@ -332,7 +333,7 @@ async function cargarServicios() {
         if (!totalServicios) {
             grid.innerHTML = `
                 <div class="empty-state">
-                    <span>🛠️</span>
+                    <span><i class="bi bi-tools" aria-hidden="true"></i></span>
                     No hay servicios de mantenimiento disponibles por el momento.
                 </div>`;
             return;
@@ -344,7 +345,7 @@ async function cargarServicios() {
     } catch (e) {
         grid.innerHTML = `
             <div class="empty-state">
-                <span>⚠️</span>
+                <span><i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i></span>
                 Ocurrió un error al cargar los servicios. Intenta nuevamente.
             </div>`;
         console.error(e);
@@ -425,7 +426,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             cerrarModal('modalSolicitud');
             form.reset();
-            mostrarToast('Solicitud enviada correctamente ✅');
+            mostrarToast('Solicitud enviada correctamente');
         } catch (err: any) {
             mostrarToast(err.message ?? 'Error al enviar la solicitud', 'error');
         }

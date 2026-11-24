@@ -185,6 +185,8 @@ export function rutaPorRol(rol: string | null | undefined): string {
       return "/agente";
     case "Constructora":
       return "/constructora";
+    case "Trabajador":
+      return "/trabajador";
     case "Usuario":
     default:
       return "/"; // menú

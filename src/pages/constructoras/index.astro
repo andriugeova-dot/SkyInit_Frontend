@@ -1,10 +1,11 @@
 ---
+import { BACKEND_URL } from "../../utils/config";
 import Navbar from "../../components/menu/Navbar.astro";
 import FooterMenu from "../../components/menu/FooterMenu.astro";
 import Constructoras from "../../components/ConstructorasUsuario/constructoras.astro";
 import "../../components/menu/menu.css";
 
-const BACKEND = "http://127.0.0.1:8001";
+const BACKEND = `${BACKEND_URL}`;
 
 let lista: any[] = [];
 try {

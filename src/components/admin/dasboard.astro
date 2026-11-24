@@ -1,4 +1,5 @@
 ---
+import ResumenPanel from "../funciones/ResumenPanel.astro";
 import "./dashboard.css";
 import { COOKIE_NAME, getTokenSSR } from "../../utils/auth";
 
@@ -72,6 +73,7 @@ const iconoEstadoSolicitud = (estado: string) => {
         <h1>Panel inmobiliaria</h1>
         <p>Resumen general de la inmobiliaria.</p>
     </div>
+    <ResumenPanel />
 
     {errorCarga && (
         <div class="alert-error" role="alert">

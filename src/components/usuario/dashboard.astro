@@ -1,4 +1,6 @@
 ---
+import ResumenPanel from "../funciones/ResumenPanel.astro";
+import { BACKEND_URL } from "../../utils/config";
 import { COOKIE_NAME, getTokenSSR } from "../../utils/auth";
 
 const token = getTokenSSR(Astro.cookies);
@@ -15,9 +17,9 @@ if (token) {
         };
 
         const [resPerfil, resFavs, resSols] = await Promise.allSettled([
-            fetch("http://127.0.0.1:8001/auth/perfil",            { headers }),
-            fetch("http://127.0.0.1:8001/usuario/favoritos",      { headers }),
-            fetch("http://127.0.0.1:8001/usuario/solicitudes",    { headers }),
+            fetch(`${BACKEND_URL}/auth/perfil`,            { headers }),
+            fetch(`${BACKEND_URL}/usuario/favoritos`,      { headers }),
+            fetch(`${BACKEND_URL}/usuario/solicitudes`,    { headers }),
         ]);
 
         if (resPerfil.status === "fulfilled" && resPerfil.value.ok) {
@@ -46,7 +48,7 @@ function obtenerIniciales(nombre: string): string {
 }
 
 const fotoSrc = usuario.fotoPerfil
-    ? (usuario.fotoPerfil.startsWith("http") ? usuario.fotoPerfil : `http://localhost:8001${usuario.fotoPerfil}`)
+    ? (usuario.fotoPerfil.startsWith("http") ? usuario.fotoPerfil : `/backend${usuario.fotoPerfil}`)
     : null;
 ---
 
@@ -57,6 +59,7 @@ const fotoSrc = usuario.fotoPerfil
         <h1>Bienvenido, {usuario.nombre}</h1>
         <p>Gestiona tu cuenta y tus propiedades favoritas.</p>
     </div>
+    <ResumenPanel />
 
     <!-- ESTADÍSTICAS -->
     <section class="stats-grid">
@@ -74,9 +77,9 @@ const fotoSrc = usuario.fotoPerfil
     <section class="card">
         <h2>Accesos rápidos</h2>
         <div class="accesos-grid">
-            <a href="/usuario/favoritos"   class="acceso-btn">⭐ Mis Favoritos</a>
-            <a href="/usuario/solicitudes" class="acceso-btn">🛠️ Mis Solicitudes</a>
-            <a href="/usuario/perfil"      class="acceso-btn">👤 Mi Perfil</a>
+            <a href="/usuario/favoritos"   class="acceso-btn"><i class="bi bi-star-fill" aria-hidden="true"></i> Mis Favoritos</a>
+            <a href="/usuario/solicitudes" class="acceso-btn"><i class="bi bi-tools" aria-hidden="true"></i> Mis Solicitudes</a>
+            <a href="/usuario/perfil"      class="acceso-btn"><i class="bi bi-person-fill" aria-hidden="true"></i> Mi Perfil</a>
         </div>
     </section>
 
@@ -94,7 +97,7 @@ const fotoSrc = usuario.fotoPerfil
                 <p><strong>Nombre:</strong> {usuario.nombre}</p>
                 <p><strong>Correo:</strong> {usuario.correo || "—"}</p>
                 <p><strong>Teléfono:</strong> {usuario.telefono || "No registrado"}</p>
-                <a href="/usuario/perfil" class="btn">✏️ Editar Perfil</a>
+                <a href="/usuario/perfil" class="btn"><i class="bi bi-pencil-square" aria-hidden="true"></i> Editar Perfil</a>
             </div>
         </div>
     </section>

@@ -1,5 +1,6 @@
 ---
 import "./login.css";
+import "bootstrap-icons/font/bootstrap-icons.min.css";
 ---
 
 <div class="auth-page">
@@ -37,7 +38,7 @@ import "./login.css";
         <p>Ingresa a tu cuenta para explorar propiedades</p>
       </div>
 
-      <form id="formLogin" class="auth-form">
+      <form id="formLogin" class="auth-form" autocomplete="off">
         <div class="field">
           <label for="login-correo">Correo electrónico</label>
           <input
@@ -45,7 +46,9 @@ import "./login.css";
             type="email"
             class="custom-input"
             placeholder="ejemplo@email.com"
-            autocomplete="email"
+            autocomplete="off"
+            autocapitalize="none"
+            spellcheck="false"
             required
           />
         </div>
@@ -57,7 +60,8 @@ import "./login.css";
             type="password"
             class="custom-input"
             placeholder="••••••••"
-            autocomplete="current-password"
+            autocomplete="new-password"
+            data-ojo
             required
           />
         </div>
@@ -123,11 +127,14 @@ import "./login.css";
       if (data.error) {
         errorEl.textContent = data.error;
         errorEl.classList.remove("d-none");
+        (document.getElementById("login-password") as HTMLInputElement).value = "";
         return;
       }
       const rol = data.usuario?.rol ?? "Usuario";
-      window.location.href =
-      rol === "Usuario" ? "/" : rutaPorRol(rol);
+      // Volver a la pagina que se queria abrir, solo si es una ruta interna
+      const destino = new URLSearchParams(window.location.search).get("redirect");
+      const esInterna = !!destino && destino.startsWith("/") && !destino.startsWith("//") && !destino.includes("\\");
+      window.location.href = esInterna ? destino! : (rol === "Usuario" ? "/" : rutaPorRol(rol));
     } catch {
       errorEl.textContent = "Error al conectar con el servidor";
       errorEl.classList.remove("d-none");
@@ -137,9 +144,22 @@ import "./login.css";
   });
   
 
+  // El formulario nunca conserva datos: se limpia al cargar, al volver con "atras" y tras cada intento
+  import { activarOjos } from "../funciones/ojo";
+  import "../funciones/funciones.css";
+  activarOjos();
+  const limpiarLogin = () => {
+    (document.getElementById("login-correo") as HTMLInputElement).value = "";
+    const pw = document.getElementById("login-password") as HTMLInputElement;
+    pw.value = ""; pw.type = "password";
+  };
+  limpiarLogin();
+  setTimeout(limpiarLogin, 120); // algunos navegadores autocompletan un instante despues de cargar
+  window.addEventListener("pageshow", limpiarLogin);
+
   // Google OAuth
   const btnGoogle = document.getElementById("btnGoogle") as HTMLButtonElement;
   btnGoogle.addEventListener("click", () => {
-    window.location.href = "http://localhost:8001/auth/google";
+    window.location.href = "/api/auth/google";
   });
 </script>

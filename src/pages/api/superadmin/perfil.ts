@@ -1,6 +1,7 @@
+import { BACKEND_URL } from "../../../utils/config";
 import type { APIRoute } from "astro";
 
-const BACKEND = "http://localhost:8001/superadmin/perfil";
+const BACKEND = `${BACKEND_URL}/superadmin/perfil`;
 
 async function reenviar(request: Request, method: string, body?: string): Promise<Response> {
   try {

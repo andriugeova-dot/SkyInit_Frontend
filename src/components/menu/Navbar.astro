@@ -1,5 +1,7 @@
 ---
-import { isAuthenticatedSSR, getTokenSSR, COOKIE_NAME } from "../../utils/auth";
+import { BACKEND_URL } from "../../utils/config";
+import { isAuthenticatedSSR, getTokenSSR, COOKIE_NAME, obtenerRolDesdeToken } from "../../utils/auth";
+import "bootstrap-icons/font/bootstrap-icons.min.css";
 import "./menu.css";
 
 interface Props {
@@ -12,13 +14,19 @@ const { soloNav = false } = Astro.props;
 
 const autenticado = isAuthenticatedSSR(Astro.cookies);
 const token = getTokenSSR(Astro.cookies);
+const rol = obtenerRolDesdeToken(token) ?? "Usuario";
+// Pestaña activa: se resalta la seccion en la que esta el usuario
+const ruta = Astro.url.pathname;
+const activa = (href: string) => (href === "/" ? ruta === "/" : ruta === href || ruta.startsWith(href + "/")) ? "nav-activo" : undefined;
+const panelPorRol: Record<string, string> = { Administrador: "/admin", SuperAdmin: "/superadmin", Agente: "/agente", Constructora: "/constructora", Trabajador: "/trabajador", Usuario: "/usuario" };
+const miPanel = panelPorRol[rol] ?? "/usuario";
 
 let nombre = "Usuario";
 let foto: string | null = null;
 
 if (token) {
   try {
-    const res = await fetch("http://localhost:8001/auth/perfil", {
+    const res = await fetch(`${BACKEND_URL}/auth/perfil`, {
       headers: { Cookie: `${COOKIE_NAME}=${token}` },
     });
     if (res.ok) {
@@ -28,7 +36,7 @@ if (token) {
       if (u.fotoPerfil) {
         foto = u.fotoPerfil.startsWith("http")
           ? u.fotoPerfil
-          : `http://localhost:8001${u.fotoPerfil.startsWith("/") ? u.fotoPerfil : "/" + u.fotoPerfil}`;
+          : `/backend${u.fotoPerfil.startsWith("/") ? u.fotoPerfil : "/" + u.fotoPerfil}`;
       }
     }
   } catch { /* defaults */ }
@@ -44,21 +52,23 @@ const iniciales = nombre
 
 {
   soloNav ? (
-    <header id="header" class="header--solo-nav">
+    <header id="header" class="header--solo-nav" data-rol={rol}>
 
 <div class="topbar">
   <span class="logo">SkyInit</span>
 
-  <button type="button" class="menu-toggle" id="menuToggle" aria-label="Abrir menú">&#9776;</button>
+  <button type="button" class="menu-toggle" id="menuToggle" aria-label="Abrir menú"><i class="bi bi-list" aria-hidden="true"></i></button>
 
   <nav id="menu">
-    <a href="/">Inicio</a>
-    <a href="/propiedades">Propiedades</a>
-    <a href="/proyectos">Proyectos</a>
-    <a href="/servicios">Servicios</a>
-    <a href="/constructoras">Constructoras</a>
+    <a href="/" class={activa("/")} aria-current={activa("/") ? "page" : undefined}>Inicio</a>
+    <a href="/propiedades" class={activa("/propiedades")} aria-current={activa("/propiedades") ? "page" : undefined}>Propiedades</a>
+    <a href="/proyectos" class={activa("/proyectos")} aria-current={activa("/proyectos") ? "page" : undefined}>Proyectos</a>
+    <a href="/servicios" class={activa("/servicios")} aria-current={activa("/servicios") ? "page" : undefined}>Servicios</a>
+    <a href="/constructoras" class={activa("/constructoras")} aria-current={activa("/constructoras") ? "page" : undefined}>Constructoras</a>
+    <a href="/mapa" class={activa("/mapa")} aria-current={activa("/mapa") ? "page" : undefined}>Mapa</a>
 
     {autenticado ? (
+      <a href="/notificaciones" class="nav-campana" aria-label="Notificaciones"><i class="bi bi-bell-fill" aria-hidden="true"></i><b class="nav-campana-n" data-contador-notif hidden></b></a>
       <div class="user-profile" id="navUserProfile">
         {foto ? (
           <img src={foto} alt="Perfil" class="profile-pic" id="btnUserMenu" referrerpolicy="no-referrer" />
@@ -69,8 +79,9 @@ const iniciales = nombre
         )}
         <div id="user-menu" class="user-menu">
           <div class="user-menu-name">{nombre}</div>
-          <a href="/usuario">⚙️ Ajustes</a>
-          <button type="button" id="btnLogout">🚪 Cerrar sesión</button>
+          <a href={miPanel}><i class="bi bi-grid-1x2-fill" aria-hidden="true"></i> Mi panel</a>
+          <a href="/notificaciones"><i class="bi bi-bell-fill" aria-hidden="true"></i> Notificaciones</a>
+          <button type="button" id="btnLogout"><i class="bi bi-box-arrow-right" aria-hidden="true"></i> Cerrar sesión</button>
         </div>
       </div>
     ) : (
@@ -84,16 +95,18 @@ const iniciales = nombre
 <div class="topbar">
   <span class="logo">SkyInit</span>
 
-  <button type="button" class="menu-toggle" id="menuToggle" aria-label="Abrir menú">&#9776;</button>
+  <button type="button" class="menu-toggle" id="menuToggle" aria-label="Abrir menú"><i class="bi bi-list" aria-hidden="true"></i></button>
 
   <nav id="menu">
-    <a href="/">Inicio</a>
-    <a href="/propiedades">Propiedades</a>
-    <a href="/proyectos">Proyectos</a>
-    <a href="/servicios">Servicios</a>
-    <a href="/constructoras">Constructoras</a>
+    <a href="/" class={activa("/")} aria-current={activa("/") ? "page" : undefined}>Inicio</a>
+    <a href="/propiedades" class={activa("/propiedades")} aria-current={activa("/propiedades") ? "page" : undefined}>Propiedades</a>
+    <a href="/proyectos" class={activa("/proyectos")} aria-current={activa("/proyectos") ? "page" : undefined}>Proyectos</a>
+    <a href="/servicios" class={activa("/servicios")} aria-current={activa("/servicios") ? "page" : undefined}>Servicios</a>
+    <a href="/constructoras" class={activa("/constructoras")} aria-current={activa("/constructoras") ? "page" : undefined}>Constructoras</a>
+    <a href="/mapa" class={activa("/mapa")} aria-current={activa("/mapa") ? "page" : undefined}>Mapa</a>
 
     {autenticado ? (
+      <a href="/notificaciones" class="nav-campana" aria-label="Notificaciones"><i class="bi bi-bell-fill" aria-hidden="true"></i><b class="nav-campana-n" data-contador-notif hidden></b></a>
       <div class="user-profile" id="navUserProfile">
         {foto ? (
           <img src={foto} alt="Perfil" class="profile-pic" id="btnUserMenu" referrerpolicy="no-referrer" />
@@ -104,8 +117,9 @@ const iniciales = nombre
         )}
         <div id="user-menu" class="user-menu">
           <div class="user-menu-name">{nombre}</div>
-          <a href="/usuario">⚙️ Ajustes</a>
-          <button type="button" id="btnLogout">🚪 Cerrar sesión</button>
+          <a href={miPanel}><i class="bi bi-grid-1x2-fill" aria-hidden="true"></i> Mi panel</a>
+          <a href="/notificaciones"><i class="bi bi-bell-fill" aria-hidden="true"></i> Notificaciones</a>
+          <button type="button" id="btnLogout"><i class="bi bi-box-arrow-right" aria-hidden="true"></i> Cerrar sesión</button>
         </div>
       </div>
     ) : (
@@ -118,6 +132,14 @@ const iniciales = nombre
 
 <script>
   import { logoutRequest } from "../../utils/api";
+  import { iniciarAvisos } from "../funciones/avisos";
+
+  // Contador y avisos emergentes de notificaciones (solo con sesion iniciada)
+  const campanas = [...document.querySelectorAll<HTMLElement>("[data-contador-notif]")];
+  if (campanas.length) {
+    campanas.forEach((c, i) => { c.id = "navCampana" + i; });
+    iniciarAvisos(document.getElementById("header")?.dataset.rol ?? "Usuario", campanas.map((c) => c.id));
+  }
 
   // Toggle menú móvil
   document.getElementById("menuToggle")?.addEventListener("click", () => {
@@ -151,7 +173,7 @@ const iniciales = nombre
           const data = await res.json();
           const u = data.usuario ?? data;
           const nuevaFoto: string | null = u.fotoPerfil
-            ? (u.fotoPerfil.startsWith("http") ? u.fotoPerfil : `http://localhost:8001${u.fotoPerfil.startsWith("/") ? u.fotoPerfil : "/" + u.fotoPerfil}`)
+            ? (u.fotoPerfil.startsWith("http") ? u.fotoPerfil : `/backend${u.fotoPerfil.startsWith("/") ? u.fotoPerfil : "/" + u.fotoPerfil}`)
             : null;
           if (nuevaFoto && nuevaFoto !== profileImg.src) {
             profileImg.src = nuevaFoto;

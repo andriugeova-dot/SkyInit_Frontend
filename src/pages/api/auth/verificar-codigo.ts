@@ -2,12 +2,12 @@ import type { APIRoute } from "astro";
 
 const BACKEND = import.meta.env.BACKEND_URL ?? "http://localhost:8001";
 
-export const POST: APIRoute = async ({ request }) => {
+export const POST: APIRoute = async ({ request, clientAddress }) => {
   try {
     const body = await request.text();
     const res = await fetch(`${BACKEND}/auth/verificar-codigo`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", "X-Forwarded-For": clientAddress },
       body,
     });
     const data = await res.text();

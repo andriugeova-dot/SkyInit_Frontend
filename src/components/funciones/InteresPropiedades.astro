@@ -1,0 +1,31 @@
+---
+/** Metricas de interes por propiedad. Rellena cada <div data-interes="ID"> del panel del administrador. */
+import "./funciones.css";
+---
+<style is:global>
+  .prop-interes { display:flex; flex-wrap:wrap; gap:6px 12px; font-size:.8rem; color:var(--fn-muted); border-top:1px solid var(--fn-line); padding-top:8px; margin-top:8px; }
+  .prop-interes span { display:inline-flex; align-items:center; gap:4px; white-space:nowrap; }
+  .prop-interes b { color:var(--fn-ink); font-variant-numeric:tabular-nums; }
+  .prop-interes .prop-interes-titulo { flex-basis:100%; font-weight:600; color:var(--fn-ink); }
+</style>
+<script>
+  import { api } from "./comun";
+  (async () => {
+    const cajas = [...document.querySelectorAll<HTMLElement>("[data-interes]")];
+    if (!cajas.length) return;
+    try {
+      const { propiedades } = await api("/admin/interes");
+      const porId = new Map<number, any>(propiedades.map((p: any) => [p.propiedadID, p]));
+      for (const caja of cajas) {
+        const m = porId.get(Number(caja.dataset.interes));
+        if (!m) { caja.textContent = "Sin datos de interés"; continue; }
+        const item = (icono: string, n: number, etiqueta: string) =>
+          `<span title="${etiqueta}"><i class="bi ${icono}" aria-hidden="true"></i><b>${Number(n)}</b> ${etiqueta}</span>`;
+        caja.innerHTML = `<span class="prop-interes-titulo"><i class="bi bi-graph-up-arrow" aria-hidden="true"></i> Interés: ${Number(m.interesTotal)} interacciones · ${Number(m.usuariosUnicos)} usuario(s)</span>` +
+          item("bi-eye", m.vistas, "vistas") + item("bi-heart", m.guardados, "guardados") + item("bi-calendar-check", m.citas, "citas") +
+          item("bi-chat-dots", m.comentarios, "comentarios") + item("bi-geo-alt", m.clicsMapa, "mapa") +
+          `<span title="Calificación promedio"><i class="bi bi-star-fill" aria-hidden="true"></i><b>${m.promedio ?? "—"}</b> (${Number(m.calificaciones)})</span>`;
+      }
+    } catch { cajas.forEach((c) => { c.textContent = "No se pudieron cargar las métricas"; }); }
+  })();
+</script>

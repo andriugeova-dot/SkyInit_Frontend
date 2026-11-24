@@ -1,7 +1,7 @@
+import { BACKEND_URL } from "../../utils/config";
 import type { APIRoute } from "astro";
 import { COOKIE_NAME, getTokenSSR } from "../../utils/auth";
 
-const BACKEND_URL = "http://localhost:8001";
 
 // El catalogo de servicios es publico: no debe exigir sesion.
 export const GET: APIRoute = async ({ cookies }) => {
