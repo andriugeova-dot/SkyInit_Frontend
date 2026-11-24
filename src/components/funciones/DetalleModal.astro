@@ -19,9 +19,9 @@ import "./funciones.css";
   .det-cerrar { position:sticky; top:10px; margin:10px 10px -46px auto; display:grid; place-items:center; z-index:5; width:36px; height:36px;
                 border-radius:50%; border:0; background:rgba(20,28,22,.7); color:#fff; cursor:pointer; float:right; }
   .det-top { display:grid; gap:18px; grid-template-columns:minmax(0,1.15fr) minmax(0,1fr); align-items:start; }
-  .det-car { position:relative; border-radius:12px; overflow:hidden; background:#e9e6dc; aspect-ratio:4/3; }
+  .det-car { position:relative; border-radius:12px; overflow:hidden; background:#e9e6dc; width:100%; min-height:220px; aspect-ratio:4/3; }
   .det-car img { width:100%; height:100%; object-fit:cover; display:block; }
-  .det-car-vacio { display:grid; place-items:center; height:100%; color:#8a8f86; font-size:2.6rem; }
+  .det-car-vacio { display:grid; place-items:center; width:100%; height:100%; min-height:220px; color:#8a8f86; font-size:2.6rem; background:#e9e6dc; }
   .det-flecha { position:absolute; top:50%; transform:translateY(-50%); width:38px; height:38px; border-radius:50%; border:0;
                 background:rgba(255,255,255,.88); color:#222; cursor:pointer; display:grid; place-items:center; }
   .det-flecha:hover { background:#fff; }
@@ -72,9 +72,20 @@ import "./funciones.css";
   };
   const dato = (icono: string, texto: unknown) => texto ? `<li><i class="bi ${icono}" aria-hidden="true"></i><span>${esc(texto)}</span></li>` : "";
 
+  function obtenerImagenes(): string[] {
+    const raw: unknown[] = Array.isArray(datos?.imagenes)
+      ? datos.imagenes
+      : [datos?.imagen, datos?.image_url, datos?.foto, datos?.imagenServicio].filter(Boolean);
+    return raw
+      .map((item) => (typeof item === "string" ? item : (item as any)?.url ?? (item as any)?.imagen ?? ""))
+      .map((s) => String(s ?? "").trim())
+      .filter(Boolean);
+  }
+
   function carrusel(): string {
-    const imgs: string[] = datos.imagenes ?? [];
-    if (!imgs.length) return `<div class="det-car"><div class="det-car-vacio"><i class="bi bi-image" aria-hidden="true"></i></div></div>`;
+    const imgs = obtenerImagenes();
+    const iconoVacio = datos?.tipo === "servicio" ? "bi-tools" : "bi-image";
+    if (!imgs.length) return `<div class="det-car"><div class="det-car-vacio"><i class="bi ${iconoVacio}" aria-hidden="true"></i></div></div>`;
     return `<div class="det-car" id="detCar" role="group" aria-roledescription="carrusel" aria-label="Fotos">
       <img id="detFoto" src="${esc(urlArchivo(imgs[0]))}" alt="Foto 1 de ${imgs.length}: ${esc(datos.titulo)}" />
       ${imgs.length > 1 ? `
@@ -85,10 +96,11 @@ import "./funciones.css";
     </div>`;
   }
   function irA(i: number) {
-    const imgs: string[] = datos.imagenes ?? [];
+    const imgs = obtenerImagenes();
     if (!imgs.length) return;
     foto = (i + imgs.length) % imgs.length;
-    const img = document.getElementById("detFoto") as HTMLImageElement;
+    const img = document.getElementById("detFoto") as HTMLImageElement | null;
+    if (!img) return;
     img.src = urlArchivo(imgs[foto]); img.alt = `Foto ${foto + 1} de ${imgs.length}: ${datos.titulo}`;
     const c = document.getElementById("detContador"); if (c) c.textContent = `${foto + 1} / ${imgs.length}`;
     cuerpo.querySelectorAll<HTMLElement>(".det-punto").forEach((p, n) => p.setAttribute("aria-current", String(n === foto)));
@@ -171,6 +183,16 @@ import "./funciones.css";
       ${d.descripcion ? `<section class="det-seccion"><h3>Descripción</h3><p class="det-desc">${esc(d.descripcion)}</p></section>` : ""}
       <section class="det-seccion" id="detSeccionMapa" hidden><h3>Ubicación</h3><div id="detMapa"></div></section>
       ${bloqueOpiniones()}`;
+    const imgEl = document.getElementById("detFoto") as HTMLImageElement | null;
+    if (imgEl) {
+      imgEl.addEventListener("error", () => {
+        const car = document.getElementById("detCar");
+        if (car) {
+          const ic = d.tipo === "servicio" ? "bi-tools" : "bi-image";
+          car.innerHTML = `<div class="det-car-vacio"><i class="bi ${ic}" aria-hidden="true"></i></div>`;
+        }
+      }, { once: true });
+    }
     mapa = null; foto = 0;
     if (mapaAbierto) mostrarMapa(false);
   }
@@ -181,6 +203,7 @@ import "./funciones.css";
     const seccion = document.getElementById("detSeccionMapa")!;
     seccion.hidden = false;
     if (!mapa) {
+      // @ts-ignore Leaflet no incluye tipos propios
       const L = (await import("leaflet")).default;
       await import("leaflet/dist/leaflet.css");
       mapa = L.map("detMapa").setView([d.latitud, d.longitud], 16);

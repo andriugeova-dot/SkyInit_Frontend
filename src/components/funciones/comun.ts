@@ -25,9 +25,11 @@ export async function api<T = any>(ruta: string, metodo = "GET", cuerpo?: unknow
 }
 
 export function urlArchivo(ruta: string | null | undefined): string {
-  if (!ruta) return "";
-  if (/^https?:\/\//i.test(ruta)) return ruta;
-  return "/backend" + (ruta.startsWith("/") ? ruta : "/" + ruta);
+  if (!ruta || !ruta.trim()) return "";
+  const r = ruta.trim();
+  if (/^(https?:\/\/|data:)/i.test(r)) return r;
+  if (r.startsWith("/backend/") || r.startsWith("/img/") || r.startsWith("/assets/")) return r;
+  return "/backend" + (r.startsWith("/") ? r : "/" + r);
 }
 
 export function fechaHora(v: string | null | undefined): string {

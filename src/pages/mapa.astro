@@ -4,6 +4,7 @@ import FooterMenu from "../components/menu/FooterMenu.astro";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap-icons/font/bootstrap-icons.min.css";
 import "../components/menu/menu.css";
+import "../components/propiedades/propiedades.css";
 import "../components/funciones/funciones.css";
 ---
 <html lang="es">
@@ -12,145 +13,569 @@ import "../components/funciones/funciones.css";
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Mapa | SkyInit</title>
     <link rel="icon" href="/favicon.ico" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&display=swap"
+      rel="stylesheet"
+    />
   </head>
   <body>
-    <Navbar soloNav />
-    <main class="fn fn-publica" id="mapaRoot" data-editar="0">
-      <div class="fn-head">
-        <div>
-          <h1>Mapa de propiedades y proyectos</h1>
-          <p id="mapaResumen">Cargando ubicaciones…</p>
-        </div>
-        <div class="fn-acciones">
-          <button class="fn-btn" id="btnCerca" type="button"><i class="bi bi-crosshair" aria-hidden="true"></i> Cerca de mí</button>
-        </div>
+    <header id="header" class="mapa-hero">
+      <Navbar />
+      <div class="hero-inner">
+        <div class="hero-eyebrow">Mapa interactivo</div>
+        <h1>Explora <em>ubicaciones estratégicas</em></h1>
+        <p class="hero-sub">
+          Descubre propiedades y proyectos en el mapa interactivo.
+        </p>
       </div>
-      <div class="mapa-layout">
-        <div id="mapa" role="application" aria-label="Mapa"></div>
-        <aside class="mapa-lista" id="mapaLista" aria-live="polite"></aside>
+    </header>
+
+    <section class="search-container" aria-label="Filtros del mapa">
+      <form class="search-box mapa-search-box" id="mapaFiltros">
+        <input
+          type="text"
+          id="filtroTexto"
+          placeholder="Buscar por nombre de propiedad, proyecto o ciudad..."
+          aria-label="Buscar por nombre de propiedad, proyecto o ciudad"
+        />
+        <select id="filtroTipo" aria-label="Filtrar por tipo">
+          <option value="">-- Todos --</option>
+          <option value="propiedad">Propiedad</option>
+          <option value="proyecto">Proyecto</option>
+        </select>
+        <select id="filtroCiudad" aria-label="Filtrar por ciudad">
+          <option value="">-- Todas las ciudades --</option>
+        </select>
+        <button type="submit" id="btnBuscarMapa">Buscar</button>
+      </form>
+    </section>
+
+    <main class="mapa-seccion" id="mapaRoot" data-editar="0">
+      <div class="fn fn-publica mapa-contenedor">
+        <div class="fn-head mapa-head">
+          <div>
+            <h1>Mapa de propiedades y proyectos</h1>
+            <p id="mapaResumen">Cargando ubicaciones…</p>
+          </div>
+          <div class="fn-acciones">
+            <button class="fn-btn mapa-btn-cerca" id="btnCerca" type="button">
+              <i class="bi bi-crosshair" aria-hidden="true"></i> Cerca de mí
+            </button>
+          </div>
+        </div>
+        <div class="mapa-layout">
+          <div id="mapa" role="application" aria-label="Mapa"></div>
+          <aside class="mapa-lista" id="mapaLista" aria-live="polite"></aside>
+        </div>
       </div>
     </main>
+
     <FooterMenu />
   </body>
 </html>
 
 <style is:global>
-  body { margin:0; background:#F8F6F0; }
-  .mapa-layout { display:grid; grid-template-columns:minmax(0,1fr) 320px; gap:16px; }
-  #mapa { height:560px; border-radius:12px; border:1px solid #e2ddd0; z-index:0; }
-  .mapa-lista { max-height:560px; overflow:auto; display:grid; gap:8px; align-content:start; }
-  .mapa-item { background:#fff; border:1px solid #e2ddd0; border-radius:10px; padding:10px 12px; text-align:left; cursor:pointer; font:inherit; color:inherit; display:grid; gap:2px; width:100%; }
-  .mapa-item:hover, .mapa-item--activo { border-color:#c8ad72; background:#fffdf6; }
-  .mapa-item small { color:#6b7268; }
-  .mapa-pin { width:26px; height:26px; border-radius:50% 50% 50% 0; transform:rotate(-45deg); border:2px solid #fff; box-shadow:0 2px 6px rgba(0,0,0,.4); }
-  .mapa-pin--propiedad { background:#2f5d46; } .mapa-pin--proyecto { background:#c8ad72; } .mapa-pin--yo { background:#1f5fa8; border-radius:50%; }
-  @media (max-width:900px){ .mapa-layout { grid-template-columns:1fr; } #mapa { height:420px; } .mapa-lista { max-height:none; } }
+  body {
+    margin: 0;
+    background: #f8faf8;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  }
+
+  /* Hero superior coherente con Proyectos y Propiedades (misma altura 90vh) */
+  header#header.mapa-hero {
+    background-color: #14261c;
+    background-size: cover;
+    background-position: center;
+  }
+
+  header#header.mapa-hero .hero-inner h1 em {
+    color: #86efac;
+    font-style: normal;
+  }
+
+  /* Barra de búsqueda flotante */
+  .mapa-search-box {
+    max-width: 1020px;
+    align-items: center;
+  }
+
+  .mapa-search-box input {
+    flex: 2 1 260px;
+  }
+
+  .mapa-search-box select {
+    flex: 1 1 160px;
+  }
+
+  /* Sección principal sobre fondo claro */
+  .mapa-seccion {
+    background: #f8faf8;
+    padding: 36px 0 56px;
+  }
+
+  .mapa-contenedor {
+    padding-top: 8px;
+  }
+
+  .mapa-head h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(1.6rem, 2.6vw, 2.15rem);
+    color: #1a2e22;
+    margin: 0 0 4px;
+  }
+
+  .mapa-head p {
+    margin: 0;
+    color: #5b665f;
+    font-size: 0.95rem;
+  }
+
+  .mapa-btn-cerca {
+    background: #1f2937 !important;
+    color: #fff !important;
+    border: 1px solid #111827;
+  }
+
+  .mapa-btn-cerca:hover {
+    background: #111827 !important;
+  }
+
+  .mapa-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 340px;
+    gap: 18px;
+  }
+
+  #mapa {
+    height: 560px;
+    border-radius: 14px;
+    border: 1px solid #dce5de;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+    z-index: 0;
+  }
+
+  .mapa-lista {
+    max-height: 560px;
+    overflow: auto;
+    display: grid;
+    gap: 10px;
+    align-content: start;
+    padding-right: 2px;
+  }
+
+  .mapa-item {
+    position: relative;
+    background: #ffffff;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 12px 14px;
+    text-align: left;
+    cursor: pointer;
+    font: inherit;
+    color: inherit;
+    display: grid;
+    gap: 5px;
+    width: 100%;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+  }
+
+  .mapa-item:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+  }
+
+  .mapa-item--propiedad {
+    border-color: #86efac;
+    border-left: 4px solid #16a34a;
+  }
+
+  .mapa-item--propiedad:hover,
+  .mapa-item--propiedad.mapa-item--activo {
+    border-color: #16a34a;
+    background: #f0fdf4;
+  }
+
+  .mapa-item--proyecto {
+    border-color: #93c5fd;
+    border-left: 4px solid #2563eb;
+  }
+
+  .mapa-item--proyecto:hover,
+  .mapa-item--proyecto.mapa-item--activo {
+    border-color: #2563eb;
+    background: #eff6ff;
+  }
+
+  .mapa-item-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .mapa-item-top strong {
+    font-size: 0.96rem;
+    color: #1a202c;
+    line-height: 1.3;
+  }
+
+  .mapa-badge {
+    flex-shrink: 0;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #ffffff;
+    padding: 3px 9px;
+    border-radius: 999px;
+    letter-spacing: 0.02em;
+    line-height: 1.2;
+  }
+
+  .mapa-badge--propiedad {
+    background: #16a34a;
+  }
+
+  .mapa-badge--proyecto {
+    background: #2563eb;
+  }
+
+  .mapa-item small {
+    color: #5b665f;
+    font-size: 0.83rem;
+    line-height: 1.35;
+  }
+
+  /* Pines en Leaflet */
+  .mapa-pin {
+    width: 26px;
+    height: 26px;
+    border-radius: 50% 50% 50% 0;
+    transform: rotate(-45deg);
+    border: 2.5px solid #ffffff;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4);
+  }
+
+  .mapa-pin--propiedad {
+    background: #16a34a;
+  }
+
+  .mapa-pin--proyecto {
+    background: #2563eb;
+  }
+
+  .mapa-pin--yo {
+    background: #111827;
+    border-radius: 50%;
+    transform: none;
+  }
+
+  @media (max-width: 900px) {
+    .mapa-layout {
+      grid-template-columns: 1fr;
+    }
+
+    #mapa {
+      height: 420px;
+    }
+
+    .mapa-lista {
+      max-height: none;
+    }
+  }
 </style>
 
 <script>
+  // @ts-ignore Leaflet no incluye tipos propios
   import L from "leaflet";
   import "leaflet/dist/leaflet.css";
   import { api, esc, aviso } from "../components/funciones/comun";
 
-  type Punto = { tipo: "propiedad" | "proyecto"; id: number; titulo: string; detalle: string; latitud: number | null; longitud: number | null; distancia?: number };
+  // Fondo del hero coherente con Proyectos y Propiedades
+  const heroImages = [
+    "https://images.unsplash.com/photo-1541976590-713941681591",
+    "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab",
+    "https://images.unsplash.com/photo-1480074568708-e7b720bb3f09",
+  ];
+  let heroIndex = 0;
+  const heroHeader = document.getElementById("header");
+  function cambiarFondoHero() {
+    if (!heroHeader) return;
+    heroHeader.style.backgroundImage = `url(${heroImages[heroIndex]})`;
+    heroIndex = (heroIndex + 1) % heroImages.length;
+  }
+  cambiarFondoHero();
+  setInterval(cambiarFondoHero, 5000);
+
+  type Punto = {
+    tipo: "propiedad" | "proyecto";
+    id: number;
+    titulo: string;
+    ciudad: string;
+    detalle: string;
+    latitud: number | null;
+    longitud: number | null;
+    distancia?: number;
+  };
+
   const editar = document.getElementById("mapaRoot")!.dataset.editar === "1";
   const lista = document.getElementById("mapaLista")!;
   const resumen = document.getElementById("mapaResumen")!;
-  const DUITAMA: [number, number] = [5.8268, -73.0331];
+  const formFiltros = document.getElementById("mapaFiltros") as HTMLFormElement;
+  const inputTexto = document.getElementById("filtroTexto") as HTMLInputElement;
+  const selectTipo = document.getElementById("filtroTipo") as HTMLSelectElement;
+  const selectCiudad = document.getElementById("filtroCiudad") as HTMLSelectElement;
 
+  const DUITAMA: [number, number] = [5.8268, -73.0331];
   const mapa = L.map("mapa").setView(DUITAMA, 13);
   L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-    maxZoom: 19, attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    maxZoom: 19,
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
   }).addTo(mapa);
-  const icono = (clase: string) => L.divIcon({ className: "", html: `<div class="mapa-pin mapa-pin--${clase}"></div>`, iconSize: [26, 26], iconAnchor: [13, 26], popupAnchor: [0, -24] });
-  const marcadores = new Map<string, L.Marker>();
-  let puntos: Punto[] = [];
+
+  const icono = (clase: string) =>
+    L.divIcon({
+      className: "",
+      html: `<div class="mapa-pin mapa-pin--${clase}"></div>`,
+      iconSize: [26, 26],
+      iconAnchor: [13, 26],
+      popupAnchor: [0, -24],
+    });
+
+  const marcadores = new Map<string, any>();
+  let todosPuntos: Punto[] = [];
+  let puntosFiltrados: Punto[] = [];
   let seleccionado: Punto | null = null;
+  let marcadorYo: any = null;
+
   const clave = (p: Punto) => `${p.tipo}-${p.id}`;
-  const pesos = (v: unknown) => new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 }).format(Number(v) || 0);
+  const pesos = (v: unknown) =>
+    new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 }).format(
+      Number(v) || 0,
+    );
+
+  function extraerCiudadProyecto(ubicacion: string | null | undefined): string {
+    if (!ubicacion) return "";
+    const partes = ubicacion.split(",").map((s) => s.trim()).filter(Boolean);
+    return partes.length > 1 ? partes[partes.length - 1] : partes[0] ?? "";
+  }
 
   function normalizar(d: any): Punto[] {
     return [
-      ...d.propiedades.map((p: any) => ({ tipo: "propiedad" as const, id: p.id, titulo: p.titulo,
-        detalle: [p.direccion, p.ciudad].filter(Boolean).join(", ") + (p.precio ? ` · ${pesos(p.precio)}` : ""), latitud: p.latitud, longitud: p.longitud })),
-      ...d.proyectos.map((p: any) => ({ tipo: "proyecto" as const, id: p.id, titulo: p.titulo,
-        detalle: (p.ubicacion ?? p.direccion ?? "Proyecto") + (p.avance != null ? ` · ${Number(p.avance).toFixed(0)} % de avance` : ""), latitud: p.latitud, longitud: p.longitud })),
+      ...(d.propiedades ?? []).map((p: any) => ({
+        tipo: "propiedad" as const,
+        id: p.id,
+        titulo: p.titulo ?? "Propiedad",
+        ciudad: String(p.ciudad ?? "").trim(),
+        detalle:
+          [p.direccion, p.ciudad].filter(Boolean).join(", ") + (p.precio ? ` · ${pesos(p.precio)}` : ""),
+        latitud: p.latitud,
+        longitud: p.longitud,
+      })),
+      ...(d.proyectos ?? []).map((p: any) => ({
+        tipo: "proyecto" as const,
+        id: p.id,
+        titulo: p.titulo ?? "Proyecto",
+        ciudad: String(p.ciudad ?? extraerCiudadProyecto(p.ubicacion ?? p.direccion)).trim(),
+        detalle:
+          (p.ubicacion ?? p.direccion ?? "Proyecto") +
+          (p.avance != null ? ` · ${Number(p.avance).toFixed(0)} % de avance` : ""),
+        latitud: p.latitud,
+        longitud: p.longitud,
+      })),
     ];
+  }
+
+  function poblarCiudades() {
+    const ciudades = Array.from(
+      new Set(todosPuntos.map((p) => p.ciudad).filter(Boolean)),
+    ).sort((a, b) => a.localeCompare(b, "es"));
+    selectCiudad.innerHTML =
+      `<option value="">-- Todas las ciudades --</option>` +
+      ciudades.map((c) => `<option value="${esc(c)}">${esc(c)}</option>`).join("");
   }
 
   function pintarMarcador(p: Punto) {
     marcadores.get(clave(p))?.remove();
     if (p.latitud == null || p.longitud == null) return;
-    const m = L.marker([p.latitud, p.longitud], { icon: icono(p.tipo) }).addTo(mapa)
-      .bindPopup(`<strong>${esc(p.titulo)}</strong><br>${esc(p.detalle)}<br><a href="#" data-detalle="${p.tipo}:${Number(p.id)}">Ver detalle</a>`);
+    const m = L.marker([p.latitud, p.longitud], { icon: icono(p.tipo) })
+      .addTo(mapa)
+      .bindPopup(
+        `<strong>${esc(p.titulo)}</strong><br>${esc(p.detalle)}<br><a href="#" data-detalle="${p.tipo}:${Number(p.id)}">Ver detalle</a>`,
+      );
     marcadores.set(clave(p), m);
   }
 
+  function limpiarMarcadores() {
+    marcadores.forEach((m) => m.remove());
+    marcadores.clear();
+  }
+
   function pintarLista() {
-    if (!puntos.length) {
-      lista.innerHTML = `<div class="fn-vacio"><i class="bi bi-geo-alt"></i>${editar ? "No tienes propiedades ni proyectos para ubicar." : "Aún no hay propiedades ni proyectos con ubicación."}</div>`;
+    if (!puntosFiltrados.length) {
+      lista.innerHTML = `<div class="fn-vacio"><i class="bi bi-geo-alt"></i>${
+        todosPuntos.length
+          ? "No se encontraron ubicaciones con los filtros aplicados."
+          : editar
+          ? "No tienes propiedades ni proyectos para ubicar."
+          : "Aún no hay propiedades ni proyectos con ubicación."
+      }</div>`;
       return;
     }
-    lista.innerHTML = puntos.map((p) => `
-      <button class="mapa-item ${seleccionado && clave(seleccionado) === clave(p) ? "mapa-item--activo" : ""}" data-clave="${clave(p)}" type="button">
-        <strong>${esc(p.titulo)}</strong>
-        <small>${p.tipo === "proyecto" ? "Proyecto" : "Propiedad"} · ${esc(p.detalle)}</small>
-        ${p.distancia != null ? `<small><i class="bi bi-signpost"></i> a ${p.distancia < 1 ? Math.round(p.distancia * 1000) + " m" : p.distancia.toFixed(1) + " km"}</small>` : ""}
-        ${editar ? `<span class="fn-chip ${p.latitud != null ? "fn-chip--ok" : "fn-chip--pend"}">${p.latitud != null ? "Con ubicación" : "Sin ubicación"}</span>` : ""}
-      </button>`).join("");
+
+    lista.innerHTML = puntosFiltrados
+      .map((p) => {
+        const esProyecto = p.tipo === "proyecto";
+        const activo = seleccionado && clave(seleccionado) === clave(p) ? "mapa-item--activo" : "";
+        return `
+          <button class="mapa-item mapa-item--${p.tipo} ${activo}" data-clave="${clave(p)}" type="button">
+            <div class="mapa-item-top">
+              <strong>${esc(p.titulo)}</strong>
+              <span class="mapa-badge mapa-badge--${p.tipo}">${esProyecto ? "Proyecto" : "Propiedad"}</span>
+            </div>
+            <small>${esc(p.detalle)}</small>
+            ${
+              p.distancia != null
+                ? `<small><i class="bi bi-signpost"></i> a ${
+                    p.distancia < 1 ? Math.round(p.distancia * 1000) + " m" : p.distancia.toFixed(1) + " km"
+                  }</small>`
+                : ""
+            }
+            ${
+              editar
+                ? `<span class="fn-chip ${p.latitud != null ? "fn-chip--ok" : "fn-chip--pend"}">${
+                    p.latitud != null ? "Con ubicación" : "Sin ubicación"
+                  }</span>`
+                : ""
+            }
+          </button>`;
+      })
+      .join("");
   }
+
+  function actualizarResumen(ajustarVista = false) {
+    const conCoord = puntosFiltrados.filter((p) => p.latitud != null && p.longitud != null);
+    if (!editar) {
+      resumen.textContent = `${conCoord.length} ubicaciones en el mapa. Verde: propiedades. Azul: proyectos.`;
+    } else {
+      resumen.textContent = `${conCoord.length} de ${puntosFiltrados.length} con ubicación. Elige un elemento y haz clic en el mapa para fijarla o moverla.`;
+    }
+    if (ajustarVista && conCoord.length) {
+      mapa.fitBounds(
+        L.latLngBounds(conCoord.map((p) => [p.latitud!, p.longitud!] as [number, number])).pad(0.25),
+        { maxZoom: 15 },
+      );
+    }
+  }
+
+  function aplicarFiltros(ajustarVista = false) {
+    const q = inputTexto.value.trim().toLowerCase();
+    const tipo = selectTipo.value;
+    const ciudad = selectCiudad.value.toLowerCase();
+
+    puntosFiltrados = todosPuntos.filter((p) => {
+      if (tipo && p.tipo !== tipo) return false;
+      if (ciudad && p.ciudad.toLowerCase() !== ciudad) return false;
+      if (q) {
+        const texto = `${p.titulo} ${p.ciudad} ${p.detalle}`.toLowerCase();
+        if (!texto.includes(q)) return false;
+      }
+      return true;
+    });
+
+    limpiarMarcadores();
+    puntosFiltrados.forEach(pintarMarcador);
+    pintarLista();
+    actualizarResumen(ajustarVista);
+  }
+
+  inputTexto.addEventListener("input", () => aplicarFiltros(false));
+  selectTipo.addEventListener("change", () => aplicarFiltros(true));
+  selectCiudad.addEventListener("change", () => aplicarFiltros(true));
+  formFiltros.addEventListener("submit", (e) => {
+    e.preventDefault();
+    aplicarFiltros(true);
+  });
 
   lista.addEventListener("click", (ev) => {
     const b = (ev.target as HTMLElement).closest<HTMLElement>("[data-clave]");
     if (!b) return;
-    seleccionado = puntos.find((p) => clave(p) === b.dataset.clave) ?? null;
+    seleccionado = puntosFiltrados.find((p) => clave(p) === b.dataset.clave) ?? null;
     pintarLista();
-    if (seleccionado?.latitud != null) { mapa.setView([seleccionado.latitud, seleccionado.longitud!], 16); marcadores.get(clave(seleccionado))?.openPopup(); }
-    else if (editar) aviso("Ahora haz clic en el mapa para ubicar “" + seleccionado!.titulo + "”");
+    if (seleccionado?.latitud != null && seleccionado?.longitud != null) {
+      mapa.setView([seleccionado.latitud, seleccionado.longitud], 16);
+      marcadores.get(clave(seleccionado))?.openPopup();
+    } else if (editar && seleccionado) {
+      aviso("Ahora haz clic en el mapa para ubicar “" + seleccionado.titulo + "”");
+    }
   });
 
   if (editar) {
-    mapa.on("click", async (ev: L.LeafletMouseEvent) => {
+    mapa.on("click", async (ev: any) => {
       if (!seleccionado) return aviso("Primero elige un elemento de la lista", "error");
       const p = seleccionado;
       try {
-        await api(`/geo/${p.tipo === "propiedad" ? "propiedades" : "proyectos"}/${p.id}`, "PUT", { latitud: ev.latlng.lat, longitud: ev.latlng.lng });
-        p.latitud = ev.latlng.lat; p.longitud = ev.latlng.lng;
-        pintarMarcador(p); pintarLista(); aviso("Ubicación guardada");
-      } catch (e) { aviso((e as Error).message, "error"); }
+        await api(`/geo/${p.tipo === "propiedad" ? "propiedades" : "proyectos"}/${p.id}`, "PUT", {
+          latitud: ev.latlng.lat,
+          longitud: ev.latlng.lng,
+        });
+        p.latitud = ev.latlng.lat;
+        p.longitud = ev.latlng.lng;
+        pintarMarcador(p);
+        pintarLista();
+        aviso("Ubicación guardada");
+      } catch (e) {
+        aviso((e as Error).message, "error");
+      }
     });
   } else {
-    // Geolocalizacion del navegador: ordena por cercania
     const km = (a: [number, number], b: [number, number]) => {
-      const R = 6371, r = (g: number) => (g * Math.PI) / 180;
-      const dLat = r(b[0] - a[0]), dLng = r(b[1] - a[1]);
-      const h = Math.sin(dLat / 2) ** 2 + Math.cos(r(a[0])) * Math.cos(r(b[0])) * Math.sin(dLng / 2) ** 2;
+      const R = 6371,
+        r = (g: number) => (g * Math.PI) / 180;
+      const dLat = r(b[0] - a[0]),
+        dLng = r(b[1] - a[1]);
+      const h =
+        Math.sin(dLat / 2) ** 2 +
+        Math.cos(r(a[0])) * Math.cos(r(b[0])) * Math.sin(dLng / 2) ** 2;
       return 2 * R * Math.asin(Math.sqrt(h));
     };
+
     document.getElementById("btnCerca")?.addEventListener("click", () => {
       if (!navigator.geolocation) return aviso("Tu navegador no permite obtener la ubicación", "error");
-      navigator.geolocation.getCurrentPosition((pos) => {
-        const yo: [number, number] = [pos.coords.latitude, pos.coords.longitude];
-        L.marker(yo, { icon: icono("yo") }).addTo(mapa).bindPopup("Estás aquí").openPopup();
-        puntos.forEach((p) => { p.distancia = km(yo, [p.latitud!, p.longitud!]); });
-        puntos.sort((a, b) => a.distancia! - b.distancia!);
-        pintarLista();
-        const cercanos = puntos.slice(0, 5).map((p) => [p.latitud!, p.longitud!] as [number, number]);
-        mapa.fitBounds(L.latLngBounds([yo, ...cercanos]).pad(0.2));
-        resumen.textContent = puntos.length ? `Ordenado por cercanía. El más cercano: ${puntos[0].titulo}.` : "No hay ubicaciones para comparar.";
-      }, () => aviso("No pudimos obtener tu ubicación. Revisa el permiso del navegador.", "error"), { enableHighAccuracy: true, timeout: 10000 });
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const yo: [number, number] = [pos.coords.latitude, pos.coords.longitude];
+          marcadorYo?.remove();
+          marcadorYo = L.marker(yo, { icon: icono("yo") }).addTo(mapa).bindPopup("Estás aquí").openPopup();
+          todosPuntos.forEach((p) => {
+            if (p.latitud != null && p.longitud != null) p.distancia = km(yo, [p.latitud, p.longitud]);
+          });
+          todosPuntos.sort((a, b) => (a.distancia ?? Infinity) - (b.distancia ?? Infinity));
+          aplicarFiltros(false);
+          const cercanos = puntosFiltrados
+            .filter((p) => p.latitud != null && p.longitud != null)
+            .slice(0, 5)
+            .map((p) => [p.latitud!, p.longitud!] as [number, number]);
+          if (cercanos.length) {
+            mapa.fitBounds(L.latLngBounds([yo, ...cercanos]).pad(0.2));
+          } else {
+            mapa.setView(yo, 14);
+          }
+          resumen.textContent = puntosFiltrados.length
+            ? `Ordenado por cercanía. El más cercano: ${puntosFiltrados[0].titulo}.`
+            : "No hay ubicaciones para comparar.";
+        },
+        () => aviso("No pudimos obtener tu ubicación. Revisa el permiso del navegador.", "error"),
+        { enableHighAccuracy: true, timeout: 10000 },
+      );
     });
   }
 
   (async () => {
     try {
-      puntos = normalizar(await api(editar ? "/geo/editables" : "/geo/puntos"));
-      puntos.forEach(pintarMarcador);
-      pintarLista();
-      const conCoord = puntos.filter((p) => p.latitud != null);
-      if (conCoord.length) mapa.fitBounds(L.latLngBounds(conCoord.map((p) => [p.latitud!, p.longitud!] as [number, number])).pad(0.25), { maxZoom: 15 });
-      if (!editar) resumen.textContent = `${conCoord.length} ubicaciones en el mapa. Verde: propiedades. Dorado: proyectos.`;
-      else resumen.textContent = `${conCoord.length} de ${puntos.length} con ubicación. Elige un elemento y haz clic en el mapa para fijarla o moverla.`;
-    } catch (e) { resumen.textContent = (e as Error).message; }
+      todosPuntos = normalizar(await api(editar ? "/geo/editables" : "/geo/puntos"));
+      poblarCiudades();
+      aplicarFiltros(true);
+    } catch (e) {
+      resumen.textContent = (e as Error).message;
+    }
   })();
 </script>

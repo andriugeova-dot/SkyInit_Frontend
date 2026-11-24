@@ -1,0 +1,398 @@
+---
+const pilares = [
+  {
+    titulo: "Confianza y Transparencia",
+    texto: "Procesos claros y verificación de inmobiliarias, constructoras y proveedores para cada operación.",
+    icono: "shield",
+  },
+  {
+    titulo: "Gestión Integral",
+    texto: "Centraliza la búsqueda de inmuebles, el seguimiento de proyectos, la agenda de visitas y el mantenimiento.",
+    icono: "layers",
+  },
+  {
+    titulo: "Conexión Directa",
+    texto: "Acercamos a usuarios con agentes, constructoras y especialistas certificados en tiempo real.",
+    icono: "users",
+  },
+];
+
+const integrantes = [
+  {
+    nombre: "Jhoan Cotamo",
+    iniciales: "JC",
+    rol: "Full Stack & Autenticación",
+    aporte: "Desarrollo del sistema de autenticación (JWT, Google OAuth, registro y términos), panel de usuario, menú principal y mapa interactivo.",
+    github: "https://github.com/Jhoan-Cotamo",
+    linkedin: "#",
+    correo: "mailto:jhoan.cotamo42@gmail.com",
+  },
+  {
+    nombre: "Andrés Mendoza",
+    iniciales: "AM",
+    rol: "Seguridad & Arquitectura",
+    aporte: "Implementación de seguridad, módulos de agenda y mantenimiento, panel de constructoras y dashboards administrativos.",
+    github: "https://github.com/andriugeova-dot",
+    linkedin: "#",
+    correo: "mailto:andriu.geova@gmail.com",
+  },
+  {
+    nombre: "Santiago Ortiz",
+    iniciales: "SO",
+    rol: "Propiedades, Proyectos & Datos",
+    aporte: "Construcción de catálogos y gestión de propiedades y proyectos, panel de agente, estadísticas y aislamiento por inmobiliaria.",
+    github: "https://github.com/SantiagoOrtiz0",
+    linkedin: "#",
+    correo: "mailto:santiagoortizgomez621@gmail.com",
+  },
+  {
+    nombre: "Jeffry Rodríguez",
+    iniciales: "JR",
+    rol: "Servicios, Inmobiliarias & Entorno",
+    aporte: "Módulo de servicios de mantenimiento, perfiles de inmobiliarias, carga de imágenes y configuración de base de datos y correo.",
+    github: "https://github.com/jeffryrodriguez12-collab",
+    linkedin: "#",
+    correo: "mailto:jeffryrodriguez117@mail.com",
+  },
+];
+---
+
+<section class="quienes-section" id="quienes-somos">
+  <div class="contenedor">
+    <div class="quienes-header">
+      <div class="etiqueta-quienes-container">
+        <span class="etiqueta-quienes">Sobre nosotros</span>
+      </div>
+      <h2 class="titulo-quienes">Quiénes somos</h2>
+      <p class="sub-quienes">
+        <strong>SkyInit</strong> es una plataforma integral diseñada para conectar usuarios, inmobiliarias,
+        constructoras y trabajadores de mantenimiento. Facilitamos la búsqueda de propiedades, el seguimiento de
+        proyectos inmobiliarios y la solicitud de servicios especializados en un solo lugar, con respaldo y agilidad.
+      </p>
+    </div>
+
+    <div class="pilares-grid">
+      {
+        pilares.map((p) => (
+          <article class="pilar-card">
+            <div class="pilar-icono" aria-hidden="true">
+              {p.icono === "shield" && (
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                  <path d="m9 12 2 2 4-4" />
+                </svg>
+              )}
+              {p.icono === "layers" && (
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <polygon points="12 2 2 7 12 12 22 7 12 2" />
+                  <polyline points="2 17 12 22 22 17" />
+                  <polyline points="2 12 12 17 22 12" />
+                </svg>
+              )}
+              {p.icono === "users" && (
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                  <circle cx="9" cy="7" r="4" />
+                  <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                </svg>
+              )}
+            </div>
+            <div>
+              <h3>{p.titulo}</h3>
+              <p>{p.texto}</p>
+            </div>
+          </article>
+        ))
+      }
+    </div>
+
+    <div class="equipo-bloque">
+      <div class="equipo-subhead">
+        <h3>Nuestro equipo</h3>
+        <p>Las personas detrás del desarrollo y evolución de SkyInit.</p>
+      </div>
+
+      <div class="equipo-grid">
+        {
+          integrantes.map((m) => (
+            <article class="equipo-card">
+              <div class="equipo-avatar" aria-hidden="true">
+                <span>{m.iniciales}</span>
+              </div>
+              <h4 class="equipo-nombre">{m.nombre}</h4>
+              <span class="equipo-rol">{m.rol}</span>
+              <p class="equipo-aporte">{m.aporte}</p>
+              <div class="equipo-redes">
+                <a href={m.github} aria-label={`GitHub de ${m.nombre}`} title="GitHub">
+                  <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                    <path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.57.1.78-.25.78-.55 0-.27-.01-1.17-.02-2.12-3.2.69-3.87-1.36-3.87-1.36-.52-1.33-1.28-1.68-1.28-1.68-1.05-.72.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.76 2.7 1.25 3.36.96.1-.75.4-1.25.73-1.54-2.55-.29-5.23-1.28-5.23-5.68 0-1.25.45-2.28 1.19-3.08-.12-.29-.52-1.46.11-3.04 0 0 .97-.31 3.17 1.18a11.02 11.02 0 0 1 5.78 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.58.23 2.75.11 3.04.74.8 1.19 1.83 1.19 3.08 0 4.41-2.69 5.38-5.25 5.67.41.35.78 1.05.78 2.12 0 1.53-.01 2.76-.01 3.14 0 .3.21.66.79.55A11.51 11.51 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5Z" />
+                  </svg>
+                </a>
+                <a href={m.linkedin} aria-label={`LinkedIn de ${m.nombre}`} title="LinkedIn">
+                  <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                    <path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.28 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.75M6.88 8.56a1.68 1.68 0 0 0 1.68-1.68c0-.93-.75-1.69-1.68-1.69a1.69 1.69 0 0 0-1.69 1.69c0 .93.76 1.68 1.69 1.68m1.39 9.94v-8.37H5.5v8.37h2.77Z" />
+                  </svg>
+                </a>
+                <a href={m.correo} aria-label={`Correo de ${m.nombre}`} title="Correo">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <rect x="2" y="4" width="20" height="16" rx="2" />
+                    <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+                  </svg>
+                </a>
+              </div>
+            </article>
+          ))
+        }
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .quienes-section {
+    background-color: #f9fcf3;
+    padding: 72px 20px;
+    border-bottom: 1px solid #e6eee4;
+  }
+
+  .quienes-header {
+    text-align: center;
+    max-width: 760px;
+    margin: 0 auto 44px;
+  }
+
+  .etiqueta-quienes-container {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 12px;
+  }
+
+  .etiqueta-quienes {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    color: #2e8b57;
+    font-size: 0.85rem;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+  }
+
+  .etiqueta-quienes::before {
+    content: "";
+    display: inline-block;
+    width: 30px;
+    height: 2px;
+    background-color: #2e8b57;
+  }
+
+  .titulo-quienes {
+    font-family: 'Playfair Display', serif;
+    font-size: 2.5rem;
+    color: #1a1a1a;
+    margin: 0 0 14px;
+    line-height: 1.15;
+  }
+
+  .sub-quienes {
+    color: #4b5563;
+    font-size: 1.05rem;
+    line-height: 1.7;
+    margin: 0;
+  }
+
+  .pilares-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 20px;
+    max-width: 1140px;
+    margin: 0 auto 52px;
+  }
+
+  .pilar-card {
+    background: #ffffff;
+    border: 1px solid #e2ece0;
+    border-radius: 16px;
+    padding: 22px;
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    box-shadow: 0 4px 14px rgba(27, 94, 32, 0.05);
+  }
+
+  .pilar-icono {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: #e8f5e9;
+    color: #1b5e20;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .pilar-icono svg {
+    width: 22px;
+    height: 22px;
+  }
+
+  .pilar-card h3 {
+    margin: 0 0 6px;
+    font-size: 1.04rem;
+    color: #14532d;
+    font-weight: 700;
+  }
+
+  .pilar-card p {
+    margin: 0;
+    font-size: 0.9rem;
+    color: #5b665f;
+    line-height: 1.5;
+  }
+
+  .equipo-bloque {
+    max-width: 1140px;
+    margin: 0 auto;
+  }
+
+  .equipo-subhead {
+    text-align: center;
+    margin-bottom: 28px;
+  }
+
+  .equipo-subhead h3 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.85rem;
+    color: #1a1a1a;
+    margin: 0 0 6px;
+  }
+
+  .equipo-subhead p {
+    margin: 0;
+    color: #6b7280;
+    font-size: 0.98rem;
+  }
+
+  .equipo-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 22px;
+  }
+
+  .equipo-card {
+    background: #ffffff;
+    border: 1px solid #e2ece0;
+    border-radius: 18px;
+    padding: 26px 20px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+  }
+
+  .equipo-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 24px rgba(27, 94, 32, 0.1);
+  }
+
+  .equipo-avatar {
+    width: 84px;
+    height: 84px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #1b5e20, #2e8b57);
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.55rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    margin-bottom: 14px;
+    border: 3px solid #d1fae5;
+    overflow: hidden;
+    object-fit: cover;
+  }
+
+  .equipo-nombre {
+    margin: 0 0 4px;
+    font-size: 1.12rem;
+    font-weight: 700;
+    color: #1f2937;
+  }
+
+  .equipo-rol {
+    display: inline-block;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #1b5e20;
+    background: #e8f5e9;
+    padding: 3px 10px;
+    border-radius: 999px;
+    margin-bottom: 12px;
+  }
+
+  .equipo-aporte {
+    margin: 0 0 16px;
+    font-size: 0.88rem;
+    color: #5b665f;
+    line-height: 1.5;
+    flex: 1;
+  }
+
+  .equipo-redes {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+  }
+
+  .equipo-redes a {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 1px solid #dce5de;
+    color: #4b5563;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s, color 0.2s, border-color 0.2s;
+  }
+
+  .equipo-redes a:hover {
+    background-color: #2e8b57;
+    border-color: #2e8b57;
+    color: #ffffff;
+  }
+
+  .equipo-redes svg {
+    width: 15px;
+    height: 15px;
+  }
+
+  @media (max-width: 1024px) {
+    .pilares-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .equipo-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 600px) {
+    .quienes-section {
+      padding: 52px 16px;
+    }
+
+    .titulo-quienes {
+      font-size: 2rem;
+    }
+
+    .equipo-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

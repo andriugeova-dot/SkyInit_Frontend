@@ -1,0 +1,481 @@
+---
+import "../funciones/funciones.css";
+---
+<section class="card cal-usuario-card" id="calUsuarioRoot">
+  <div class="cal-usuario-head">
+    <div>
+      <h2><i class="bi bi-calendar3" aria-hidden="true"></i> Mi Calendario</h2>
+      <p class="cal-usuario-sub">Visitas programadas a propiedades y mantenimientos aceptados.</p>
+    </div>
+    <div class="fn-acciones">
+      <a href="/usuario/agenda" class="fn-btn fn-btn--sec fn-btn--mini">
+        <i class="bi bi-calendar-plus" aria-hidden="true"></i> Agendar visita
+      </a>
+      <button class="fn-btn fn-btn--sec fn-btn--mini" id="calUsrRefresh" type="button" title="Actualizar eventos">
+        <i class="bi bi-arrow-clockwise" aria-hidden="true"></i> Actualizar
+      </button>
+    </div>
+  </div>
+
+  <div class="cal-barra">
+    <div class="fn-acciones">
+      <button class="fn-btn fn-btn--sec fn-btn--mini" id="calUsrPrev" type="button" aria-label="Semana anterior">
+        <i class="bi bi-chevron-left" aria-hidden="true"></i>
+      </button>
+      <button class="fn-btn fn-btn--sec fn-btn--mini" id="calUsrHoy" type="button">Hoy</button>
+      <button class="fn-btn fn-btn--sec fn-btn--mini" id="calUsrNext" type="button" aria-label="Semana siguiente">
+        <i class="bi bi-chevron-right" aria-hidden="true"></i>
+      </button>
+    </div>
+    <strong id="calUsrTitulo"></strong>
+  </div>
+
+  <div class="cal-leyenda" aria-label="Tipos de eventos en el calendario">
+    <span><i class="cal-color cal-color--visita"></i> Visita a propiedad</span>
+    <span><i class="cal-color cal-color--mant"></i> Mantenimiento aceptado</span>
+    <span class="cal-resumen-conteo" id="calUsrConteo">Cargando eventos…</span>
+  </div>
+
+  <div class="cal-wrap">
+    <div class="cal" id="calUsrGrid" role="grid" aria-label="Calendario semanal de usuario"></div>
+  </div>
+
+  <dialog class="fn-modal" id="dlgEventoUsuario">
+    <div class="fn-modal-cuerpo">
+      <div class="cal-det-head">
+        <span class="fn-chip" id="dlgEvTipo"></span>
+        <span class="fn-chip" id="dlgEvEstado"></span>
+      </div>
+      <h2 id="dlgEvTitulo" style="margin:0"></h2>
+      <ul class="cal-det-datos" id="dlgEvDatos"></ul>
+      <div class="fn-modal-pie">
+        <a class="fn-btn fn-btn--sec" id="dlgEvLink" href="/usuario/agenda">Ir al módulo</a>
+        <button class="fn-btn" type="button" id="dlgEvCerrar">Cerrar</button>
+      </div>
+    </div>
+  </dialog>
+</section>
+
+<style is:global>
+  .cal-usuario-card {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .cal-usuario-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .cal-usuario-head h2 {
+    margin: 0 0 4px !important;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .cal-usuario-sub {
+    margin: 0;
+    color: #6b7280;
+    font-size: 0.9rem;
+  }
+
+  .cal-barra {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .cal-wrap {
+    overflow-x: auto;
+  }
+
+  .cal {
+    display: grid;
+    grid-template-columns: 56px repeat(7, minmax(118px, 1fr));
+    min-width: 880px;
+    border: 1px solid var(--fn-line);
+    border-radius: 10px;
+    overflow: hidden;
+    background: #fff;
+  }
+
+  .cal-cab {
+    background: #f6f7f9;
+    padding: 8px 6px;
+    text-align: center;
+    font-size: 0.8rem;
+    font-weight: 600;
+    border-bottom: 1px solid var(--fn-line);
+    border-left: 1px solid var(--fn-line);
+  }
+
+  .cal-cab:first-child {
+    border-left: 0;
+  }
+
+  .cal-cab--hoy {
+    background: var(--fn-acc);
+    color: #fff;
+  }
+
+  .cal-hora {
+    font-size: 0.72rem;
+    color: var(--fn-muted);
+    text-align: right;
+    padding: 4px 6px;
+    border-top: 1px solid var(--fn-line);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .cal-celda {
+    min-height: 46px;
+    border-top: 1px solid var(--fn-line);
+    border-left: 1px solid var(--fn-line);
+    padding: 3px;
+    display: grid;
+    gap: 3px;
+    align-content: start;
+  }
+
+  .cal-celda:hover {
+    background: #f9fafb;
+  }
+
+  .cal-cita {
+    border: 0;
+    border-left: 3px solid var(--fn-acc);
+    background: #eef3f8;
+    border-radius: 6px;
+    padding: 4px 6px;
+    font-size: 0.74rem;
+    text-align: left;
+    cursor: pointer;
+    line-height: 1.25;
+    color: inherit;
+    width: 100%;
+    transition: transform 0.12s ease, box-shadow 0.12s ease;
+  }
+
+  .cal-cita:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  }
+
+  .cal-cita b {
+    display: block;
+    font-weight: 700;
+  }
+
+  .cal-cita--visita {
+    border-left-color: #16a34a;
+    background: #ecfdf5;
+    color: #14532d;
+  }
+
+  .cal-cita--mant {
+    border-left-color: #2563eb;
+    background: #eff6ff;
+    color: #1e3a8a;
+  }
+
+  .cal-cita--cancel {
+    opacity: 0.65;
+    text-decoration: line-through;
+  }
+
+  .cal-leyenda {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 18px;
+    font-size: 0.82rem;
+    color: var(--fn-muted);
+  }
+
+  .cal-leyenda span {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .cal-color {
+    width: 12px;
+    height: 12px;
+    border-radius: 3px;
+    display: inline-block;
+  }
+
+  .cal-color--visita {
+    background: #16a34a;
+  }
+
+  .cal-color--mant {
+    background: #2563eb;
+  }
+
+  .cal-resumen-conteo {
+    margin-left: auto;
+    font-weight: 500;
+    color: #4b5563;
+  }
+
+  .cal-det-head {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .cal-det-datos {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 8px;
+    font-size: 0.92rem;
+  }
+
+  .cal-det-datos li {
+    display: flex;
+    gap: 8px;
+    align-items: baseline;
+  }
+
+  .cal-det-datos i {
+    color: var(--fn-acc);
+  }
+</style>
+
+<script>
+  import { api, esc, claseEstado } from "../funciones/comun";
+
+  interface EventoUsuario {
+    uid: string;
+    categoria: "visita" | "mantenimiento";
+    tipoLabel: string;
+    titulo: string;
+    fechaISO: string;
+    estado: string;
+    ubicacion?: string;
+    proveedor?: string;
+    notas?: string;
+    enlace: string;
+  }
+
+  const grid = document.getElementById("calUsrGrid")!;
+  const tituloCal = document.getElementById("calUsrTitulo")!;
+  const conteoCal = document.getElementById("calUsrConteo")!;
+  const dlg = document.getElementById("dlgEventoUsuario") as HTMLDialogElement;
+
+  let eventos: EventoUsuario[] = [];
+  let lunes = inicioSemana(new Date());
+  const HORAS = Array.from({ length: 13 }, (_, i) => i + 7); // 07:00 a 19:00
+
+  function inicioSemana(d: Date) {
+    const r = new Date(d);
+    r.setHours(0, 0, 0, 0);
+    r.setDate(r.getDate() - ((r.getDay() + 6) % 7));
+    return r;
+  }
+
+  const formatHora = (iso: string) => {
+    const d = new Date(iso);
+    return Number.isNaN(d.getTime()) ? "—" : d.toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit" });
+  };
+
+  const formatFecha = (iso: string) => {
+    const d = new Date(iso);
+    return Number.isNaN(d.getTime()) ? "—" : d.toLocaleDateString("es-CO", { dateStyle: "long" });
+  };
+
+  function pintarCalendario() {
+    const dias = Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(lunes);
+      d.setDate(d.getDate() + i);
+      return d;
+    });
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+
+    tituloCal.textContent = `${dias[0].toLocaleDateString("es-CO", { day: "numeric", month: "short" })} – ${dias[6].toLocaleDateString("es-CO", { day: "numeric", month: "short", year: "numeric" })}`;
+
+    let html =
+      `<div class="cal-cab"></div>` +
+      dias
+        .map(
+          (d) =>
+            `<div class="cal-cab ${d.getTime() === hoy.getTime() ? "cal-cab--hoy" : ""}">${esc(
+              d.toLocaleDateString("es-CO", { weekday: "short", day: "numeric" }),
+            )}</div>`,
+        )
+        .join("");
+
+    for (const h of HORAS) {
+      html += `<div class="cal-hora">${String(h).padStart(2, "0")}:00</div>`;
+      for (const d of dias) {
+        const delBloque = eventos.filter((ev) => {
+          const f = new Date(ev.fechaISO);
+          if (Number.isNaN(f.getTime())) return false;
+          return (
+            f.toDateString() === d.toDateString() &&
+            (f.getHours() === h || (h === 7 && f.getHours() < 7) || (h === 19 && f.getHours() > 19))
+          );
+        });
+
+        html +=
+          `<div class="cal-celda" role="gridcell">` +
+          delBloque
+            .map((ev) => {
+              const cancel = ev.estado.toLowerCase().includes("cancel") ? "cal-cita--cancel" : "";
+              const cls = ev.categoria === "visita" ? "cal-cita--visita" : "cal-cita--mant";
+              return `<button type="button" class="cal-cita ${cls} ${cancel}" data-ev="${esc(ev.uid)}" title="${esc(
+                ev.tipoLabel + ": " + ev.titulo,
+              )}">
+                <b>${esc(formatHora(ev.fechaISO))} · ${esc(ev.tipoLabel)}</b>
+                ${esc(ev.titulo)}<br>
+                <em style="font-style:normal;opacity:.8">${esc(ev.estado)}</em>
+              </button>`;
+            })
+            .join("") +
+          `</div>`;
+      }
+    }
+
+    grid.innerHTML = html;
+  }
+
+  function abrirDetalle(uid: string) {
+    const ev = eventos.find((e) => e.uid === uid);
+    if (!ev) return;
+
+    const tipoEl = document.getElementById("dlgEvTipo")!;
+    tipoEl.textContent = ev.tipoLabel;
+    tipoEl.className = `fn-chip ${ev.categoria === "visita" ? "fn-chip--ok" : "fn-chip--prog"}`;
+
+    const estEl = document.getElementById("dlgEvEstado")!;
+    estEl.textContent = ev.estado;
+    estEl.className = `fn-chip ${claseEstado(ev.estado)}`;
+
+    document.getElementById("dlgEvTitulo")!.textContent = ev.titulo;
+
+    const li = (icono: string, label: string, val?: string) =>
+      val ? `<li><i class="bi ${icono}" aria-hidden="true"></i><span><strong>${esc(label)}:</strong> ${esc(val)}</span></li>` : "";
+
+    document.getElementById("dlgEvDatos")!.innerHTML = [
+      li("bi-calendar-event", "Fecha", formatFecha(ev.fechaISO)),
+      li("bi-clock", "Hora", formatHora(ev.fechaISO)),
+      li("bi-geo-alt", "Ubicación", ev.ubicacion),
+      li("bi-building", "Inmobiliaria", ev.proveedor),
+      li("bi-chat-left-text", "Notas", ev.notas),
+    ].join("");
+
+    const link = document.getElementById("dlgEvLink") as HTMLAnchorElement;
+    link.href = ev.enlace;
+    link.textContent = ev.categoria === "visita" ? "Gestionar visitas" : "Ver mis solicitudes";
+
+    dlg.showModal();
+  }
+
+  async function cargarEventos() {
+    try {
+      const [resVisitas, resSolicitudes] = await Promise.allSettled([
+        api("/agenda/mias"),
+        fetch("/api/usuario/solicitudes", { credentials: "same-origin" }).then((r) => (r.ok ? r.json() : { solicitudes: [] })),
+      ]);
+
+      const listaEventos: EventoUsuario[] = [];
+
+      if (resVisitas.status === "fulfilled") {
+        const visitas = resVisitas.value?.visitas ?? [];
+        for (const v of visitas) {
+          if (!v.fechaVisita) continue;
+          listaEventos.push({
+            uid: `visita-${v.agendaID}`,
+            categoria: "visita",
+            tipoLabel: "Visita a propiedad",
+            titulo: v.propiedad ?? "Propiedad",
+            fechaISO: v.fechaVisita,
+            estado: v.estado ?? "Pendiente",
+            ubicacion: [v.direccion, v.ciudad].filter(Boolean).join(", ") || undefined,
+            notas: v.notas || undefined,
+            enlace: "/usuario/agenda",
+          });
+        }
+      }
+
+      if (resSolicitudes.status === "fulfilled") {
+        const solicitudes = resSolicitudes.value?.solicitudes ?? [];
+        for (const s of solicitudes) {
+          const estadoStr = String(s.estado ?? s.estadoReparacion ?? "").trim();
+          // Únicamente mantenimientos cuyo estado sea aceptado
+          if (!estadoStr.toLowerCase().includes("aceptad")) continue;
+          const fechaAsignada = s.fechaAsignada ?? s.fechaProgramada ?? s.fechaReenvio ?? s.fechaSolicitud;
+          if (!fechaAsignada) continue;
+          listaEventos.push({
+            uid: `mant-${s.solicitudID}`,
+            categoria: "mantenimiento",
+            tipoLabel: "Mantenimiento aceptado",
+            titulo: s.nombreServicio ?? s.servicio ?? "Servicio de mantenimiento",
+            fechaISO: fechaAsignada,
+            estado: estadoStr,
+            proveedor: s.nombreInmobiliaria ?? s.inmobiliaria ?? undefined,
+            notas: s.notas || undefined,
+            enlace: "/usuario/solicitudes",
+          });
+        }
+      }
+
+      eventos = listaEventos;
+      const numVisitas = eventos.filter((e) => e.categoria === "visita").length;
+      const numMant = eventos.filter((e) => e.categoria === "mantenimiento").length;
+      conteoCal.textContent = `${numVisitas} visita(s) · ${numMant} mantenimiento(s) aceptado(s)`;
+      pintarCalendario();
+    } catch {
+      conteoCal.textContent = "No se pudieron cargar los eventos";
+      pintarCalendario();
+    }
+  }
+
+  document.getElementById("calUsrPrev")!.addEventListener("click", () => {
+    lunes.setDate(lunes.getDate() - 7);
+    pintarCalendario();
+  });
+  document.getElementById("calUsrNext")!.addEventListener("click", () => {
+    lunes.setDate(lunes.getDate() + 7);
+    pintarCalendario();
+  });
+  document.getElementById("calUsrHoy")!.addEventListener("click", () => {
+    lunes = inicioSemana(new Date());
+    pintarCalendario();
+  });
+  document.getElementById("calUsrRefresh")!.addEventListener("click", () => {
+    cargarEventos();
+  });
+
+  grid.addEventListener("click", (ev) => {
+    const btn = (ev.target as HTMLElement).closest<HTMLElement>("[data-ev]");
+    if (btn) abrirDetalle(btn.dataset.ev!);
+  });
+
+  document.getElementById("dlgEvCerrar")!.addEventListener("click", () => dlg.close());
+  dlg.addEventListener("click", (e) => {
+    if (e.target === dlg) dlg.close();
+  });
+
+  // Actualización dinámica al volver a la pestaña, recibir evento personalizado o periódicamente
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") cargarEventos();
+  });
+  window.addEventListener("skyinit:calendario-actualizar", () => cargarEventos());
+  (window as any).recargarCalendarioUsuario = cargarEventos;
+  setInterval(cargarEventos, 30000);
+
+  cargarEventos();
+</script>

@@ -286,6 +286,14 @@ async function cargarSolicitudes() {
     }
 }
 
+function resolverImgServicio(ruta: string | null | undefined): string {
+    if (!ruta || !ruta.trim()) return "";
+    const r = ruta.trim();
+    if (/^(https?:\/\/|data:)/i.test(r)) return r;
+    if (r.startsWith("/backend/") || r.startsWith("/img/") || r.startsWith("/assets/")) return r;
+    return "/backend" + (r.startsWith("/") ? r : "/" + r);
+}
+
 function renderSolicitudes(lista: any[]) {
     if (!lista.length) {
         document.getElementById("sinSolicitudes")!.style.display = "block";
@@ -295,12 +303,13 @@ function renderSolicitudes(lista: any[]) {
     contenedor.innerHTML = lista.map(s => {
         const estado = s.estadoReparacion ?? s.estado ?? "Pendiente";
         const fecha = formatFecha(s.fechaSolicitud ?? "");
+        const imgUrl = resolverImgServicio(s.imagenServicio ?? s.imagen ?? s.image_url ?? s.foto);
         return ` 
     <div class="sol-card">
     <div class="sol-card-top ${topClass(estado)}"></div>
     <div class="sol-icono">
-        ${s.imagenServicio
-            ? `<img src="${esc(s.imagenServicio)}" alt="${esc(s.nombreServicio ?? '')}" class="sol-icono-img" />`
+        ${imgUrl
+            ? `<img src="${esc(imgUrl)}" alt="${esc(s.nombreServicio ?? '')}" class="sol-icono-img" onerror="this.outerHTML='<i class=\\'bi bi-tools\\'></i>'" />`
             : `<i class="bi bi-tools"></i>`
         }
     </div>
