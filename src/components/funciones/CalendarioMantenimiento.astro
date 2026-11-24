@@ -1,0 +1,622 @@
+---
+/** Calendario semanal de citas de mantenimiento asignadas al trabajador. */
+import "./funciones.css";
+interface Props { mostrarCabecera?: boolean }
+const { mostrarCabecera = true } = Astro.props;
+---
+<section class="fn cal-root" id="calMantRoot" style="max-width:none;margin-top:0">
+  {mostrarCabecera && (
+    <div class="fn-head" style="margin-bottom:14px">
+      <div>
+        <h2 style="font-size:1.2rem;font-weight:700;margin:0">Calendario de citas de mantenimiento</h2>
+        <p>Visualiza las fechas, horas y detalles de los servicios programados que tienes asignados.</p>
+      </div>
+    </div>
+  )}
+
+  <div class="cal-kpis" id="calKpis" aria-label="Resumen de citas">
+    <div class="cal-kpi">
+      <b id="kpiProximas">0</b>
+      <span>Próximas</span>
+    </div>
+    <div class="cal-kpi">
+      <b id="kpiPendientes">0</b>
+      <span>Pendientes</span>
+    </div>
+    <div class="cal-kpi">
+      <b id="kpiProceso">0</b>
+      <span>En proceso</span>
+    </div>
+    <div class="cal-kpi">
+      <b id="kpiFinalizadas">0</b>
+      <span>Finalizadas</span>
+    </div>
+  </div>
+
+  <div class="tr-card cal-card">
+    <div class="cal-toolbar">
+      <div class="cal-controles">
+        <button class="cal-nav-btn" type="button" id="calPrev" aria-label="Semana anterior">
+          <i class="bi bi-chevron-left" aria-hidden="true"></i>
+        </button>
+        <button class="cal-nav-btn cal-nav-btn--hoy" type="button" id="calHoy">Hoy</button>
+        <button class="cal-nav-btn" type="button" id="calNext" aria-label="Semana siguiente">
+          <i class="bi bi-chevron-right" aria-hidden="true"></i>
+        </button>
+      </div>
+      <div class="cal-rango" id="calRangoTitulo"></div>
+    </div>
+
+    <div class="cal-leyenda">
+      <span><i class="cal-dot cal-dot--pend"></i> Pendiente</span>
+      <span><i class="cal-dot cal-dot--prog"></i> En proceso</span>
+      <span><i class="cal-dot cal-dot--ok"></i> Finalizada</span>
+    </div>
+
+    <div class="cal-scroll">
+      <div class="cal-semana-grid" id="calSemanaGrid" role="grid" aria-label="Calendario semanal de citas"></div>
+    </div>
+
+    <p class="cal-error" id="calError" hidden></p>
+  </div>
+
+  <dialog class="fn-modal" id="calDetalleModal" aria-labelledby="calModalTitulo">
+    <div class="fn-modal-cuerpo">
+      <div>
+        <h2 id="calModalTitulo">Detalle de la cita</h2>
+        <small id="calModalSub"></small>
+      </div>
+      <div id="calModalContenido"></div>
+      <div class="fn-modal-pie">
+        <button class="fn-btn fn-btn--sec" type="button" id="calModalCerrar">Cerrar</button>
+      </div>
+    </div>
+  </dialog>
+</section>
+
+<style is:global>
+  .cal-root {
+    display: grid;
+    gap: 16px;
+  }
+
+  /* Tarjetas KPI superiores */
+  .cal-kpis {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 14px;
+  }
+  .cal-kpi {
+    background: #fff;
+    border: 1px solid var(--tr-linea, var(--fn-line));
+    border-radius: 14px;
+    padding: 18px 20px;
+    display: grid;
+    gap: 4px;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+  }
+  .cal-kpi b {
+    font-size: 1.75rem;
+    font-weight: 800;
+    line-height: 1.1;
+    color: var(--tr-ink, var(--fn-ink));
+    font-variant-numeric: tabular-nums;
+  }
+  .cal-kpi span {
+    font-size: 0.85rem;
+    color: var(--tr-muted, var(--fn-muted));
+    font-weight: 500;
+  }
+
+  /* Tarjeta principal del calendario */
+  .cal-card {
+    padding: 20px;
+    display: grid;
+    gap: 14px;
+  }
+
+  .cal-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .cal-controles {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .cal-nav-btn {
+    height: 36px;
+    min-width: 36px;
+    padding: 0 10px;
+    border-radius: 10px;
+    border: 1px solid var(--tr-linea, var(--fn-line));
+    background: #fff;
+    color: var(--tr-ink, var(--fn-ink));
+    font: inherit;
+    font-size: 0.88rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s, color 0.15s;
+  }
+  .cal-nav-btn:hover {
+    border-color: var(--tr-oro, var(--fn-acc));
+    background: var(--tr-acento-suave, #f0fdfa);
+    color: var(--tr-oro-osc, var(--fn-acc));
+  }
+  .cal-nav-btn--hoy {
+    padding: 0 14px;
+  }
+
+  .cal-rango {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--tr-ink, var(--fn-ink));
+    letter-spacing: -0.01em;
+  }
+
+  /* Leyenda de estados */
+  .cal-leyenda {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    font-size: 0.8rem;
+    color: var(--tr-muted, var(--fn-muted));
+    align-items: center;
+  }
+  .cal-leyenda span {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 500;
+  }
+  .cal-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 3px;
+    display: inline-block;
+    flex-shrink: 0;
+  }
+  .cal-dot--pend { background: #c8ad72; }
+  .cal-dot--prog { background: #1f4f82; }
+  .cal-dot--ok { background: #1b6e3c; }
+
+  /* Grilla semanal por horas */
+  .cal-scroll {
+    overflow-x: auto;
+    border: 1px solid var(--tr-linea, var(--fn-line));
+    border-radius: 12px;
+    background: #fff;
+  }
+  .cal-semana-grid {
+    min-width: 780px;
+    display: grid;
+    grid-template-columns: 64px repeat(7, minmax(0, 1fr));
+  }
+
+  .cal-corner {
+    background: var(--tr-crema, #f8fafc);
+    border-bottom: 1px solid var(--tr-linea, var(--fn-line));
+    border-right: 1px solid var(--tr-linea, var(--fn-line));
+    min-height: 44px;
+  }
+  .cal-dia-head {
+    background: var(--tr-crema, #f8fafc);
+    border-bottom: 1px solid var(--tr-linea, var(--fn-line));
+    border-right: 1px solid var(--tr-linea, var(--fn-line));
+    padding: 11px 8px;
+    text-align: center;
+    font-size: 0.84rem;
+    font-weight: 700;
+    color: var(--tr-ink, var(--fn-ink));
+    text-transform: lowercase;
+  }
+  .cal-dia-head:last-child {
+    border-right: 0;
+  }
+  .cal-dia-head--hoy {
+    background: var(--tr-ink, var(--fn-ink));
+    color: #fff;
+  }
+
+  .cal-hora-lbl {
+    padding: 8px 10px 4px;
+    font-size: 0.74rem;
+    font-weight: 500;
+    color: var(--tr-muted, var(--fn-muted));
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    border-bottom: 1px solid var(--tr-linea, var(--fn-line));
+    border-right: 1px solid var(--tr-linea, var(--fn-line));
+    background: #fff;
+    min-height: 54px;
+  }
+  .cal-slot {
+    border-bottom: 1px solid var(--tr-linea, var(--fn-line));
+    border-right: 1px solid var(--tr-linea, var(--fn-line));
+    padding: 4px;
+    min-height: 54px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    background: #fff;
+  }
+  .cal-slot--fin-col {
+    border-right: 0;
+  }
+  .cal-slot--hoy {
+    background: rgba(13, 148, 136, 0.035);
+  }
+  .cal-semana-grid > .cal-ultima-fila {
+    border-bottom: 0;
+  }
+
+  /* Eventos dentro de la celda horaria */
+  .cal-ev {
+    width: 100%;
+    border: 0;
+    border-left: 3px solid transparent;
+    border-radius: 6px;
+    padding: 4px 7px;
+    text-align: left;
+    font: inherit;
+    font-size: 0.74rem;
+    line-height: 1.25;
+    cursor: pointer;
+    display: grid;
+    gap: 1px;
+    transition: filter 0.15s, transform 0.12s;
+  }
+  .cal-ev:hover {
+    filter: brightness(0.96);
+    transform: translateY(-1px);
+  }
+  .cal-ev strong {
+    font-weight: 700;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .cal-ev span {
+    font-size: 0.69rem;
+    opacity: 0.88;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .cal-ev--pend { background: #f3ecd9; color: #7a5c12; border-left-color: #c8ad72; }
+  .cal-ev--prog { background: #dde9f6; color: #1f4f82; border-left-color: #1f4f82; }
+  .cal-ev--ok { background: #dcefe3; color: #1b6e3c; border-left-color: #1b6e3c; }
+
+  .cal-error {
+    margin: 0;
+    color: #b3261e;
+    font-size: 0.88rem;
+  }
+
+  /* Detalle dentro del modal */
+  .cal-modal-card {
+    display: grid;
+    gap: 12px;
+  }
+  .cal-modal-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .cal-cita-hora {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 99px;
+    background: var(--tr-acento-suave, #f0fdfa);
+    color: var(--tr-oro-osc, var(--fn-acc));
+  }
+  .cal-cita-meta {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: 8px;
+    font-size: 0.9rem;
+    color: var(--tr-ink, var(--fn-ink));
+  }
+  .cal-cita-meta li {
+    display: flex;
+    gap: 9px;
+    align-items: baseline;
+  }
+  .cal-cita-meta i {
+    color: var(--tr-oro, var(--fn-acc));
+    flex-shrink: 0;
+  }
+
+  @media (max-width: 900px) {
+    .cal-kpis {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+  @media (max-width: 520px) {
+    .cal-kpis {
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .cal-kpi {
+      padding: 14px 16px;
+    }
+    .cal-card {
+      padding: 14px;
+    }
+  }
+</style>
+
+<script>
+  import { api, esc, fechaHora } from "./comun";
+
+  const semanaGrid = document.getElementById("calSemanaGrid")!;
+  const rangoTitulo = document.getElementById("calRangoTitulo")!;
+  const errBox = document.getElementById("calError")!;
+  const kpiProximas = document.getElementById("kpiProximas")!;
+  const kpiPendientes = document.getElementById("kpiPendientes")!;
+  const kpiProceso = document.getElementById("kpiProceso")!;
+  const kpiFinalizadas = document.getElementById("kpiFinalizadas")!;
+  const modal = document.getElementById("calDetalleModal") as HTMLDialogElement;
+  const modalTitulo = document.getElementById("calModalTitulo")!;
+  const modalSub = document.getElementById("calModalSub")!;
+  const modalContenido = document.getElementById("calModalContenido")!;
+
+  const FINAL = [3, 6];
+  const DIAS_CORTOS = ["lun", "mar", "mié", "jue", "vie", "sáb", "dom"];
+  const MESES_CORTOS = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
+
+  let trabajos: any[] = [];
+  const hoy = new Date();
+  let inicioSemana = lunesDeSemana(hoy);
+
+  function lunesDeSemana(d: Date): Date {
+    const copia = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    const offset = (copia.getDay() + 6) % 7;
+    copia.setDate(copia.getDate() - offset);
+    return copia;
+  }
+
+  function claveFecha(d: Date): string {
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  }
+
+  function fechaCitaDe(t: any): Date | null {
+    const raw = t.fechaAsignacion ?? t.fechaReenvio ?? t.fechaSolicitud;
+    if (!raw) return null;
+    const d = new Date(raw);
+    return Number.isNaN(d.getTime()) ? null : d;
+  }
+
+  function claseEv(t: any): string {
+    if (FINAL.includes(t.estadoReparacionID)) return "cal-ev--ok";
+    if (t.estadoReparacionID === 2) return "cal-ev--prog";
+    return "cal-ev--pend";
+  }
+
+  function claseChip(t: any): string {
+    if (FINAL.includes(t.estadoReparacionID)) return "fn-chip--ok";
+    if (t.estadoReparacionID === 2) return "fn-chip--prog";
+    return "fn-chip--pend";
+  }
+
+  function horaCorta(d: Date): string {
+    return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+  }
+
+  function formatearRango(inicio: Date, fin: Date): string {
+    const d1 = inicio.getDate();
+    const m1 = MESES_CORTOS[inicio.getMonth()];
+    const a1 = inicio.getFullYear();
+    const d2 = fin.getDate();
+    const m2 = MESES_CORTOS[fin.getMonth()];
+    const a2 = fin.getFullYear();
+
+    if (a1 === a2) {
+      return `${d1} de ${m1} – ${d2} de ${m2} de ${a2}`;
+    }
+    return `${d1} de ${m1} de ${a1} – ${d2} de ${m2} de ${a2}`;
+  }
+
+  function actualizarKpis() {
+    const inicioHoy = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate()).getTime();
+    let proximas = 0;
+    let pendientes = 0;
+    let proceso = 0;
+    let finalizadas = 0;
+
+    for (const t of trabajos) {
+      const esFinal = FINAL.includes(t.estadoReparacionID);
+      if (esFinal) {
+        finalizadas++;
+      } else if (t.estadoReparacionID === 2) {
+        proceso++;
+      } else {
+        pendientes++;
+      }
+      const f = fechaCitaDe(t);
+      if (!esFinal && f && f.getTime() >= inicioHoy) {
+        proximas++;
+      }
+    }
+
+    kpiProximas.textContent = String(proximas);
+    kpiPendientes.textContent = String(pendientes);
+    kpiProceso.textContent = String(proceso);
+    kpiFinalizadas.textContent = String(finalizadas);
+  }
+
+  function render() {
+    const diasSemana: Date[] = [];
+    for (let i = 0; i < 7; i++) {
+      diasSemana.push(new Date(inicioSemana.getFullYear(), inicioSemana.getMonth(), inicioSemana.getDate() + i));
+    }
+    const finSemana = diasSemana[6];
+    rangoTitulo.textContent = formatearRango(diasSemana[0], finSemana);
+
+    const clavesSemana = new Set(diasSemana.map(claveFecha));
+    const eventosPorCelda = new Map<string, { item: any; fecha: Date; idx: number }[]>();
+    let horaMin = 7;
+    let horaMax = 20;
+
+    trabajos.forEach((item, idx) => {
+      const fecha = fechaCitaDe(item);
+      if (!fecha) return;
+      const keyDia = claveFecha(fecha);
+      if (!clavesSemana.has(keyDia)) return;
+      const h = fecha.getHours();
+      if (h < horaMin) horaMin = h;
+      if (h > horaMax) horaMax = h;
+      const k = `${keyDia}|${h}`;
+      const lista = eventosPorCelda.get(k) ?? [];
+      lista.push({ item, fecha, idx });
+      eventosPorCelda.set(k, lista);
+    });
+
+    const hoyKey = claveFecha(hoy);
+    const partes: string[] = [];
+
+    // Fila de cabecera: esquina vacía + 7 días
+    partes.push('<div class="cal-corner" aria-hidden="true"></div>');
+    diasSemana.forEach((d, i) => {
+      const k = claveFecha(d);
+      const esHoy = k === hoyKey;
+      partes.push(
+        `<div class="cal-dia-head${esHoy ? " cal-dia-head--hoy" : ""}" role="columnheader">${DIAS_CORTOS[i]} ${d.getDate()}</div>`
+      );
+    });
+
+    // Filas horarias
+    for (let h = horaMin; h <= horaMax; h++) {
+      const ultima = h === horaMax;
+      const etiqueta = `${String(h).padStart(2, "0")}:00`;
+      partes.push(`<div class="cal-hora-lbl${ultima ? " cal-ultima-fila" : ""}">${etiqueta}</div>`);
+
+      diasSemana.forEach((d, i) => {
+        const keyDia = claveFecha(d);
+        const esHoy = keyDia === hoyKey;
+        const finCol = i === 6;
+        const eventos = (eventosPorCelda.get(`${keyDia}|${h}`) ?? []).sort(
+          (a, b) => a.fecha.getTime() - b.fecha.getTime()
+        );
+
+        const clases = [
+          "cal-slot",
+          esHoy ? "cal-slot--hoy" : "",
+          finCol ? "cal-slot--fin-col" : "",
+          ultima ? "cal-ultima-fila" : "",
+        ].filter(Boolean).join(" ");
+
+        const evHtml = eventos
+          .map(({ item, fecha, idx }) => {
+            const sub = item.propiedad || item.cliente || item.estado || "";
+            return `
+              <button type="button" class="cal-ev ${claseEv(item)}" data-idx="${idx}" title="${esc(horaCorta(fecha) + " · " + item.servicio)}">
+                <strong>${esc(horaCorta(fecha))} · ${esc(item.servicio)}</strong>
+                ${sub ? `<span>${esc(sub)}</span>` : ""}
+              </button>
+            `;
+          })
+          .join("");
+
+        partes.push(`<div class="${clases}" role="gridcell">${evHtml}</div>`);
+      });
+    }
+
+    semanaGrid.innerHTML = partes.join("");
+  }
+
+  function abrirDetalle(idx: number) {
+    const item = trabajos[idx];
+    if (!item) return;
+    const fecha = fechaCitaDe(item);
+    const ubicacion = [item.propiedad, item.direccion, item.ciudad].filter(Boolean).join(", ");
+    const grupo = Array.isArray(item.trabajadores) && item.trabajadores.length
+      ? item.trabajadores.map((t: any) => t.nombre).join(", ")
+      : "";
+
+    modalTitulo.textContent = item.servicio ?? "Detalle de la cita";
+    modalSub.textContent = fecha
+      ? fecha.toLocaleDateString("es-CO", { weekday: "long", day: "numeric", month: "long", year: "numeric" })
+      : "";
+
+    modalContenido.innerHTML = `
+      <div class="cal-modal-card">
+        <div class="cal-modal-top">
+          <span class="cal-cita-hora"><i class="bi bi-clock" aria-hidden="true"></i> ${fecha ? esc(fechaHora(fecha.toISOString())) : "Sin fecha"}</span>
+          <span class="fn-chip ${claseChip(item)}">${esc(item.estado ?? "Pendiente")}</span>
+        </div>
+        <ul class="cal-cita-meta">
+          ${item.servicioDescripcion ? `<li><i class="bi bi-card-text" aria-hidden="true"></i><span>${esc(item.servicioDescripcion)}</span></li>` : ""}
+          ${ubicacion ? `<li><i class="bi bi-geo-alt" aria-hidden="true"></i><span>${esc(ubicacion)}</span></li>` : ""}
+          <li><i class="bi bi-person" aria-hidden="true"></i><span>${esc(item.cliente ?? "Sin cliente")}${item.clienteTelefono ? " · " + esc(item.clienteTelefono) : ""}</span></li>
+          ${item.constructora ? `<li><i class="bi bi-hammer" aria-hidden="true"></i><span>${esc(item.constructora)}</span></li>` : ""}
+          ${grupo ? `<li><i class="bi bi-people" aria-hidden="true"></i><span>Equipo: ${esc(grupo)}</span></li>` : ""}
+          ${item.notas ? `<li><i class="bi bi-chat-left-text" aria-hidden="true"></i><span>${esc(item.notas)}</span></li>` : ""}
+        </ul>
+      </div>
+    `;
+    modal.showModal();
+  }
+
+  semanaGrid.addEventListener("click", (ev) => {
+    const btn = (ev.target as HTMLElement).closest<HTMLElement>("[data-idx]");
+    if (!btn?.dataset.idx) return;
+    abrirDetalle(Number(btn.dataset.idx));
+  });
+
+  document.getElementById("calModalCerrar")!.addEventListener("click", () => modal.close());
+
+  document.getElementById("calPrev")!.addEventListener("click", () => {
+    inicioSemana = new Date(inicioSemana.getFullYear(), inicioSemana.getMonth(), inicioSemana.getDate() - 7);
+    render();
+  });
+  document.getElementById("calNext")!.addEventListener("click", () => {
+    inicioSemana = new Date(inicioSemana.getFullYear(), inicioSemana.getMonth(), inicioSemana.getDate() + 7);
+    render();
+  });
+  document.getElementById("calHoy")!.addEventListener("click", () => {
+    inicioSemana = lunesDeSemana(hoy);
+    render();
+  });
+
+  (async () => {
+    try {
+      const d = await api("/mantenimiento/trabajador");
+      trabajos = d.trabajos ?? [];
+      actualizarKpis();
+
+      const hayEnSemanaActual = trabajos.some((t) => {
+        const f = fechaCitaDe(t);
+        if (!f) return false;
+        const lun = lunesDeSemana(f).getTime();
+        return lun === inicioSemana.getTime();
+      });
+
+      if (!hayEnSemanaActual && trabajos.length) {
+        const primera = fechaCitaDe(trabajos[0]);
+        if (primera) {
+          inicioSemana = lunesDeSemana(primera);
+        }
+      }
+      render();
+    } catch (e) {
+      errBox.textContent = (e as Error).message;
+      errBox.hidden = false;
+      render();
+    }
+  })();
+</script>

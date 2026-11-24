@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Propuesta 2 · Azul Pizarra & Esmeralda Técnico — Panel de Trabajador</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+  <style>
+    :root {
+      --bg: #f8fafc;
+      --surface: #ffffff;
+      --surface-soft: #f1f5f9;
+      --ink: #0f172a;
+      --ink-2: #1e293b;
+      --muted: #64748b;
+      --line: #e2e8f0;
+      --accent: #0d9488;
+      --accent-dark: #0f766e;
+      --accent-soft: #f0fdfa;
+      --pend-bg: #fff7ed; --pend-fg: #c2410c;
+      --prog-bg: #eff6ff; --prog-fg: #1d4ed8;
+      --ok-bg: #ecfdf5;   --ok-fg: #047857;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      display: grid;
+      grid-template-columns: 248px 1fr;
+      min-height: 100vh;
+    }
+    .preview-bar {
+      position: fixed; right: 18px; bottom: 18px; z-index: 999;
+      display: flex; gap: 6px; padding: 6px; border-radius: 12px;
+      background: rgba(15, 23, 42, 0.92); backdrop-filter: blur(8px);
+      border: 1px solid rgba(255,255,255,0.12); box-shadow: 0 12px 30px rgba(15,23,42,0.22);
+    }
+    .preview-bar a {
+      color: #cbd5e1; text-decoration: none; font-size: 0.78rem; font-weight: 600;
+      padding: 6px 11px; border-radius: 8px; transition: 0.15s;
+    }
+    .preview-bar a:hover { background: rgba(255,255,255,0.1); color: #fff; }
+    .preview-bar a.active { background: var(--accent); color: #fff; }
+
+    /* Sidebar */
+    .sidebar {
+      background: var(--ink);
+      color: #e2e8f0;
+      padding: 24px 16px;
+      display: flex; flex-direction: column; gap: 24px;
+      border-right: 1px solid #1e293b;
+    }
+    .brand {
+      display: flex; align-items: center; gap: 10px; padding: 0 8px;
+      font-weight: 800; font-size: 1.05rem; letter-spacing: 0.02em; color: #fff;
+    }
+    .brand-dot {
+      width: 10px; height: 10px; border-radius: 99px; background: var(--accent);
+      box-shadow: 0 0 12px rgba(13, 148, 136, 0.7);
+    }
+    .nav { display: grid; gap: 4px; }
+    .nav a {
+      display: flex; align-items: center; gap: 10px; padding: 10px 12px;
+      border-radius: 10px; text-decoration: none; color: #94a3b8;
+      font-size: 0.9rem; font-weight: 500; transition: 0.15s;
+    }
+    .nav a:hover { background: rgba(255,255,255,0.06); color: #fff; }
+    .nav a.active {
+      background: rgba(13, 148, 136, 0.18);
+      color: #5eead4;
+      font-weight: 600;
+    }
+    .sidebar-foot {
+      margin-top: auto; padding: 12px; border-radius: 12px;
+      background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+      font-size: 0.8rem; color: #94a3b8;
+    }
+    .sidebar-foot strong { display: block; color: #fff; font-size: 0.86rem; }
+
+    /* Main */
+    .main { padding: 28px 32px 80px; max-width: 1240px; width: 100%; margin: 0 auto; display: grid; gap: 22px; align-content: start; }
+
+    /* Hero */
+    .hero {
+      background: linear-gradient(135deg, var(--ink) 0%, var(--ink-2) 100%);
+      color: #f8fafc;
+      border-radius: 16px;
+      padding: 26px 28px;
+      box-shadow: 0 12px 28px rgba(15, 23, 42, 0.12);
+      display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px;
+    }
+    .tags { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
+    .tag {
+      display: inline-flex; align-items: center; gap: 6px; padding: 4px 11px;
+      border-radius: 99px; font-size: 0.76rem; font-weight: 600;
+      background: rgba(13, 148, 136, 0.2); color: #99f6e4;
+      border: 1px solid rgba(94, 234, 212, 0.28);
+    }
+    .hero h1 { margin: 0 0 4px; font-size: 1.65rem; font-weight: 700; letter-spacing: -0.02em; }
+    .hero p { margin: 0; color: #cbd5e1; font-size: 0.92rem; }
+    .hero-acc { display: flex; flex-wrap: wrap; gap: 10px; }
+    .btn {
+      display: inline-flex; align-items: center; gap: 7px; padding: 9px 16px;
+      border-radius: 10px; font-weight: 600; font-size: 0.88rem; text-decoration: none; cursor: pointer;
+      border: 1px solid var(--accent); background: var(--accent); color: #fff; transition: 0.15s;
+    }
+    .btn:hover { background: var(--accent-dark); }
+    .btn-sec {
+      background: rgba(255,255,255,0.08); color: #f8fafc; border-color: rgba(255,255,255,0.18);
+    }
+    .btn-sec:hover { background: rgba(255,255,255,0.15); }
+    .btn-light {
+      background: var(--surface); color: var(--ink); border-color: var(--line); padding: 5px 10px; font-size: 0.78rem;
+    }
+    .btn-light:hover { border-color: var(--accent); color: var(--accent-dark); }
+
+    /* KPIs */
+    .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(175px, 1fr)); gap: 14px; }
+    .kpi {
+      background: var(--surface); border: 1px solid var(--line); border-radius: 14px;
+      padding: 16px 18px; display: grid; gap: 10px;
+      box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .kpi:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(15, 23, 42, 0.07); }
+    .kpi-top { display: flex; justify-content: space-between; align-items: center; color: var(--muted); font-size: 0.82rem; font-weight: 600; }
+    .kpi-ico {
+      width: 34px; height: 34px; border-radius: 99px; display: grid; place-items: center;
+      background: var(--accent-soft); color: var(--accent-dark);
+    }
+    .kpi b { font-size: 1.75rem; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
+
+    /* Split */
+    .split { display: grid; grid-template-columns: 1.15fr 1fr; gap: 20px; align-items: start; }
+    .stack { display: grid; gap: 20px; }
+    .card {
+      background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 20px;
+      display: grid; gap: 16px; box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+    }
+    .card-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+    .card-titulo { display: flex; align-items: center; gap: 12px; }
+    .card-ico {
+      width: 38px; height: 38px; border-radius: 10px; display: grid; place-items: center;
+      background: var(--ink); color: #fff; font-size: 1rem;
+    }
+    .card-ico.accent { background: var(--accent-soft); color: var(--accent-dark); }
+    .card-titulo h2 { margin: 0; font-size: 1.02rem; font-weight: 700; }
+    .card-titulo small { color: var(--muted); font-size: 0.8rem; }
+
+    /* Recordatorio hoy */
+    .hoy-item {
+      padding: 13px 14px; border: 1px solid var(--line);
+      border-radius: 12px; background: var(--bg); display: flex; justify-content: space-between; align-items: center; gap: 12px;
+    }
+    .hoy-item strong { display: block; font-size: 0.92rem; }
+    .hoy-item small { color: var(--muted); font-size: 0.8rem; }
+
+    /* Acciones rápidas */
+    .acciones-grid { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); }
+    .accion {
+      display: flex; align-items: center; gap: 12px; padding: 12px 14px;
+      border: 1px solid var(--line); border-radius: 12px; text-decoration: none; color: var(--ink);
+      background: var(--surface); transition: 0.15s;
+    }
+    .accion:hover { border-color: var(--accent); background: var(--accent-soft); }
+    .accion-ico {
+      width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center;
+      background: var(--surface-soft); color: var(--ink-2); flex-shrink: 0;
+    }
+    .accion.destacada { border-color: rgba(13, 148, 136, 0.35); background: var(--accent-soft); }
+    .accion.destacada .accion-ico { background: var(--accent); color: #fff; }
+    .accion-txt { display: grid; min-width: 0; flex: 1; }
+    .accion-txt strong { font-size: 0.88rem; }
+    .accion-txt small { font-size: 0.76rem; color: var(--muted); }
+
+    /* Notificaciones */
+    .notif-lista { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+    .notif-item {
+      display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: start;
+      padding: 12px 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface);
+    }
+    .notif-item.nueva { background: var(--accent-soft); border-color: rgba(13, 148, 136, 0.28); }
+    .notif-item strong { font-size: 0.88rem; display: flex; align-items: center; gap: 7px; }
+    .dot-new { width: 8px; height: 8px; border-radius: 99px; background: var(--accent); display: inline-block; }
+    .notif-item p { margin: 3px 0; font-size: 0.82rem; color: var(--muted); }
+    .notif-item small { font-size: 0.74rem; color: var(--muted); }
+
+    /* Chips */
+    .chip { display: inline-block; padding: 2px 9px; border-radius: 99px; font-size: 0.72rem; font-weight: 700; }
+    .chip-pend { background: var(--pend-bg); color: var(--pend-fg); }
+    .chip-prog { background: var(--prog-bg); color: var(--prog-fg); }
+    .chip-ok   { background: var(--ok-bg); color: var(--ok-fg); }
+
+    @media (max-width: 960px) {
+      body { grid-template-columns: 1fr; }
+      .sidebar { display: none; }
+      .split { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <aside class="sidebar">
+    <div class="brand"><span class="brand-dot"></span> SKYINIT · TRABAJADOR</div>
+    <nav class="nav">
+      <a class="active" href="#"><i class="bi bi-grid-1x2-fill"></i> Resumen</a>
+      <a href="#"><i class="bi bi-tools"></i> Mis mantenimientos</a>
+      <a href="#"><i class="bi bi-calendar3"></i> Calendario</a>
+      <a href="#"><i class="bi bi-people-fill"></i> Grupo de trabajo</a>
+      <a href="#"><i class="bi bi-bell-fill"></i> Notificaciones</a>
+      <a href="#"><i class="bi bi-person-fill"></i> Mi perfil</a>
+    </nav>
+    <div class="sidebar-foot">
+      <strong>Propuesta 2</strong>
+      Azul Pizarra & Esmeralda Técnico
+    </div>
+  </aside>
+
+  <main class="main">
+    <header class="hero">
+      <div>
+        <div class="tags">
+          <span class="tag"><i class="bi bi-building"></i> Constructora Horizonte</span>
+          <span class="tag"><i class="bi bi-calendar-event"></i> Mar, 24 Nov 2026</span>
+        </div>
+        <h1>¡Hola, Carlos!</h1>
+        <p>Resumen de tus mantenimientos asignados, agenda del día y avisos recientes.</p>
+      </div>
+      <div class="hero-acc">
+        <a class="btn" href="#"><i class="bi bi-calendar3"></i> Ver calendario</a>
+        <a class="btn btn-sec" href="#"><i class="bi bi-people-fill"></i> Mi equipo</a>
+      </div>
+    </header>
+
+    <section class="kpis">
+      <div class="kpi"><div class="kpi-top"><span>Trabajos asignados</span><span class="kpi-ico"><i class="bi bi-briefcase-fill"></i></span></div><b>14</b></div>
+      <div class="kpi"><div class="kpi-top"><span>Pendientes</span><span class="kpi-ico"><i class="bi bi-hourglass-split"></i></span></div><b>4</b></div>
+      <div class="kpi"><div class="kpi-top"><span>En proceso</span><span class="kpi-ico"><i class="bi bi-tools"></i></span></div><b>3</b></div>
+      <div class="kpi"><div class="kpi-top"><span>Finalizados</span><span class="kpi-ico"><i class="bi bi-check-circle-fill"></i></span></div><b>7</b></div>
+      <div class="kpi"><div class="kpi-top"><span>Sin leer</span><span class="kpi-ico"><i class="bi bi-bell-fill"></i></span></div><b>2</b></div>
+    </section>
+
+    <section class="split">
+      <div class="stack">
+        <article class="card">
+          <div class="card-head">
+            <div class="card-titulo">
+              <div class="card-ico accent"><i class="bi bi-calendar2-check-fill"></i></div>
+              <div>
+                <h2>Recordatorio de hoy</h2>
+                <small>2 visitas programadas para tu jornada</small>
+              </div>
+            </div>
+            <span class="chip chip-prog">Hoy</span>
+          </div>
+          <div class="hoy-item">
+            <div>
+              <strong>Torre Mirador · Apto 402</strong>
+              <small><i class="bi bi-clock"></i> 09:30 AM · Revisión humedad baño principal</small>
+            </div>
+            <span class="chip chip-prog">En proceso</span>
+          </div>
+          <div class="hoy-item">
+            <div>
+              <strong>Conjunto Robledal · Casa 18</strong>
+              <small><i class="bi bi-clock"></i> 02:30 PM · Ajuste de carpintería y cerradura</small>
+            </div>
+            <span class="chip chip-pend">Pendiente</span>
+          </div>
+        </article>
+
+        <article class="card">
+          <div class="card-head">
+            <div class="card-titulo">
+              <div class="card-ico"><i class="bi bi-lightning-charge-fill"></i></div>
+              <div>
+                <h2>Acciones rápidas</h2>
+                <small>Accesos directos a tus herramientas diarias.</small>
+              </div>
+            </div>
+          </div>
+          <div class="acciones-grid">
+            <a class="accion destacada" href="#">
+              <span class="accion-ico"><i class="bi bi-calendar3"></i></span>
+              <span class="accion-txt"><strong>Calendario de citas</strong><small>Ver fechas y horas</small></span>
+              <i class="bi bi-chevron-right"></i>
+            </a>
+            <a class="accion" href="#">
+              <span class="accion-ico"><i class="bi bi-tools"></i></span>
+              <span class="accion-txt"><strong>Mis mantenimientos</strong><small>Registrar avances</small></span>
+              <i class="bi bi-chevron-right"></i>
+            </a>
+            <a class="accion" href="#">
+              <span class="accion-ico"><i class="bi bi-people-fill"></i></span>
+              <span class="accion-txt"><strong>Grupo de trabajo</strong><small>Cuadrilla y supervisor</small></span>
+              <i class="bi bi-chevron-right"></i>
+            </a>
+            <a class="accion" href="#">
+              <span class="accion-ico"><i class="bi bi-person-fill"></i></span>
+              <span class="accion-txt"><strong>Mi perfil</strong><small>Datos y contraseña</small></span>
+              <i class="bi bi-chevron-right"></i>
+            </a>
+          </div>
+        </article>
+      </div>
+
+      <article class="card">
+        <div class="card-head">
+          <div class="card-titulo">
+            <div class="card-ico accent"><i class="bi bi-bell-fill"></i></div>
+            <div>
+              <h2>Últimas 5 notificaciones</h2>
+              <small>2 notificaciones sin leer</small>
+            </div>
+          </div>
+          <a class="btn btn-light" href="#">Ver todas</a>
+        </div>
+        <ul class="notif-lista">
+          <li class="notif-item nueva">
+            <div>
+              <strong><span class="dot-new"></span> Nuevo mantenimiento asignado</strong>
+              <p>Se te asignó la orden #1048 en Torre Mirador Apto 402.</p>
+              <small><i class="bi bi-clock"></i> Hace 15 min</small>
+            </div>
+            <button class="btn btn-light" type="button"><i class="bi bi-check2"></i></button>
+          </li>
+          <li class="notif-item nueva">
+            <div>
+              <strong><span class="dot-new"></span> Cambio de horario aprobado</strong>
+              <p>La visita en Conjunto Robledal Casa 18 pasó a las 02:30 PM.</p>
+              <small><i class="bi bi-clock"></i> Hace 1 hora</small>
+            </div>
+            <button class="btn btn-light" type="button"><i class="bi bi-check2"></i></button>
+          </li>
+          <li class="notif-item">
+            <div>
+              <strong>Cierre validado por supervisor</strong>
+              <p>Orden #1039 marcada como finalizada conforme.</p>
+              <small><i class="bi bi-clock"></i> Ayer, 5:40 PM</small>
+            </div>
+          </li>
+          <li class="notif-item">
+            <div>
+              <strong>Material disponible en bodega</strong>
+              <p>Kit de sellado acrílico listo para retiro en obra.</p>
+              <small><i class="bi bi-clock"></i> Ayer, 11:10 AM</small>
+            </div>
+          </li>
+        </ul>
+      </article>
+    </section>
+  </main>
+
+  <nav class="preview-bar" aria-label="Cambiar propuesta">
+    <a href="propuesta-1-obsidiana-cobre.html">1. Obsidiana & Cobre</a>
+    <a class="active" href="propuesta-2-pizarra-esmeralda.html">2. Pizarra & Esmeralda</a>
+    <a href="propuesta-3-grafito-terracota.html">3. Grafito & Terracota</a>
+  </nav>
+</body>
+</html>

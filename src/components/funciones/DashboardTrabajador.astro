@@ -1,0 +1,219 @@
+---
+/** Dashboard principal del trabajador: hero, estadísticas unificadas, recordatorio de hoy, acciones rápidas y últimas 5 notificaciones. */
+import "./funciones.css";
+import RecordatorioMantenimientoHoy from "./RecordatorioMantenimientoHoy.astro";
+import NotifModalTrabajador from "../trabajador/NotifModalTrabajador.astro";
+---
+<section id="dashTrabRoot" class="tr-stack">
+  <!-- Hero -->
+  <header class="tr-hero">
+    <div class="tr-hero-info">
+      <div class="tr-hero-tags">
+        <span class="tr-hero-tag"><i class="bi bi-building" aria-hidden="true"></i> <span id="dtConstructoraTag">Constructora</span></span>
+        <span class="tr-hero-tag"><i class="bi bi-calendar-event" aria-hidden="true"></i> <span id="dtFechaTag"></span></span>
+      </div>
+      <h1 id="dtSaludo">Panel de trabajador</h1>
+      <p>Resumen de tus mantenimientos asignados, agenda del día y avisos recientes.</p>
+    </div>
+    <div class="tr-hero-acc">
+      <a class="tr-hero-btn" href="/trabajador/calendario"><i class="bi bi-calendar3" aria-hidden="true"></i> Ver calendario</a>
+      <a class="tr-hero-btn tr-hero-btn--sec" href="/trabajador/grupo"><i class="bi bi-people-fill" aria-hidden="true"></i> Mi equipo</a>
+      <NotifModalTrabajador />
+    </div>
+  </header>
+
+  <!-- Estadísticas unificadas -->
+  <div class="tr-kpis" id="dashTrabStats" aria-label="Estadísticas del trabajador">
+    <div class="tr-kpi tr-kpi--destacado"><div class="tr-kpi-top"><span class="tr-kpi-lbl">Trabajos asignados</span><span class="tr-kpi-ico"><i class="bi bi-briefcase-fill"></i></span></div><b class="tr-kpi-val">—</b></div>
+    <div class="tr-kpi"><div class="tr-kpi-top"><span class="tr-kpi-lbl">Pendientes</span><span class="tr-kpi-ico"><i class="bi bi-hourglass-split"></i></span></div><b class="tr-kpi-val">—</b></div>
+    <div class="tr-kpi tr-kpi--prog"><div class="tr-kpi-top"><span class="tr-kpi-lbl">En proceso</span><span class="tr-kpi-ico"><i class="bi bi-tools"></i></span></div><b class="tr-kpi-val">—</b></div>
+    <div class="tr-kpi tr-kpi--ok"><div class="tr-kpi-top"><span class="tr-kpi-lbl">Finalizados</span><span class="tr-kpi-ico"><i class="bi bi-check-circle-fill"></i></span></div><b class="tr-kpi-val">—</b></div>
+    <div class="tr-kpi"><div class="tr-kpi-top"><span class="tr-kpi-lbl">Sin leer</span><span class="tr-kpi-ico"><i class="bi bi-bell-fill"></i></span></div><b class="tr-kpi-val">—</b></div>
+  </div>
+
+  <!-- Distribución 2 columnas: Recordatorio + Acciones rápidas | Últimas 5 notificaciones -->
+  <div class="tr-split">
+    <div class="tr-stack">
+      <RecordatorioMantenimientoHoy />
+
+      <article class="tr-card">
+        <div class="tr-card-head">
+          <div class="tr-card-titulo">
+            <div class="tr-card-ico"><i class="bi bi-lightning-charge-fill" aria-hidden="true"></i></div>
+            <div>
+              <h2>Acciones rápidas</h2>
+              <small>Accesos directos a tus herramientas diarias.</small>
+            </div>
+          </div>
+        </div>
+        <div class="tr-acciones-grid">
+          <a class="tr-accion tr-accion--destacada" href="/trabajador/calendario">
+            <span class="tr-accion-ico"><i class="bi bi-calendar3" aria-hidden="true"></i></span>
+            <span class="tr-accion-txt"><strong>Calendario de citas</strong><small>Ver fechas y horas</small></span>
+            <i class="bi bi-chevron-right" aria-hidden="true"></i>
+          </a>
+          <a class="tr-accion" href="#mantRoot">
+            <span class="tr-accion-ico"><i class="bi bi-tools" aria-hidden="true"></i></span>
+            <span class="tr-accion-txt"><strong>Mis mantenimientos</strong><small>Registrar avances</small></span>
+            <i class="bi bi-chevron-right" aria-hidden="true"></i>
+          </a>
+          <a class="tr-accion" href="/trabajador/grupo">
+            <span class="tr-accion-ico"><i class="bi bi-people-fill" aria-hidden="true"></i></span>
+            <span class="tr-accion-txt"><strong>Grupo de trabajo</strong><small>Cuadrilla y supervisor</small></span>
+            <i class="bi bi-chevron-right" aria-hidden="true"></i>
+          </a>
+          <a class="tr-accion" href="/notificaciones">
+            <span class="tr-accion-ico"><i class="bi bi-bell-fill" aria-hidden="true"></i></span>
+            <span class="tr-accion-txt"><strong>Notificaciones</strong><small>Historial completo</small></span>
+            <i class="bi bi-chevron-right" aria-hidden="true"></i>
+          </a>
+          <a class="tr-accion" href="/trabajador/perfil">
+            <span class="tr-accion-ico"><i class="bi bi-person-fill" aria-hidden="true"></i></span>
+            <span class="tr-accion-txt"><strong>Mi perfil</strong><small>Datos y contraseña</small></span>
+            <i class="bi bi-chevron-right" aria-hidden="true"></i>
+          </a>
+        </div>
+      </article>
+    </div>
+
+    <article class="tr-card dt-notif-card">
+      <div class="tr-card-head">
+        <div class="tr-card-titulo">
+          <div class="tr-card-ico tr-card-ico--oro"><i class="bi bi-bell-fill" aria-hidden="true"></i></div>
+          <div>
+            <h2>Últimas 5 notificaciones</h2>
+            <small id="dtNotifSub">Cargando…</small>
+          </div>
+        </div>
+        <a class="fn-btn fn-btn--sec fn-btn--mini" href="/notificaciones">Ver todas</a>
+      </div>
+      <ul class="dt-notif-lista" id="dtNotifLista" aria-live="polite">
+        <li class="fn-muted">Cargando notificaciones…</li>
+      </ul>
+    </article>
+  </div>
+</section>
+
+<style is:global>
+  .dt-notif-lista { list-style:none; margin:0; padding:0; display:grid; gap:10px; }
+  .dt-notif-item {
+    display:grid; grid-template-columns:1fr auto; gap:10px; align-items:start;
+    padding:12px 14px; border:1px solid var(--tr-linea, #e2e8f0); border-radius:12px; background:#fff;
+    transition:border-color .15s, background .15s;
+  }
+  .dt-notif-item:hover { border-color:var(--tr-oro, #0d9488); }
+  .dt-notif-item--nueva {
+    border-color:rgba(13, 148, 136, 0.28);
+    border-left:4px solid var(--tr-oro, #0d9488);
+    background:var(--tr-acento-suave, #f0fdfa);
+  }
+  .dt-notif-cuerpo { display:grid; gap:3px; min-width:0; }
+  .dt-notif-cuerpo strong { font-size:.9rem; display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+  .dt-notif-cuerpo p { margin:0; font-size:.83rem; color:var(--fn-muted); overflow-wrap:anywhere; }
+  .dt-notif-cuerpo small { font-size:.75rem; color:var(--fn-muted); }
+</style>
+
+<script>
+  import { api, esc, fechaHora, aviso } from "./comun";
+
+  const statsEl = document.getElementById("dashTrabStats")!;
+  const notifLista = document.getElementById("dtNotifLista")!;
+  const notifSub = document.getElementById("dtNotifSub")!;
+  const saludoEl = document.getElementById("dtSaludo")!;
+  const constTagEl = document.getElementById("dtConstructoraTag")!;
+  const fechaTagEl = document.getElementById("dtFechaTag")!;
+
+  const FINAL = [3, 6];
+
+  fechaTagEl.textContent = new Date().toLocaleDateString("es-CO", {
+    weekday: "short", day: "numeric", month: "short", year: "numeric",
+  });
+
+  function kpi(lbl: string, val: number, icono: string, extra = ""): string {
+    return `<div class="tr-kpi ${extra}">
+      <div class="tr-kpi-top"><span class="tr-kpi-lbl">${esc(lbl)}</span><span class="tr-kpi-ico"><i class="bi ${icono}" aria-hidden="true"></i></span></div>
+      <b class="tr-kpi-val">${Number(val)}</b>
+    </div>`;
+  }
+
+  async function cargarDashboard() {
+    const [perfilRes, mantRes, notifRes] = await Promise.allSettled([
+      fetch("/backend/auth/perfil", { credentials: "same-origin" }).then((r) => (r.ok ? r.json() : null)),
+      api("/mantenimiento/trabajador"),
+      api("/notificaciones"),
+    ]);
+
+    if (perfilRes.status === "fulfilled" && perfilRes.value?.usuario) {
+      const u = perfilRes.value.usuario;
+      if (u.nombre) saludoEl.textContent = `¡Hola, ${String(u.nombre).split(" ")[0]}!`;
+      if (u.constructoraNombre) constTagEl.textContent = u.constructoraNombre;
+    }
+
+    const trabajos: any[] = mantRes.status === "fulfilled" ? (mantRes.value.trabajos ?? []) : [];
+    const notificaciones: any[] = notifRes.status === "fulfilled" ? (notifRes.value.notificaciones ?? []) : [];
+    const noLeidas: number = notifRes.status === "fulfilled" ? Number(notifRes.value.noLeidas ?? 0) : 0;
+
+    const total = trabajos.length;
+    const finalizados = trabajos.filter((t) => FINAL.includes(t.estadoReparacionID)).length;
+    const enProceso = trabajos.filter((t) => t.estadoReparacionID === 2).length;
+    const pendientes = total - finalizados - enProceso;
+
+    statsEl.innerHTML =
+      kpi("Trabajos asignados", total, "bi-briefcase-fill", "tr-kpi--destacado") +
+      kpi("Pendientes", pendientes, "bi-hourglass-split", pendientes ? "tr-kpi--alerta" : "") +
+      kpi("En proceso", enProceso, "bi-tools", "tr-kpi--prog") +
+      kpi("Finalizados", finalizados, "bi-check-circle-fill", "tr-kpi--ok") +
+      kpi("Sin leer", noLeidas, "bi-bell-fill", noLeidas ? "tr-kpi--alerta" : "");
+
+    pintarNotificaciones(notificaciones.slice(0, 5), noLeidas);
+  }
+
+  function pintarNotificaciones(ultimas: any[], noLeidas: number) {
+    notifSub.textContent = noLeidas
+      ? `${noLeidas} ${noLeidas === 1 ? "notificación sin leer" : "notificaciones sin leer"}`
+      : "Al día con tus notificaciones";
+
+    if (!ultimas.length) {
+      notifLista.innerHTML = `
+        <li class="fn-vacio" style="padding:22px 12px">
+          <i class="bi bi-bell-slash" aria-hidden="true"></i>
+          No tienes notificaciones todavía.
+        </li>`;
+      return;
+    }
+
+    notifLista.innerHTML = ultimas.map((n) => `
+      <li class="dt-notif-item ${!n.leida ? "dt-notif-item--nueva" : ""}">
+        <div class="dt-notif-cuerpo">
+          <strong>
+            ${esc(n.titulo)}
+            ${!n.leida ? `<span class="fn-chip fn-chip--pend">Nueva</span>` : ""}
+          </strong>
+          ${n.mensaje ? `<p>${esc(n.mensaje)}</p>` : ""}
+          <small><i class="bi bi-clock" aria-hidden="true"></i> ${esc(fechaHora(n.fechaCreacion))}</small>
+        </div>
+        ${!n.leida
+          ? `<button class="fn-btn fn-btn--sec fn-btn--mini" type="button" data-leer="${Number(n.notificacionID)}" title="Marcar como leída"><i class="bi bi-check2"></i></button>`
+          : ""}
+      </li>
+    `).join("");
+  }
+
+  notifLista.addEventListener("click", async (ev) => {
+    const btn = (ev.target as HTMLElement).closest<HTMLButtonElement>("[data-leer]");
+    if (!btn) return;
+    btn.disabled = true;
+    try {
+      await api(`/notificaciones/${Number(btn.dataset.leer)}/leida`, "PATCH");
+      aviso("Notificación marcada como leída");
+      await cargarDashboard();
+    } catch (e) {
+      aviso((e as Error).message, "error");
+      btn.disabled = false;
+    }
+  });
+
+  cargarDashboard().catch(() => {
+    notifSub.textContent = "Error al cargar";
+  });
+</script>

@@ -234,11 +234,13 @@ const configuraciones: Record<
         descripcion: subtitulo,
         iniciales,
         clase: "constructora",
-        rutas: { dashboard: "/trabajador", perfil: "/trabajador" },
+        rutas: { dashboard: "/trabajador", perfil: "/trabajador/perfil" },
         items: [
-            { href: "/trabajador",     icon: "bi-grid-1x2-fill", label: "Mi trabajo" },
-            { href: "/trabajador/perfil", icon: "bi-person-fill", label: "Perfil" },
-            { href: "/notificaciones", icon: "bi-bell-fill",     label: "Notificaciones" },
+            { href: "/trabajador",            icon: "bi-grid-1x2-fill", label: "Mi trabajo" },
+            { href: "/trabajador/calendario", icon: "bi-calendar3",     label: "Calendario" },
+            { href: "/trabajador/grupo",      icon: "bi-people-fill",   label: "Grupo de trabajo" },
+            { href: "/notificaciones",        icon: "bi-bell-fill",     label: "Notificaciones" },
+            { href: "/trabajador/perfil",     icon: "bi-person-fill",   label: "Perfil" },
         ],
     },
 };
