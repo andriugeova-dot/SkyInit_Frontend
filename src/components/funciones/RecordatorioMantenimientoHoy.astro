@@ -1,0 +1,112 @@
+---
+/** Recordatorio de citas de servicio de mantenimiento programadas para el día actual. */
+import "./funciones.css";
+---
+<article class="tr-card rec-hoy" id="recHoyRoot">
+  <div class="tr-card-head">
+    <div class="tr-card-titulo">
+      <div class="tr-card-ico tr-card-ico--oro"><i class="bi bi-alarm-fill" aria-hidden="true"></i></div>
+      <div>
+        <h2>Recordatorio de citas de hoy</h2>
+        <small id="recHoyFecha"></small>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <span class="fn-chip fn-chip--pend" id="recHoyBadge" hidden></span>
+      <a class="fn-btn fn-btn--sec fn-btn--mini" href="/trabajador/calendario">
+        <i class="bi bi-calendar3" aria-hidden="true"></i> Ver calendario
+      </a>
+    </div>
+  </div>
+  <div id="recHoyLista" class="rec-hoy-lista" aria-live="polite">
+    <p class="fn-muted" style="margin:0">Cargando citas de hoy…</p>
+  </div>
+</article>
+
+<style is:global>
+  .rec-hoy { border-top:3px solid var(--tr-oro, #c8ad72); }
+  .rec-hoy-lista { display:grid; gap:10px; }
+  .rec-hoy-item {
+    border:1px solid var(--tr-linea, #e2ddd0); border-left:4px solid var(--tr-ink, #253229);
+    border-radius:12px; padding:12px 14px; background:#fffdf9;
+    display:grid; gap:7px; align-content:start;
+  }
+  .rec-hoy-top { display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap; }
+  .rec-hoy-hora {
+    display:inline-flex; align-items:center; gap:5px; font-size:.78rem; font-weight:700;
+    padding:3px 9px; border-radius:99px; background:#eef3ef; color:#253229;
+  }
+  .rec-hoy-meta { margin:0; padding:0; list-style:none; display:grid; gap:4px; font-size:.84rem; }
+  .rec-hoy-meta li { display:flex; gap:7px; align-items:baseline; }
+  .rec-hoy-meta i { color:var(--fn-acc); flex-shrink:0; }
+</style>
+
+<script>
+  import { api, esc } from "./comun";
+
+  const fechaEl = document.getElementById("recHoyFecha")!;
+  const listaEl = document.getElementById("recHoyLista")!;
+  const badgeEl = document.getElementById("recHoyBadge")!;
+
+  const FINAL = [3, 6];
+  const hoy = new Date();
+  const clave = (d: Date) =>
+    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  const hoyKey = clave(hoy);
+
+  fechaEl.textContent = hoy.toLocaleDateString("es-CO", {
+    weekday: "long", day: "numeric", month: "long", year: "numeric",
+  });
+
+  const claseChip = (t: any) =>
+    FINAL.includes(t.estadoReparacionID) ? "fn-chip--ok" : t.estadoReparacionID === 2 ? "fn-chip--prog" : "fn-chip--pend";
+
+  (async () => {
+    try {
+      const { trabajos = [] } = await api("/mantenimiento/trabajador");
+      const deHoy = trabajos
+        .map((t: any) => {
+          const raw = t.fechaAsignacion ?? t.fechaReenvio ?? t.fechaSolicitud;
+          const f = raw ? new Date(raw) : null;
+          return f && !Number.isNaN(f.getTime()) ? { item: t, fecha: f } : null;
+        })
+        .filter((x: any): x is { item: any; fecha: Date } => x !== null && clave(x.fecha) === hoyKey)
+        .sort((a: any, b: any) => a.fecha.getTime() - b.fecha.getTime());
+
+      badgeEl.textContent = `${deHoy.length} ${deHoy.length === 1 ? "cita" : "citas"}`;
+      badgeEl.hidden = false;
+
+      if (!deHoy.length) {
+        listaEl.innerHTML = `
+          <div class="fn-vacio" style="padding:20px 14px">
+            <i class="bi bi-calendar-check" aria-hidden="true"></i>
+            No tienes citas de mantenimiento programadas para hoy.
+          </div>`;
+        return;
+      }
+
+      listaEl.innerHTML = deHoy.map(({ item, fecha }: { item: any; fecha: Date }) => {
+        const hora = fecha.toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit" });
+        const ubicacion = [item.propiedad, item.direccion, item.ciudad].filter(Boolean).join(", ");
+        return `
+          <article class="rec-hoy-item">
+            <div class="rec-hoy-top">
+              <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                <span class="rec-hoy-hora"><i class="bi bi-clock" aria-hidden="true"></i> ${esc(hora)}</span>
+                <strong>${esc(item.servicio)}</strong>
+              </div>
+              <span class="fn-chip ${claseChip(item)}">${esc(item.estado ?? "Pendiente")}</span>
+            </div>
+            <ul class="rec-hoy-meta">
+              ${ubicacion ? `<li><i class="bi bi-geo-alt" aria-hidden="true"></i><span>${esc(ubicacion)}</span></li>` : ""}
+              <li><i class="bi bi-person" aria-hidden="true"></i><span>${esc(item.cliente)}${item.clienteTelefono ? " · " + esc(item.clienteTelefono) : ""}</span></li>
+              ${item.constructora ? `<li><i class="bi bi-hammer" aria-hidden="true"></i><span>${esc(item.constructora)}</span></li>` : ""}
+              ${item.notas ? `<li><i class="bi bi-chat-left-text" aria-hidden="true"></i><span>${esc(item.notas)}</span></li>` : ""}
+            </ul>
+          </article>`;
+      }).join("");
+    } catch (e) {
+      listaEl.innerHTML = `<div class="fn-vacio">${esc((e as Error).message)}</div>`;
+    }
+  })();
+</script>

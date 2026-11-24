@@ -6,8 +6,8 @@
  *  trabajador   -> ve sus trabajos, registra avances y finaliza
  */
 import "./funciones.css";
-interface Props { modo: "admin" | "constructora" | "trabajador"; titulo?: boolean }
-const { modo, titulo = true } = Astro.props;
+interface Props { modo: "admin" | "constructora" | "trabajador"; titulo?: boolean; mostrarStats?: boolean }
+const { modo, titulo = true, mostrarStats = true } = Astro.props;
 const textos = {
   admin: ["Mantenimiento", "Solicitudes de servicio de tus clientes. Reenvíalas a una constructora asociada para que las atienda."],
   constructora: ["Trabajos de mantenimiento", "Solicitudes que te reenviaron las inmobiliarias. Asigna el grupo de trabajadores que las atenderá."],
@@ -20,7 +20,15 @@ const textos = {
   ) : (
     <div class="fn-head" style="margin-top:28px"><div><h2 style="font-size:1.2rem;font-weight:700;margin:0">{textos[0]}</h2><p>{textos[1]}</p></div></div>
   )}
-  <div class="fn-stats" id="mantStats"></div>
+  <div class="fn-stats" id="mantStats" hidden={!mostrarStats}></div>
+  {modo === "trabajador" && (
+    <div class="tr-filtros" id="mantFiltros" role="tablist" aria-label="Filtrar trabajos por estado">
+      <button type="button" class="tr-filtro activo" data-filtro="todos" role="tab" aria-selected="true">Todos</button>
+      <button type="button" class="tr-filtro" data-filtro="pendientes" role="tab" aria-selected="false">Pendientes</button>
+      <button type="button" class="tr-filtro" data-filtro="proceso" role="tab" aria-selected="false">En proceso</button>
+      <button type="button" class="tr-filtro" data-filtro="finalizados" role="tab" aria-selected="false">Finalizados</button>
+    </div>
+  )}
   <div class="fn-grid" id="mantLista" style="grid-template-columns:repeat(auto-fill,minmax(320px,1fr))"></div>
 
   <dialog class="fn-modal" id="dlgMant">
@@ -56,6 +64,7 @@ const textos = {
   let items: any[] = [];
   let constructoras: any[] = [];
   let actual: any = null;
+  let filtroEstado = "todos";
 
   const FINAL = [3, 6];
   const estadoTexto = (s: any) => s.estado ?? "Pendiente";
@@ -96,11 +105,23 @@ const textos = {
         ${modo !== "trabajador" ? `<div class="fn-stat ${sinAsignar ? "fn-stat--alerta" : ""}"><b>${sinAsignar}</b><span>${modo === "admin" ? "Sin reenviar" : "Sin grupo asignado"}</span></div>` : ""}
         <div class="fn-stat"><b>${items.length - fin}</b><span>En curso</span></div>
         <div class="fn-stat"><b>${fin}</b><span>Finalizadas</span></div>`;
-      lista.innerHTML = items.length ? items.map(tarjeta).join("") : `<div class="fn-vacio" style="grid-column:1/-1"><i class="bi bi-tools" aria-hidden="true"></i>${
-        modo === "admin" ? "Aún no hay solicitudes de servicio de tus clientes."
-        : modo === "constructora" ? "Ninguna inmobiliaria te ha reenviado solicitudes todavía."
-        : "Aún no te han asignado trabajos de mantenimiento."}</div>`;
+      pintarLista();
     } catch (e) { lista.innerHTML = `<div class="fn-vacio" style="grid-column:1/-1">${esc((e as Error).message)}</div>`; }
+  }
+
+  function pintarLista() {
+    const visibles = modo !== "trabajador" || filtroEstado === "todos"
+      ? items
+      : items.filter((s) => {
+          const fin = FINAL.includes(s.estadoReparacionID);
+          if (filtroEstado === "finalizados") return fin;
+          if (filtroEstado === "proceso") return s.estadoReparacionID === 2;
+          return !fin && s.estadoReparacionID !== 2;
+        });
+    lista.innerHTML = visibles.length ? visibles.map(tarjeta).join("") : `<div class="fn-vacio" style="grid-column:1/-1"><i class="bi bi-tools" aria-hidden="true"></i>${
+      modo === "admin" ? "Aún no hay solicitudes de servicio de tus clientes."
+      : modo === "constructora" ? "Ninguna inmobiliaria te ha reenviado solicitudes todavía."
+      : items.length ? "No hay trabajos en esta categoría." : "Aún no te han asignado trabajos de mantenimiento."}</div>`;
   }
 
   async function abrir(id: number) {
@@ -144,6 +165,17 @@ const textos = {
     } catch (e) { hist.innerHTML = `<li class="fn-muted" style="border-color:transparent">${esc((e as Error).message)}</li>`; }
   }
 
+  document.getElementById("mantFiltros")?.addEventListener("click", (ev) => {
+    const btn = (ev.target as HTMLElement).closest<HTMLButtonElement>("[data-filtro]");
+    if (!btn?.dataset.filtro) return;
+    filtroEstado = btn.dataset.filtro;
+    document.querySelectorAll<HTMLButtonElement>("#mantFiltros [data-filtro]").forEach((b) => {
+      const activo = b === btn;
+      b.classList.toggle("activo", activo);
+      b.setAttribute("aria-selected", String(activo));
+    });
+    pintarLista();
+  });
   lista.addEventListener("click", (ev) => {
     const b = (ev.target as HTMLElement).closest<HTMLElement>("[data-abrir]");
     if (b) abrir(Number(b.dataset.abrir)).catch((e) => aviso(e.message, "error"));

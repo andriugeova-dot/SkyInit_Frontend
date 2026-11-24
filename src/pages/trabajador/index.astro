@@ -1,13 +1,14 @@
 ---
 import Layout from "../../layouts/LayoutVistas.astro";
 import Mantenimiento from "../../components/funciones/Mantenimiento.astro";
-import ResumenPanel from "../../components/funciones/ResumenPanel.astro";
-import "../../components/funciones/funciones.css";
+import DashboardTrabajador from "../../components/funciones/DashboardTrabajador.astro";
+import "../../components/trabajador/trabajador.css";
 ---
 <Layout>
-  <section class="fn" style="max-width:none">
-    <div class="fn-head"><div><h1>Mi trabajo</h1><p>Servicios de mantenimiento que tienes asignados.</p></div></div>
-    <ResumenPanel />
-  </section>
-  <Mantenimiento modo="trabajador" titulo={false} />
+  <div class="tr-page">
+    <DashboardTrabajador />
+    <section class="tr-card tr-mant-wrap">
+      <Mantenimiento modo="trabajador" titulo={false} mostrarStats={false} />
+    </section>
+  </div>
 </Layout>

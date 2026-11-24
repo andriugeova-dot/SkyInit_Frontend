@@ -36,6 +36,15 @@
   background: var(--fondo);
 }
 
+.sidebar.constructora[data-rol="Trabajador"] {
+  --fondo: #0f172a;
+  --texto: #f8fafc;
+  --texto-secundario: #94a3b8;
+  --principal: #5eead4;
+  --principal-suave: rgba(13, 148, 136, 0.18);
+  background: var(--fondo);
+}
+
 .sidebar.administrador {
   --fondo: #202d3b;
   --texto: #f2f5f8;

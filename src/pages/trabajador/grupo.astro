@@ -1,0 +1,216 @@
+---
+import Layout from "../../layouts/LayoutVistas.astro";
+import "../../components/funciones/funciones.css";
+import "../../components/trabajador/trabajador.css";
+---
+<Layout>
+  <div class="tr-page" id="grupoRoot">
+    <header class="tr-hero">
+      <div class="tr-hero-info">
+        <div class="tr-hero-tags">
+          <span class="tr-hero-tag"><i class="bi bi-people-fill" aria-hidden="true"></i> Cuadrilla de trabajo</span>
+          <span class="tr-hero-tag" id="grupoHeroConstTag" hidden><i class="bi bi-building" aria-hidden="true"></i> <span id="grupoHeroConst"></span></span>
+        </div>
+        <h1 id="grupoHeroTitulo">Grupo de trabajo</h1>
+        <p>Información de la cuadrilla, integrantes y supervisor asignados por tu constructora.</p>
+      </div>
+      <div class="tr-hero-acc">
+        <a class="tr-hero-btn tr-hero-btn--sec" href="/trabajador"><i class="bi bi-arrow-left" aria-hidden="true"></i> Volver al panel</a>
+      </div>
+    </header>
+
+    <div class="tr-kpis" id="grupoStats" aria-label="Resumen de la cuadrilla"></div>
+
+    <div class="grupo-cols" id="grupoInfo"></div>
+
+    <section class="tr-card">
+      <div class="tr-card-head">
+        <div class="tr-card-titulo">
+          <div class="tr-card-ico"><i class="bi bi-person-lines-fill" aria-hidden="true"></i></div>
+          <div>
+            <h2>Integrantes del equipo</h2>
+            <small>Trabajadores activos afiliados a la misma constructora.</small>
+          </div>
+        </div>
+      </div>
+      <div class="fn-grid" id="grupoIntegrantes"></div>
+    </section>
+
+    <section class="tr-card">
+      <div class="tr-card-head">
+        <div class="tr-card-titulo">
+          <div class="tr-card-ico tr-card-ico--oro"><i class="bi bi-tools" aria-hidden="true"></i></div>
+          <div>
+            <h2>Cuadrillas asignadas por servicio</h2>
+            <small>Servicios de mantenimiento donde compartes asignación con otros integrantes.</small>
+          </div>
+        </div>
+      </div>
+      <div class="fn-grid" id="grupoAsignaciones" style="grid-template-columns:repeat(auto-fill,minmax(320px,1fr))"></div>
+    </section>
+  </div>
+</Layout>
+
+<style is:global>
+  .grupo-cols { display:grid; grid-template-columns:repeat(auto-fit, minmax(300px, 1fr)); gap:18px; }
+  .grupo-meta { margin:0; padding:0; list-style:none; display:grid; gap:8px; font-size:.9rem; }
+  .grupo-meta li { display:flex; gap:8px; align-items:baseline; }
+  .grupo-meta i { color:var(--fn-acc); flex-shrink:0; }
+  .grupo-meta a { color:var(--tr-ink, #253229); text-decoration:none; }
+  .grupo-meta a:hover { text-decoration:underline; }
+  .grupo-miembro-card { border-radius:14px; display:grid; gap:10px; align-content:start; background:#fffdf9; }
+  .grupo-miembro { display:flex; gap:12px; align-items:center; }
+  .grupo-avatar {
+    width:50px; height:50px; border-radius:50%; background:var(--fn-acc); color:#fff;
+    border:2px solid var(--tr-oro, #c8ad72);
+    display:grid; place-items:center; font-weight:700; font-size:1rem; flex-shrink:0; overflow:hidden;
+  }
+  .grupo-avatar--sup { background:#f4f0e4; color:#253229; width:44px; height:44px; }
+  .grupo-avatar img { width:100%; height:100%; object-fit:cover; }
+  .grupo-chips { display:flex; flex-wrap:wrap; gap:6px; margin-top:4px; }
+  .grupo-chip-miembro {
+    display:inline-flex; align-items:center; gap:5px; padding:3px 10px; border-radius:99px;
+    background:#f3efe4; color:#253229; font-size:.78rem; font-weight:600;
+  }
+  .grupo-chip-miembro--yo { background:#dcefe3; color:#1b6e3c; }
+</style>
+
+<script>
+  import { api, esc, fechaHora, urlArchivo, claseEstado } from "../../components/funciones/comun";
+
+  const stats = document.getElementById("grupoStats")!;
+  const info = document.getElementById("grupoInfo")!;
+  const listaInt = document.getElementById("grupoIntegrantes")!;
+  const listaAsig = document.getElementById("grupoAsignaciones")!;
+  const heroTitulo = document.getElementById("grupoHeroTitulo")!;
+  const heroConstTag = document.getElementById("grupoHeroConstTag")!;
+  const heroConst = document.getElementById("grupoHeroConst")!;
+
+  function iniciales(nombre: string): string {
+    return nombre.trim().split(/\s+/).map((p) => p[0]).join("").slice(0, 2).toUpperCase() || "?";
+  }
+
+  async function cargar() {
+    try {
+      const d = await api("/trabajador/grupo");
+      const eq = d.equipo ?? {};
+      const c = eq.constructora;
+      const sup = eq.supervisor;
+      const integrantes: any[] = d.integrantes ?? [];
+      const asignaciones: any[] = d.asignaciones ?? [];
+
+      if (eq.nombre) heroTitulo.textContent = eq.nombre;
+      if (c?.nombre) {
+        heroConst.textContent = c.nombre;
+        heroConstTag.hidden = false;
+      }
+
+      stats.innerHTML = `
+        <div class="tr-kpi tr-kpi--destacado">
+          <div class="tr-kpi-top"><span class="tr-kpi-lbl">Integrantes activos</span><span class="tr-kpi-ico"><i class="bi bi-people-fill" aria-hidden="true"></i></span></div>
+          <b class="tr-kpi-val">${integrantes.length}</b>
+        </div>
+        <div class="tr-kpi">
+          <div class="tr-kpi-top"><span class="tr-kpi-lbl">Servicios asignados</span><span class="tr-kpi-ico"><i class="bi bi-tools" aria-hidden="true"></i></span></div>
+          <b class="tr-kpi-val">${asignaciones.length}</b>
+        </div>
+        <div class="tr-kpi tr-kpi--ok">
+          <div class="tr-kpi-top"><span class="tr-kpi-lbl">Tu rol</span><span class="tr-kpi-ico"><i class="bi bi-person-badge" aria-hidden="true"></i></span></div>
+          <b class="tr-kpi-val tr-kpi-val--texto">${esc(eq.rol ?? "Trabajador")}</b>
+        </div>
+      `;
+
+      info.innerHTML = `
+        <article class="tr-card">
+          <div class="tr-card-head">
+            <div class="tr-card-titulo">
+              <div class="tr-card-ico"><i class="bi bi-building" aria-hidden="true"></i></div>
+              <div>
+                <h2>Constructora afiliada</h2>
+                <small>${esc(eq.nombre ?? "Sin cuadrilla")}</small>
+              </div>
+            </div>
+          </div>
+          <ul class="grupo-meta">
+            <li><i class="bi bi-hammer" aria-hidden="true"></i><span><strong>Nombre:</strong> ${esc(c?.nombre ?? "Sin constructora asignada")}</span></li>
+            ${c?.ciudad ? `<li><i class="bi bi-geo-alt" aria-hidden="true"></i><span><strong>Ciudad:</strong> ${esc(c.ciudad)}</span></li>` : ""}
+            ${c?.correo ? `<li><i class="bi bi-envelope" aria-hidden="true"></i><a href="mailto:${esc(c.correo)}">${esc(c.correo)}</a></li>` : ""}
+            ${c?.telefono ? `<li><i class="bi bi-telephone" aria-hidden="true"></i><a href="tel:${esc(c.telefono)}">${esc(c.telefono)}</a></li>` : ""}
+          </ul>
+        </article>
+        <article class="tr-card">
+          <div class="tr-card-head">
+            <div class="tr-card-titulo">
+              <div class="tr-card-ico tr-card-ico--oro"><i class="bi bi-person-badge-fill" aria-hidden="true"></i></div>
+              <div>
+                <h2>Supervisor asignado</h2>
+                <small>Responsable de la constructora</small>
+              </div>
+            </div>
+          </div>
+          ${sup ? `
+            <div class="grupo-miembro" style="margin-bottom:12px">
+              <div class="grupo-avatar grupo-avatar--sup">${esc(iniciales(sup.nombre ?? ""))}</div>
+              <div>
+                <strong>${esc(sup.nombre)}</strong>
+                <div><small class="fn-muted">Supervisor / Constructora</small></div>
+              </div>
+            </div>
+            <ul class="grupo-meta">
+              ${sup.correo ? `<li><i class="bi bi-envelope" aria-hidden="true"></i><a href="mailto:${esc(sup.correo)}">${esc(sup.correo)}</a></li>` : ""}
+              ${sup.telefono ? `<li><i class="bi bi-telephone" aria-hidden="true"></i><a href="tel:${esc(sup.telefono)}">${esc(sup.telefono)}</a></li>` : ""}
+            </ul>
+          ` : `<p class="fn-muted" style="margin:0">No hay un supervisor registrado para esta constructora.</p>`}
+        </article>
+      `;
+
+      listaInt.innerHTML = integrantes.length
+        ? integrantes.map((t) => {
+            const foto = t.fotoPerfil ? urlArchivo(t.fotoPerfil) : "";
+            return `
+              <article class="fn-card grupo-miembro-card">
+                <div class="grupo-miembro">
+                  <div class="grupo-avatar">
+                    ${foto ? `<img src="${esc(foto)}" alt="" />` : esc(iniciales(t.nombre ?? ""))}
+                  </div>
+                  <div style="min-width:0">
+                    <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+                      <strong>${esc(t.nombre)}</strong>
+                      ${t.esYo ? `<span class="fn-chip fn-chip--ok">Tú</span>` : ""}
+                    </div>
+                    <small class="fn-muted">${esc(t.rol ?? "Trabajador")}</small>
+                  </div>
+                </div>
+                <ul class="grupo-meta" style="font-size:.84rem">
+                  ${t.correo ? `<li><i class="bi bi-envelope" aria-hidden="true"></i><a href="mailto:${esc(t.correo)}">${esc(t.correo)}</a></li>` : ""}
+                  ${t.telefono ? `<li><i class="bi bi-telephone" aria-hidden="true"></i><a href="tel:${esc(t.telefono)}">${esc(t.telefono)}</a></li>` : ""}
+                </ul>
+              </article>
+            `;
+          }).join("")
+        : `<div class="fn-vacio" style="grid-column:1/-1"><i class="bi bi-people" aria-hidden="true"></i>No hay integrantes activos registrados en tu cuadrilla.</div>`;
+
+      listaAsig.innerHTML = asignaciones.length
+        ? asignaciones.map((a) => `
+            <article class="fn-card grupo-miembro-card">
+              <div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start">
+                <strong>${esc(a.servicio)}</strong>
+                <span class="fn-chip ${claseEstado(a.estado ?? "Pendiente")}">${esc(a.estado ?? "Pendiente")}</span>
+              </div>
+              <ul class="grupo-meta" style="font-size:.85rem">
+                ${a.propiedad ? `<li><i class="bi bi-geo-alt" aria-hidden="true"></i><span>${esc(a.propiedad)}${a.ciudad ? ", " + esc(a.ciudad) : ""}</span></li>` : ""}
+                <li><i class="bi bi-calendar3" aria-hidden="true"></i><span>Asignado el ${esc(fechaHora(a.fechaAsignacion ?? a.fechaSolicitud))}</span></li>
+              </ul>
+              <div class="grupo-chips">
+                ${a.integrantes.map((m: any) => `<span class="grupo-chip-miembro ${m.esYo ? "grupo-chip-miembro--yo" : ""}"><i class="bi bi-person" aria-hidden="true"></i>${esc(m.nombre)}${m.esYo ? " (Tú)" : ""}</span>`).join("")}
+              </div>
+            </article>
+          `).join("")
+        : `<div class="fn-vacio" style="grid-column:1/-1"><i class="bi bi-tools" aria-hidden="true"></i>Aún no tienes servicios de mantenimiento asignados.</div>`;
+    } catch (e) {
+      info.innerHTML = `<div class="fn-vacio">${esc((e as Error).message)}</div>`;
+    }
+  }
+
+  cargar();
+</script>

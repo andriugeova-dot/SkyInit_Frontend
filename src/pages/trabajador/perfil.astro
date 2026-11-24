@@ -2,36 +2,98 @@
 import Layout from "../../layouts/LayoutVistas.astro";
 import CambiarPassword from "../../components/funciones/CambiarPassword.astro";
 import "../../components/funciones/funciones.css";
+import "../../components/trabajador/trabajador.css";
 ---
 <Layout>
-  <section class="fn" style="max-width:720px">
-    <div class="fn-head"><div><h1>Mi perfil</h1><p>Tus datos de contacto y tu foto.</p></div></div>
-    <div class="fn-card perfil-t">
-      <div class="perfil-t-foto">
-        <div class="perfil-t-avatar" id="ptAvatar" aria-hidden="true"></div>
-        <label class="fn-btn fn-btn--sec fn-btn--mini" for="ptFoto"><i class="bi bi-camera" aria-hidden="true"></i> Cambiar foto</label>
-        <input type="file" id="ptFoto" accept="image/jpeg,image/png,image/webp" hidden />
-        <small class="fn-muted">JPG, PNG o WebP · máx. 5 MB</small>
+  <div class="tr-page tr-perfil-page">
+    <header class="tr-hero">
+      <div class="tr-hero-info">
+        <div class="tr-hero-tags">
+          <span class="tr-hero-tag"><i class="bi bi-person-badge" aria-hidden="true"></i> <span id="ptRolTag">Trabajador</span></span>
+          <span class="tr-hero-tag" id="ptConstTag" hidden><i class="bi bi-building" aria-hidden="true"></i> <span id="ptConstTagNombre"></span></span>
+        </div>
+        <h1>Mi perfil</h1>
+        <p>Administra tus datos personales, foto, constructora afiliada y contraseña.</p>
       </div>
-      <form class="fn-form" id="formPerfil">
-        <label>Nombre completo <input id="ptNombre" maxlength="100" required /></label>
-        <label>Correo electrónico <input id="ptCorreo" disabled />
-          <small class="fn-muted" style="font-weight:400"><i class="bi bi-lock-fill" aria-hidden="true"></i> El correo no puede modificarse.</small></label>
-        <label>Teléfono <input id="ptTelefono" maxlength="20" inputmode="tel" /></label>
-        <div class="fn-muted" id="ptEmpresa" style="font-size:.9rem"></div>
-        <div><button class="fn-btn" type="submit" id="ptGuardar"><i class="bi bi-floppy" aria-hidden="true"></i> Guardar cambios</button></div>
-      </form>
+      <div class="tr-hero-acc">
+        <a class="tr-hero-btn tr-hero-btn--sec" href="/trabajador"><i class="bi bi-arrow-left" aria-hidden="true"></i> Volver al panel</a>
+      </div>
+    </header>
+
+    <div class="tr-perfil-grid">
+      <!-- Tarjeta lateral de identidad -->
+      <aside class="tr-card perfil-t-identidad">
+        <div class="perfil-t-foto">
+          <div class="perfil-t-avatar" id="ptAvatar" aria-hidden="true"></div>
+          <label class="fn-btn fn-btn--sec fn-btn--mini" for="ptFoto"><i class="bi bi-camera" aria-hidden="true"></i> Cambiar foto</label>
+          <input type="file" id="ptFoto" accept="image/jpeg,image/png,image/webp" hidden />
+          <small class="fn-muted">JPG, PNG o WebP · máx. 5 MB</small>
+        </div>
+
+        <div class="perfil-t-resumen">
+          <strong id="ptNombreVista">Trabajador</strong>
+          <span class="fn-chip fn-chip--ok" id="ptEmpresa">Trabajador</span>
+        </div>
+
+        <div class="perfil-t-const-box">
+          <small><i class="bi bi-building" aria-hidden="true"></i> Constructora afiliada</small>
+          <strong id="ptConstVista">Cargando…</strong>
+        </div>
+      </aside>
+
+      <!-- Formularios de datos y contraseña -->
+      <div class="tr-stack">
+        <article class="tr-card">
+          <div class="tr-card-head">
+            <div class="tr-card-titulo">
+              <div class="tr-card-ico"><i class="bi bi-person-lines-fill" aria-hidden="true"></i></div>
+              <div>
+                <h2>Datos personales</h2>
+                <small>Actualiza tu nombre visible y teléfono de contacto.</small>
+              </div>
+            </div>
+          </div>
+
+          <form class="fn-form" id="formPerfil">
+            <label>Nombre completo <input id="ptNombre" maxlength="100" required /></label>
+            <div class="fn-fila">
+              <label>Correo electrónico <input id="ptCorreo" disabled />
+                <small class="fn-muted" style="font-weight:400"><i class="bi bi-lock-fill" aria-hidden="true"></i> El correo no puede modificarse.</small>
+              </label>
+              <label>Teléfono <input id="ptTelefono" maxlength="20" inputmode="tel" /></label>
+            </div>
+            <label>Constructora afiliada <input id="ptConstructora" disabled />
+              <small class="fn-muted" style="font-weight:400"><i class="bi bi-building" aria-hidden="true"></i> Constructora a la que estás afiliado.</small>
+            </label>
+            <div><button class="fn-btn" type="submit" id="ptGuardar"><i class="bi bi-floppy" aria-hidden="true"></i> Guardar cambios</button></div>
+          </form>
+        </article>
+
+        <div class="tr-perfil-pw">
+          <CambiarPassword />
+        </div>
+      </div>
     </div>
-  </section>
-  <CambiarPassword />
+  </div>
 </Layout>
 
 <style is:global>
-  .perfil-t { display:grid; grid-template-columns:180px minmax(0,1fr); gap:28px; align-items:start; }
+  .perfil-t-identidad { display:grid; gap:16px; justify-items:center; text-align:center; }
   .perfil-t-foto { display:grid; gap:10px; justify-items:center; text-align:center; }
-  .perfil-t-avatar { width:120px; height:120px; border-radius:50%; background:var(--fn-acc); color:#fff; display:grid; place-items:center; font-size:2.2rem; font-weight:700; overflow:hidden; }
+  .perfil-t-avatar {
+    width:124px; height:124px; border-radius:50%; background:var(--fn-acc); color:#fff;
+    border:3px solid var(--tr-oro, #c8ad72); box-shadow:0 6px 18px rgba(37, 50, 41, .14);
+    display:grid; place-items:center; font-size:2.2rem; font-weight:700; overflow:hidden;
+  }
   .perfil-t-avatar img { width:100%; height:100%; object-fit:cover; }
-  @media (max-width:640px){ .perfil-t { grid-template-columns:1fr; } }
+  .perfil-t-resumen { display:grid; gap:6px; justify-items:center; }
+  .perfil-t-resumen strong { font-size:1.1rem; color:#253229; }
+  .perfil-t-const-box {
+    width:100%; padding:12px 14px; border-radius:12px; background:#fbf9f3;
+    border:1px solid var(--tr-linea, #e2ddd0); display:grid; gap:4px; text-align:left;
+  }
+  .perfil-t-const-box small { font-size:.75rem; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--fn-muted); display:flex; align-items:center; gap:6px; }
+  .perfil-t-const-box strong { font-size:.94rem; color:#253229; }
 </style>
 
 <script>
@@ -46,9 +108,20 @@ import "../../components/funciones/funciones.css";
     const res = await fetch("/backend/auth/perfil", { credentials: "same-origin" });
     if (res.status === 401) { location.href = "/login?redirect=/trabajador/perfil"; return; }
     const u = (await res.json()).usuario ?? {};
-    $("ptNombre").value = u.nombre ?? ""; $("ptCorreo").value = u.correo ?? ""; $("ptTelefono").value = u.telefono ?? "";
+    const constNombre = u.constructoraNombre ?? "Sin constructora asignada";
+    $("ptNombre").value = u.nombre ?? "";
+    $("ptCorreo").value = u.correo ?? "";
+    $("ptTelefono").value = u.telefono ?? "";
+    $("ptConstructora").value = constNombre;
+    document.getElementById("ptNombreVista")!.textContent = u.nombre || "Trabajador";
+    document.getElementById("ptConstVista")!.textContent = constNombre;
+    document.getElementById("ptEmpresa")!.textContent = u.nombreRol ?? "Trabajador";
+    document.getElementById("ptRolTag")!.textContent = u.nombreRol ?? "Trabajador";
+    if (u.constructoraNombre) {
+      document.getElementById("ptConstTagNombre")!.textContent = u.constructoraNombre;
+      document.getElementById("ptConstTag")!.hidden = false;
+    }
     pintarAvatar(u.nombre ?? "", u.fotoPerfil);
-    document.getElementById("ptEmpresa")!.textContent = u.nombreRol ? `Rol: ${u.nombreRol}` : "";
   }
   document.getElementById("formPerfil")!.addEventListener("submit", async (ev) => {
     ev.preventDefault();
