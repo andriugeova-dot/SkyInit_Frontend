@@ -95,6 +95,22 @@ import NotifModalPanel from "../funciones/NotifModalPanel.astro";
         <article class="co-card">
           <div class="co-card-head">
             <div class="co-card-titulo">
+              <div class="co-card-ico co-card-ico--oro"><i class="bi bi-wrench-adjustable" aria-hidden="true"></i></div>
+              <div>
+                <h2>Mantenimientos pendientes por asignar</h2>
+                <small id="dcMantSub">Cargando solicitudes…</small>
+              </div>
+            </div>
+            <a class="fn-btn fn-btn--sec fn-btn--mini" href="/constructora/mantenimiento">Gestionar</a>
+          </div>
+          <ul class="co-notif-lista" id="dcMantLista">
+            <li class="fn-muted">Cargando…</li>
+          </ul>
+        </article>
+
+        <article class="co-card">
+          <div class="co-card-head">
+            <div class="co-card-titulo">
               <div class="co-card-ico"><i class="bi bi-lightning-charge-fill" aria-hidden="true"></i></div>
               <div>
                 <h2>Acciones rápidas</h2>
@@ -326,8 +342,41 @@ import NotifModalPanel from "../funciones/NotifModalPanel.astro";
     }
   }
 
+  async function cargarMantenimientosPendientes() {
+    const mantLista = document.getElementById("dcMantLista");
+    const mantSub = document.getElementById("dcMantSub");
+    if (!mantLista || !mantSub) return;
+    try {
+      const d = await api("/mantenimiento/constructora");
+      const todas: any[] = d.solicitudes ?? [];
+      const sinAsignar = todas.filter((s) => !(s.trabajadores ?? []).length && ![3, 6].includes(s.estadoReparacionID));
+      mantSub.textContent = sinAsignar.length
+        ? `${sinAsignar.length} sin grupo de trabajadores asignado`
+        : "Todos los mantenimientos activos tienen equipo asignado";
+      const mostrar = (sinAsignar.length ? sinAsignar : todas.filter((s) => ![3, 6].includes(s.estadoReparacionID))).slice(0, 4);
+      if (!mostrar.length) {
+        mantLista.innerHTML = `<li class="fn-vacio" style="padding:18px 12px"><i class="bi bi-check2-circle" aria-hidden="true"></i>No hay mantenimientos pendientes por asignar.</li>`;
+        return;
+      }
+      mantLista.innerHTML = mostrar.map((s) => `
+        <li class="co-notif-item ${!(s.trabajadores ?? []).length ? "co-notif-item--nueva" : ""}">
+          <div class="co-notif-cuerpo">
+            <strong>${esc(s.servicio)} <span class="fn-chip ${!(s.trabajadores ?? []).length ? "fn-chip--pend" : "fn-chip--prog"}">${!(s.trabajadores ?? []).length ? "Sin asignar" : esc(s.estado ?? "En curso")}</span></strong>
+            <p>${esc(s.cliente)}${s.propiedad ? " · " + esc(s.propiedad) : ""}</p>
+            <small><i class="bi bi-clock" aria-hidden="true"></i> ${esc(fechaHora(s.fechaReenvio ?? s.fechaSolicitud))}</small>
+          </div>
+          <a class="fn-btn fn-btn--sec fn-btn--mini" href="/constructora/mantenimiento">Asignar</a>
+        </li>
+      `).join("");
+    } catch {
+      mantSub.textContent = "Sin datos disponibles";
+      mantLista.innerHTML = `<li class="fn-muted">No se pudieron cargar los mantenimientos.</li>`;
+    }
+  }
+
   document.addEventListener("avisos:actualizados", () => cargarNotificaciones());
   cargarPerfilCabecera();
   cargarDashboard();
   cargarNotificaciones();
+  cargarMantenimientosPendientes();
 </script>

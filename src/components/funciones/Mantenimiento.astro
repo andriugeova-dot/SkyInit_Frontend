@@ -56,7 +56,7 @@ const textos = {
 </style>
 
 <script>
-  import { api, esc, fechaHora, aviso } from "./comun";
+  import { api, esc, fechaHora, aviso, urlComoLlegar } from "./comun";
   const modo = document.getElementById("mantRoot")!.dataset.modo as "admin" | "constructora" | "trabajador";
   const lista = document.getElementById("mantLista")!;
   const dlg = document.getElementById("dlgMant") as HTMLDialogElement;
@@ -78,6 +78,8 @@ const textos = {
       : modo === "constructora"
       ? `<button class="fn-btn fn-btn--mini" data-abrir="${Number(s.solicitudID)}" type="button"><i class="bi bi-people" aria-hidden="true"></i> ${s.trabajadores.length ? "Ver / cambiar grupo" : "Asignar trabajadores"}</button>`
       : `<button class="fn-btn fn-btn--mini" data-abrir="${Number(s.solicitudID)}" type="button"><i class="bi bi-clipboard-check" aria-hidden="true"></i> ${fin ? "Ver historial" : "Registrar avance"}</button>`;
+    const mapsUrl = urlComoLlegar(s);
+    const btnMapa = mapsUrl ? `<a class="fn-btn fn-btn--sec fn-btn--mini" href="${esc(mapsUrl)}" target="_blank" rel="noopener"><i class="bi bi-geo-alt-fill" aria-hidden="true"></i> Cómo llegar</a>` : "";
     return `<article class="fn-card mant-card">
       <div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start"><h3>${esc(s.servicio)}</h3><span class="fn-chip ${claseEstado(s)}">${esc(estadoTexto(s))}</span></div>
       <div class="mant-paso"><span class="ok">Solicitada</span><span class="${s.constructoraID ? "ok" : ""}">Constructora</span><span class="${s.trabajadores.length ? "ok" : ""}">Trabajadores</span><span class="${fin ? "ok" : ""}">Finalizada</span></div>
@@ -90,7 +92,7 @@ const textos = {
         ${li("bi-hammer", s.constructora ? "Constructora: " + s.constructora : "")}
         ${li("bi-people", s.trabajadores.length ? "Grupo: " + s.trabajadores.map((t: any) => t.nombre).join(", ") : "")}
       </ul>
-      <div class="fn-acciones">${boton}</div></article>`;
+      <div class="fn-acciones">${boton}${btnMapa}</div></article>`;
   }
 
   async function cargar() {

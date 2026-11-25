@@ -77,3 +77,39 @@ export function aviso(texto: string, tipo: "ok" | "error" = "ok"): void {
 export const claseEstado = (estado: string): string =>
   ({ "Pendiente": "fn-chip--pend", "En progreso": "fn-chip--prog", "Completada": "fn-chip--ok",
      "Confirmada": "fn-chip--prog", "Finalizada": "fn-chip--ok", "Cancelada": "fn-chip--mal" } as Record<string, string>)[estado] ?? "fn-chip--pend";
+
+/** Exporta un arreglo tabular a CSV UTF-8 con BOM (compatible con Excel en español). */
+export function exportarCsv(nombreArchivo: string, encabezados: string[], filas: unknown[][]): void {
+  const celda = (v: unknown): string => {
+    const s = String(v ?? "").replace(/\r?\n/g, " ").trim();
+    return /[",;\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  };
+  const lineas = [encabezados.map(celda).join(","), ...filas.map((f) => f.map(celda).join(","))];
+  const blob = new Blob(["\uFEFF" + lineas.join("\r\n")], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = nombreArchivo.endsWith(".csv") ? nombreArchivo : `${nombreArchivo}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+/** Genera un enlace directo a Google Maps a partir de coordenadas o dirección. */
+export function urlComoLlegar(item: {
+  latitud?: number | string | null;
+  longitud?: number | string | null;
+  direccion?: string | null;
+  ciudad?: string | null;
+  propiedad?: string | null;
+}): string | null {
+  const lat = Number(item.latitud);
+  const lng = Number(item.longitud);
+  if (item.latitud !== null && item.latitud !== undefined && item.longitud !== null && item.longitud !== undefined && Number.isFinite(lat) && Number.isFinite(lng) && (lat !== 0 || lng !== 0)) {
+    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${lat},${lng}`)}`;
+  }
+  const texto = [item.direccion, item.ciudad].filter(Boolean).join(", ") || item.propiedad || "";
+  if (!texto.trim()) return null;
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(texto)}`;
+}

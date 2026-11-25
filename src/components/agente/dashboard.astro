@@ -136,6 +136,22 @@ const iconoEstadoProy = (id: number) => {
 
       <div class="pl-split">
         <div class="pl-stack">
+          <article class="pl-card">
+            <div class="pl-card-head">
+              <div class="pl-card-titulo">
+                <div class="pl-card-ico pl-card-ico--acc"><i class="bi bi-alarm-fill" aria-hidden="true"></i></div>
+                <div>
+                  <h2>Citas de hoy</h2>
+                  <small id="agHoySub">Consultando agenda del día…</small>
+                </div>
+              </div>
+              <a class="fn-btn fn-btn--sec fn-btn--mini" href="/agente/agenda"><i class="bi bi-calendar-check" aria-hidden="true"></i> Ver agenda</a>
+            </div>
+            <ul class="pl-notif-lista" id="agHoyLista" aria-live="polite">
+              <li class="fn-muted">Cargando citas de hoy…</li>
+            </ul>
+          </article>
+
           <div class="pl-estados-grid">
             <section class="pl-card">
               <div class="pl-card-head">
@@ -214,6 +230,11 @@ const iconoEstadoProy = (id: number) => {
                 <span class="pl-accion-txt"><strong>Proyectos</strong><small>Obras disponibles</small></span>
                 <i class="bi bi-chevron-right" aria-hidden="true"></i>
               </a>
+              <a class="pl-accion" href="/agente/seguimiento">
+                <span class="pl-accion-ico"><i class="bi bi-graph-up-arrow" aria-hidden="true"></i></span>
+                <span class="pl-accion-txt"><strong>Seguimiento</strong><small>Interesados y métricas</small></span>
+                <i class="bi bi-chevron-right" aria-hidden="true"></i>
+              </a>
               <a class="pl-accion" href="/notificaciones">
                 <span class="pl-accion-ico"><i class="bi bi-bell-fill" aria-hidden="true"></i></span>
                 <span class="pl-accion-txt"><strong>Notificaciones</strong><small>Historial completo</small></span>
@@ -235,9 +256,53 @@ const iconoEstadoProy = (id: number) => {
 </div>
 
 <script>
+  import { api, esc, claseEstado } from "../funciones/comun";
+
   const tag = document.getElementById("agenteFechaTag");
   if (tag) {
     const f = new Date().toLocaleDateString("es-CO", { weekday: "long", day: "numeric", month: "long" });
     tag.textContent = f.charAt(0).toUpperCase() + f.slice(1);
   }
+
+  async function cargarCitasHoy() {
+    const lista = document.getElementById("agHoyLista");
+    const sub = document.getElementById("agHoySub");
+    if (!lista || !sub) return;
+    try {
+      const { visitas } = await api("/agenda/gestion");
+      const hoyStr = new Date().toDateString();
+      const deHoy = (visitas ?? [])
+        .filter((v: any) => {
+          const f = new Date(v.fechaVisita);
+          return !Number.isNaN(f.getTime()) && f.toDateString() === hoyStr && (v.estado === "Pendiente" || v.estado === "Confirmada");
+        })
+        .sort((a: any, b: any) => new Date(a.fechaVisita).getTime() - new Date(b.fechaVisita).getTime());
+
+      sub.textContent = deHoy.length
+        ? `${deHoy.length} ${deHoy.length === 1 ? "cita programada" : "citas programadas"} para hoy`
+        : "Sin citas pendientes ni confirmadas para hoy";
+
+      if (!deHoy.length) {
+        lista.innerHTML = `<li class="fn-vacio" style="padding:18px 12px"><i class="bi bi-calendar-check" aria-hidden="true"></i>No tienes visitas programadas para hoy.</li>`;
+        return;
+      }
+
+      lista.innerHTML = deHoy.map((v: any) => {
+        const hora = new Date(v.fechaVisita).toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit" });
+        return `<li class="pl-notif-item ${v.estado === "Pendiente" ? "pl-notif-item--nueva" : ""}">
+          <div class="pl-notif-cuerpo">
+            <strong>${esc(hora)} · ${esc(v.propiedad)} <span class="fn-chip ${claseEstado(v.estado)}">${esc(v.estado)}</span></strong>
+            <p><i class="bi bi-person" aria-hidden="true"></i> ${esc(v.solicitante)}${v.telefono ? " · " + esc(v.telefono) : ""}</p>
+            ${v.notas ? `<small>${esc(v.notas)}</small>` : ""}
+          </div>
+          <a class="fn-btn fn-btn--sec fn-btn--mini" href="/agente/agenda">Gestionar</a>
+        </li>`;
+      }).join("");
+    } catch {
+      sub.textContent = "Sin conexión";
+      lista.innerHTML = `<li class="fn-muted">No se pudieron cargar las citas de hoy.</li>`;
+    }
+  }
+
+  cargarCitasHoy();
 </script>

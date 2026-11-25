@@ -45,6 +45,7 @@ import "./constructoras.css";
                 <option value="Pendiente">Pendiente</option>
                 <option value="Inactivo">Inactivo</option>
             </select>
+            <button type="button" class="btn-sm" id="con-export-csv"><i class="bi bi-download" aria-hidden="true"></i> Exportar CSV</button>
         </div>
 
         <div class="table-wrap">
@@ -563,4 +564,13 @@ function esc(v){return String(v ?? "").replace(/[&<>"']/g,function(c){return {"&
 
   cargarInmobiliarias().then(cargarUsuariosConstructora).then(cargar);
 })();
+</script>
+<script>
+  import { exportarCsv } from "../funciones/comun";
+  document.getElementById("con-export-csv")?.addEventListener("click", () => {
+    const rows = [...document.querySelectorAll<HTMLTableRowElement>("#page-sa-constructoras #tbody tr")]
+      .filter((tr) => tr.querySelectorAll("td").length >= 6)
+      .map((tr) => [...tr.querySelectorAll("td")].slice(0, 6).map((td) => td.innerText.trim()));
+    exportarCsv("constructoras-superadmin.csv", ["ID", "Nombre", "Ciudad", "Estado", "Inmobiliarias", "Acceso panel"], rows);
+  });
 </script>

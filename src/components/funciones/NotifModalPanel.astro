@@ -280,6 +280,29 @@
     border-radius: 50%;
     background: var(--pl-acc-osc, var(--co-oro, var(--fn-acc)));
   }
+  .pl-notif-meta-top {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .pl-notif-read-one {
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
+    border: 1px solid var(--pl-linea, var(--co-linea, var(--fn-line)));
+    background: #fff;
+    color: var(--pl-acc-osc, var(--co-oro-osc, var(--fn-acc)));
+    display: inline-grid;
+    place-items: center;
+    cursor: pointer;
+    font-size: 0.78rem;
+    padding: 0;
+    transition: background 0.14s, border-color 0.14s;
+  }
+  .pl-notif-read-one:hover {
+    background: var(--pl-acc-suave, var(--co-acento-suave, #f8fafc));
+    border-color: var(--pl-acc-osc, var(--co-oro-osc, var(--fn-acc)));
+  }
   .pl-notif-time {
     font-size: 0.75rem;
     color: var(--pl-muted, var(--co-muted, var(--fn-muted)));
@@ -373,17 +396,19 @@
       }
 
       list.innerHTML = visibles.map((n) => `
-        <button type="button" class="pl-notif-row ${n.leida ? "" : "pl-notif-row--unread"}" data-id="${Number(n.notificacionID)}" data-tipo="${esc(n.tipoNotificacion)}" data-leida="${n.leida ? "1" : "0"}">
+        <div class="pl-notif-row ${n.leida ? "" : "pl-notif-row--unread"}" role="button" tabindex="0" data-id="${Number(n.notificacionID)}" data-tipo="${esc(n.tipoNotificacion)}" data-leida="${n.leida ? "1" : "0"}">
           <span class="pl-notif-ico"><i class="bi ${iconoNotificacion(n.tipoNotificacion)}" aria-hidden="true"></i></span>
           <span class="pl-notif-body">
             <strong>${esc(n.titulo)}</strong>
             <p>${esc(n.mensaje)}</p>
           </span>
           <span class="pl-notif-meta">
-            ${n.leida ? "" : '<span class="pl-notif-dot" aria-label="Sin leer"></span>'}
+            <span class="pl-notif-meta-top">
+              ${n.leida ? "" : `<button type="button" class="pl-notif-read-one" data-mark-read="${Number(n.notificacionID)}" title="Marcar como leída" aria-label="Marcar como leída"><i class="bi bi-check2" aria-hidden="true"></i></button><span class="pl-notif-dot" aria-label="Sin leer"></span>`}
+            </span>
             <span class="pl-notif-time">${esc(tiempoRelativo(n.fechaCreacion))}</span>
           </span>
-        </button>
+        </div>
       `).join("");
     }
 
@@ -435,7 +460,24 @@
     });
 
     list.addEventListener("click", async (ev) => {
-      const item = (ev.target as HTMLElement).closest<HTMLButtonElement>("[data-id]");
+      const btnRead = (ev.target as HTMLElement).closest<HTMLButtonElement>("[data-mark-read]");
+      if (btnRead) {
+        ev.stopPropagation();
+        const id = Number(btnRead.dataset.markRead);
+        btnRead.disabled = true;
+        try {
+          await api(`/notificaciones/${id}/leida`, "PATCH");
+          notificaciones = notificaciones.map((n) => (Number(n.notificacionID) === id ? { ...n, leida: true } : n));
+          actualizarBadge(Math.max(0, noLeidas - 1));
+          renderLista();
+          document.dispatchEvent(new CustomEvent("avisos:actualizados", { detail: { noLeidas } }));
+        } catch (e) {
+          aviso((e as Error).message, "error");
+          btnRead.disabled = false;
+        }
+        return;
+      }
+      const item = (ev.target as HTMLElement).closest<HTMLElement>("[data-id]");
       if (!item) return;
       const id = Number(item.dataset.id);
       const tipo = item.dataset.tipo ?? "";

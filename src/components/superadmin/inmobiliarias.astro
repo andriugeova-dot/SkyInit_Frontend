@@ -96,7 +96,18 @@ import "./usuarios.css";
         </div>
     </div>
 
-    <div class="pl-card">
+    <div class="pl-card" style="display:grid;gap:14px">
+        <div class="toolbar" style="margin-bottom:0">
+            <input type="search" id="si-buscar" placeholder="Buscar nombre, ciudad o contacto…" aria-label="Buscar inmobiliarias" />
+            <select id="si-filtro-estado" aria-label="Filtrar por estado">
+                <option value="">Todos los estados</option>
+                <option value="Activa">Activa</option>
+                <option value="Pendiente">Pendiente</option>
+                <option value="Inactiva">Inactiva</option>
+            </select>
+            <button type="button" class="btn-sm" id="si-export-csv"><i class="bi bi-download" aria-hidden="true"></i> Exportar CSV</button>
+        </div>
+
         <div class="table-wrap">
             <table class="tabla">
                 <thead>
@@ -198,13 +209,24 @@ function esc(v){return String(v ?? "").replace(/[&<>"']/g,function(c){return {"&
     }
 
     /* ── tabla ──────────────────────────────────────── */
+    function filtradas() {
+        var q = (el("si-buscar") ? el("si-buscar").value : "").trim().toLowerCase();
+        var est = el("si-filtro-estado") ? el("si-filtro-estado").value.toLowerCase() : "";
+        return inmList.filter(function(inm) {
+            if (est && (inm.estado || "").toLowerCase() !== est) return false;
+            if (!q) return true;
+            return ((inm.nombre || "") + " " + (inm.ciudad || "") + " " + (inm.contacto || "") + " " + (inm.correo || "")).toLowerCase().indexOf(q) >= 0;
+        });
+    }
+
     function pintarTabla() {
         var tbody = el("si-tbody");
-        if (!inmList.length) {
-            tbody.innerHTML = '<tr><td colspan="7" class="loading">No hay inmobiliarias registradas</td></tr>';
+        var listaVis = filtradas();
+        if (!listaVis.length) {
+            tbody.innerHTML = '<tr><td colspan="7" class="loading">' + (inmList.length ? "Sin resultados para los filtros" : "No hay inmobiliarias registradas") + "</td></tr>";
             return;
         }
-        tbody.innerHTML = inmList.map(function(inm) {
+        tbody.innerHTML = listaVis.map(function(inm) {
             var users = inm.usuariosAsignados || [];
             var chips = users.length
                 ? users.map(function(u){ return '<span class="chip" title="'+esc(u.nombreRol)+'">'+esc(u.nombre)+"</span>"; }).join("")
@@ -222,6 +244,22 @@ function esc(v){return String(v ?? "").replace(/[&<>"']/g,function(c){return {"&
                 "</td></tr>";
         }).join("");
     }
+
+    if (el("si-buscar")) el("si-buscar").addEventListener("input", pintarTabla);
+    if (el("si-filtro-estado")) el("si-filtro-estado").addEventListener("change", pintarTabla);
+    if (el("si-export-csv")) el("si-export-csv").addEventListener("click", function() {
+        var listaVis = filtradas();
+        var celda = function(v) { var s = String(v == null ? "" : v).replace(/\r?\n/g, " ").trim(); return /[",;\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
+        var rows = [["ID", "Nombre", "Ciudad", "Contacto", "Correo", "Teléfono", "Estado", "Usuarios asignados"]].concat(
+            listaVis.map(function(i) {
+                var u = (i.usuariosAsignados || []).map(function(x){ return x.nombre; }).join("; ");
+                return [i.inmobiliariaID, i.nombre, i.ciudad || "", i.contacto || "", i.correo || "", i.telefono || "", i.estado || "", u];
+            })
+        );
+        var blob = new Blob(["\uFEFF" + rows.map(function(r){ return r.map(celda).join(","); }).join("\r\n")], { type: "text/csv;charset=utf-8;" });
+        var a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "inmobiliarias-superadmin.csv";
+        document.body.appendChild(a); a.click(); a.remove();
+    });
 
     /* ── cargar inmobiliarias ───────────────────────── */
     function cargar() {

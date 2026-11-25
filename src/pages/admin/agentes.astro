@@ -28,14 +28,34 @@ import "../../components/funciones/panelUnificado.css";
         <div class="pl-card-titulo">
           <div class="pl-card-ico"><i class="bi bi-people-fill" aria-hidden="true"></i></div>
           <div>
-            <h2>Directorio de agentes</h2>
-            <small>Administra las cuentas activas, propiedades asignadas y citas por confirmar.</small>
+            <h2>Directorio y desempeño de agentes</h2>
+            <small>Controla cuentas activas, carga de propiedades y citas vencidas sin confirmar.</small>
           </div>
+        </div>
+        <div class="agt-toolbar">
+          <input type="search" id="agtBuscar" placeholder="Buscar por nombre o correo…" aria-label="Buscar agentes" />
+          <select id="agtFiltroEstado" aria-label="Filtrar por estado">
+            <option value="">Todos los estados</option>
+            <option value="Activa">Activa</option>
+            <option value="Inactiva">Inactiva</option>
+          </select>
+          <button type="button" class="fn-btn fn-btn--sec fn-btn--mini" id="agtExportCsv">
+            <i class="bi bi-download" aria-hidden="true"></i> Exportar CSV
+          </button>
         </div>
       </div>
       <div id="agtLista"></div>
     </section>
   </div>
+
+  <style is:global>
+    .agt-toolbar { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+    .agt-toolbar input, .agt-toolbar select {
+      height:34px; border:1px solid var(--pl-linea, #e5e7eb); border-radius:8px; padding:0 10px;
+      font:inherit; font-size:.84rem; background:#fff; color:var(--pl-ink, #202d3b);
+    }
+    .agt-toolbar input { min-width:200px; }
+  </style>
   <dialog class="fn-modal" id="dlgAgente">
     <form class="fn-modal-cuerpo fn-form" id="formAgente" autocomplete="off">
       <h2 id="agtTitulo">Nuevo agente</h2>
@@ -57,35 +77,80 @@ import "../../components/funciones/panelUnificado.css";
 </Layout>
 
 <script>
-  import { api, esc, aviso, fechaCorta } from "../../components/funciones/comun";
+  import { api, esc, aviso, fechaCorta, exportarCsv } from "../../components/funciones/comun";
   const lista = document.getElementById("agtLista")!;
   const dlg = document.getElementById("dlgAgente") as HTMLDialogElement;
   const $ = (id: string) => document.getElementById(id) as HTMLInputElement;
+  const inputBuscar = document.getElementById("agtBuscar") as HTMLInputElement;
+  const selEstado = document.getElementById("agtFiltroEstado") as HTMLSelectElement;
   let agentes: any[] = [];
+  let visibles: any[] = [];
   let editando: any = null;
+
+  function renderTabla() {
+    const q = inputBuscar.value.trim().toLowerCase();
+    const est = selEstado.value;
+    visibles = agentes.filter((a) => {
+      if (est && a.estadoCuenta !== est) return false;
+      if (!q) return true;
+      return `${a.nombre ?? ""} ${a.correo ?? ""} ${a.telefono ?? ""}`.toLowerCase().includes(q);
+    });
+    if (!visibles.length) {
+      lista.innerHTML = `<div class="fn-vacio"><i class="bi bi-people" aria-hidden="true"></i>${
+        agentes.length ? "Ningún agente coincide con los filtros." : "Tu inmobiliaria aún no tiene agentes. Crea el primero con “Nuevo agente”."
+      }</div>`;
+      return;
+    }
+    lista.innerHTML = `<div class="fn-tabla-wrap"><table class="fn-tabla"><thead><tr>
+      <th>Nombre</th><th>Correo</th><th>Teléfono</th><th>Propiedades</th><th>Citas (pend. / venc.)</th><th>Alta</th><th>Estado</th><th></th></tr></thead><tbody>` +
+      visibles.map((a) => {
+        const activa = a.estadoCuenta === "Activa", id = Number(a.usuarioID);
+        const venc = Number(a.citasVencidas ?? 0);
+        const pend = Number(a.citasPendientes ?? 0);
+        return `<tr>
+          <td><strong>${esc(a.nombre)}</strong></td>
+          <td>${esc(a.correo)}</td>
+          <td>${esc(a.telefono ?? "—")}</td>
+          <td>${Number(a.propiedades)}</td>
+          <td>
+            <span class="fn-chip ${pend ? "fn-chip--pend" : "fn-chip--ok"}">${pend} pend.</span>
+            ${venc ? ` <span class="fn-chip fn-chip--mal" title="Citas cuya fecha ya pasó sin confirmar">${venc} vencida${venc === 1 ? "" : "s"}</span>` : ""}
+          </td>
+          <td>${esc(fechaCorta(a.fechaRegistro))}</td>
+          <td><span class="fn-chip ${activa ? "fn-chip--ok" : "fn-chip--mal"}">${esc(a.estadoCuenta)}</span></td>
+          <td><div class="fn-acciones">
+            <button class="fn-btn fn-btn--sec fn-btn--mini" data-editar="${id}" type="button"><i class="bi bi-pencil" aria-hidden="true"></i> Editar</button>
+            <button class="fn-btn ${activa ? "fn-btn--mal" : "fn-btn--sec"} fn-btn--mini" data-estado="${activa ? "Inactiva" : "Activa"}" data-id="${id}" type="button">
+              <i class="bi ${activa ? "bi-person-slash" : "bi-person-check"}" aria-hidden="true"></i> ${activa ? "Desactivar" : "Activar"}</button></div></td></tr>`;
+      }).join("") + "</tbody></table></div>";
+  }
 
   async function cargar() {
     try {
-      agentes = (await api("/admin/agentes")).agentes;
+      const resp = await api("/admin/agentes");
+      agentes = resp.agentes ?? [];
+      const sinAgente = Number(resp.propiedadesSinAgente ?? 0);
       const activos = agentes.filter((a) => a.estadoCuenta === "Activa").length;
+      const totalVencidas = agentes.reduce((n, a) => n + Number(a.citasVencidas ?? 0), 0);
+      const totalPend = agentes.reduce((n, a) => n + Number(a.citasPendientes ?? 0), 0);
       document.getElementById("agtStats")!.innerHTML = `
-        <div class="pl-kpi pl-kpi--destacado"><div class="pl-kpi-top"><span class="pl-kpi-lbl">Agentes</span><span class="pl-kpi-ico"><i class="bi bi-people-fill" aria-hidden="true"></i></span></div><b class="pl-kpi-val">${agentes.length}</b></div>
-        <div class="pl-kpi pl-kpi--ok"><div class="pl-kpi-top"><span class="pl-kpi-lbl">Activos</span><span class="pl-kpi-ico"><i class="bi bi-person-check-fill" aria-hidden="true"></i></span></div><b class="pl-kpi-val">${activos}</b></div>
-        <div class="pl-kpi pl-kpi--prog"><div class="pl-kpi-top"><span class="pl-kpi-lbl">Propiedades asignadas</span><span class="pl-kpi-ico"><i class="bi bi-houses" aria-hidden="true"></i></span></div><b class="pl-kpi-val">${agentes.reduce((n, a) => n + a.propiedades, 0)}</b></div>
-        <div class="pl-kpi pl-kpi--alerta"><div class="pl-kpi-top"><span class="pl-kpi-lbl">Citas por confirmar</span><span class="pl-kpi-ico"><i class="bi bi-calendar-event" aria-hidden="true"></i></span></div><b class="pl-kpi-val">${agentes.reduce((n, a) => n + a.citasPendientes, 0)}</b></div>`;
-      if (!agentes.length) { lista.innerHTML = `<div class="fn-vacio"><i class="bi bi-people" aria-hidden="true"></i>Tu inmobiliaria aún no tiene agentes. Crea el primero con “Nuevo agente”.</div>`; return; }
-      lista.innerHTML = `<div class="fn-tabla-wrap"><table class="fn-tabla"><thead><tr><th>Nombre</th><th>Correo</th><th>Teléfono</th><th>Propiedades</th><th>Alta</th><th>Estado</th><th></th></tr></thead><tbody>` +
-        agentes.map((a) => {
-          const activa = a.estadoCuenta === "Activa", id = Number(a.usuarioID);
-          return `<tr><td><strong>${esc(a.nombre)}</strong></td><td>${esc(a.correo)}</td><td>${esc(a.telefono ?? "—")}</td><td>${Number(a.propiedades)}</td>
-            <td>${esc(fechaCorta(a.fechaRegistro))}</td><td><span class="fn-chip ${activa ? "fn-chip--ok" : "fn-chip--mal"}">${esc(a.estadoCuenta)}</span></td>
-            <td><div class="fn-acciones">
-              <button class="fn-btn fn-btn--sec fn-btn--mini" data-editar="${id}" type="button"><i class="bi bi-pencil" aria-hidden="true"></i> Editar</button>
-              <button class="fn-btn ${activa ? "fn-btn--mal" : "fn-btn--sec"} fn-btn--mini" data-estado="${activa ? "Inactiva" : "Activa"}" data-id="${id}" type="button">
-                <i class="bi ${activa ? "bi-person-slash" : "bi-person-check"}" aria-hidden="true"></i> ${activa ? "Desactivar" : "Activar"}</button></div></td></tr>`;
-        }).join("") + "</tbody></table></div>";
+        <div class="pl-kpi pl-kpi--destacado"><div class="pl-kpi-top"><span class="pl-kpi-lbl">Agentes (${activos} activos)</span><span class="pl-kpi-ico"><i class="bi bi-people-fill" aria-hidden="true"></i></span></div><b class="pl-kpi-val">${agentes.length}</b></div>
+        <div class="pl-kpi ${sinAgente ? "pl-kpi--alerta" : "pl-kpi--ok"}"><div class="pl-kpi-top"><span class="pl-kpi-lbl">Propiedades sin agente</span><span class="pl-kpi-ico"><i class="bi bi-house-exclamation" aria-hidden="true"></i></span></div><b class="pl-kpi-val">${sinAgente}</b></div>
+        <div class="pl-kpi pl-kpi--prog"><div class="pl-kpi-top"><span class="pl-kpi-lbl">Citas por confirmar</span><span class="pl-kpi-ico"><i class="bi bi-calendar-event" aria-hidden="true"></i></span></div><b class="pl-kpi-val">${totalPend}</b></div>
+        <div class="pl-kpi ${totalVencidas ? "pl-kpi--alerta" : "pl-kpi--ok"}"><div class="pl-kpi-top"><span class="pl-kpi-lbl">Citas vencidas</span><span class="pl-kpi-ico"><i class="bi bi-exclamation-octagon" aria-hidden="true"></i></span></div><b class="pl-kpi-val">${totalVencidas}</b></div>`;
+      renderTabla();
     } catch (e) { lista.innerHTML = `<div class="fn-vacio">${esc((e as Error).message)}</div>`; }
   }
+
+  inputBuscar.addEventListener("input", renderTabla);
+  selEstado.addEventListener("change", renderTabla);
+  document.getElementById("agtExportCsv")!.addEventListener("click", () => {
+    exportarCsv(
+      "agentes-desempeno.csv",
+      ["Nombre", "Correo", "Teléfono", "Propiedades", "Citas pendientes", "Citas vencidas", "Alta", "Estado"],
+      visibles.map((a) => [a.nombre, a.correo, a.telefono ?? "", a.propiedades, a.citasPendientes, a.citasVencidas ?? 0, fechaCorta(a.fechaRegistro), a.estadoCuenta]),
+    );
+  });
   function abrir(a: any | null) {
     editando = a;
     (document.getElementById("formAgente") as HTMLFormElement).reset();
