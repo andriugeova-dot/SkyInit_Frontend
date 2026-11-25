@@ -1,9 +1,39 @@
-<div class="panel-body">
+---
+import "../funciones/funciones.css";
+import "../funciones/panelUnificado.css";
+import NotifModalPanel from "../funciones/NotifModalPanel.astro";
+---
 
-    <div class="topbar-panel">
-        <h1>Mis Propiedades Favoritas</h1>
-        <p>Aquí puedes ver y gestionar tus favoritos.</p>
-    </div>
+<div class="pl-page pl-theme-usuario">
+    <header class="pl-hero">
+        <div class="pl-hero-info">
+            <div class="pl-hero-tags">
+                <span class="pl-hero-tag"><i class="bi bi-heart-fill" aria-hidden="true"></i> Propiedades guardadas</span>
+            </div>
+            <h1>Mis Propiedades Favoritas</h1>
+            <p>Aquí puedes ver y gestionar las propiedades que guardaste.</p>
+        </div>
+        <div class="pl-hero-acc">
+            <a href="/propiedades" class="pl-hero-btn"><i class="bi bi-search" aria-hidden="true"></i> Explorar propiedades</a>
+            <a href="/usuario" class="pl-hero-btn pl-hero-btn--sec"><i class="bi bi-arrow-left" aria-hidden="true"></i> Volver al inicio</a>
+            <NotifModalPanel />
+        </div>
+    </header>
+
+    <section class="pl-kpis" aria-label="Resumen de favoritos">
+        <div class="pl-kpi pl-kpi--destacado">
+            <div class="pl-kpi-top"><span class="pl-kpi-lbl">Total favoritas</span><span class="pl-kpi-ico"><i class="bi bi-heart-fill" aria-hidden="true"></i></span></div>
+            <b class="pl-kpi-val" id="favStatTotal">—</b>
+        </div>
+        <div class="pl-kpi">
+            <div class="pl-kpi-top"><span class="pl-kpi-lbl">Ciudades</span><span class="pl-kpi-ico"><i class="bi bi-geo-alt-fill" aria-hidden="true"></i></span></div>
+            <b class="pl-kpi-val" id="favStatCiudades">—</b>
+        </div>
+        <div class="pl-kpi pl-kpi--ok">
+            <div class="pl-kpi-top"><span class="pl-kpi-lbl">Tipos de inmueble</span><span class="pl-kpi-ico"><i class="bi bi-houses-fill" aria-hidden="true"></i></span></div>
+            <b class="pl-kpi-val" id="favStatTipos">—</b>
+        </div>
+    </section>
 
     <div id="estadoCarga" class="estado-carga">
         <div class="spinner"></div>
@@ -235,7 +265,25 @@ async function cargarFavoritos() {
     }
 }
 
+function actualizarStats(lista: any[]) {
+    const ciudades = new Set(lista.map((f) => (f.propiedad ?? f).ciudad).filter(Boolean));
+    const tipos = new Set(lista.map((f) => {
+        const p = f.propiedad ?? f;
+        return p.tipo ?? p.tipoPropiedad;
+    }).filter(Boolean));
+    const elTotal = document.getElementById("favStatTotal");
+    const elCiudades = document.getElementById("favStatCiudades");
+    const elTipos = document.getElementById("favStatTipos");
+    if (elTotal) elTotal.textContent = String(lista.length);
+    if (elCiudades) elCiudades.textContent = String(ciudades.size);
+    if (elTipos) elTipos.textContent = String(tipos.size);
+}
+
+let favoritosActuales: any[] = [];
+
 function renderFavoritos(lista: any[]) {
+    favoritosActuales = lista;
+    actualizarStats(lista);
     if (!lista.length) {
         document.getElementById("sinFavoritos")!.style.display = "block";
         return;
@@ -282,6 +330,8 @@ function renderFavoritos(lista: any[]) {
             const res = await fetch(`${FAV_API}/${propID}`, { method: "DELETE", credentials: "same-origin" }).catch(() => null);
             if (res?.ok) {
                 (btn as HTMLElement).closest(".fav-card")?.remove();
+                favoritosActuales = favoritosActuales.filter((f) => String((f.propiedad ?? f).propiedadID) !== String(propID));
+                actualizarStats(favoritosActuales);
                 if (!document.querySelectorAll(".fav-card").length) {
                     document.getElementById("sinFavoritos")!.style.display = "block";
                 }

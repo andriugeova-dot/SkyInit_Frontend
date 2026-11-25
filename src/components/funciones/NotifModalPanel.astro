@@ -1,0 +1,467 @@
+---
+/** Botón de campana y modal de notificaciones reutilizable para todos los paneles (sin desenfoque de fondo). */
+---
+<button
+  type="button"
+  class="pl-notif-btn"
+  id="plNotifBtn"
+  aria-label="Abrir notificaciones"
+  aria-haspopup="dialog"
+  title="Notificaciones"
+>
+  <i class="bi bi-bell" aria-hidden="true"></i>
+  <span class="pl-notif-badge" id="plNotifBadge" hidden>0</span>
+</button>
+
+<dialog class="pl-notif-modal" id="plNotifModal" aria-labelledby="plNotifModalTitulo">
+  <div class="pl-notif-head">
+    <h2 id="plNotifModalTitulo">Notificaciones</h2>
+    <div class="pl-notif-head-acc">
+      <button type="button" class="pl-notif-markall" id="plNotifMarkAll">Marcar todas como leídas</button>
+      <button type="button" class="pl-notif-close" id="plNotifClose" aria-label="Cerrar notificaciones">
+        <i class="bi bi-x-lg" aria-hidden="true"></i>
+      </button>
+    </div>
+  </div>
+
+  <div class="pl-notif-tabs" role="tablist" aria-label="Filtrar notificaciones">
+    <button type="button" class="pl-notif-tab is-active" role="tab" aria-selected="true" data-tab="todas">
+      Todas
+    </button>
+    <button type="button" class="pl-notif-tab" role="tab" aria-selected="false" data-tab="noleidas">
+      Sin leer <span id="plNotifTabCount">(0)</span>
+    </button>
+  </div>
+
+  <div class="pl-notif-list" id="plNotifList">
+    <div class="pl-notif-empty">Cargando notificaciones…</div>
+  </div>
+
+  <div class="pl-notif-foot">
+    <a href="/notificaciones">Ver todas las notificaciones</a>
+  </div>
+</dialog>
+
+<style is:global>
+  .pl-notif-btn {
+    position: relative;
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--pl-hero-text, #f8fafc);
+    display: inline-grid;
+    place-items: center;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: background 0.18s, border-color 0.18s, transform 0.18s;
+    flex-shrink: 0;
+  }
+  .pl-notif-btn:hover {
+    background: rgba(255, 255, 255, 0.18);
+    border-color: rgba(255, 255, 255, 0.35);
+    transform: translateY(-1px);
+  }
+  .pl-notif-badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    border-radius: 99px;
+    background: var(--pl-acc, var(--co-oro, var(--fn-acc)));
+    color: var(--pl-acc-btn-text, #fff);
+    border: 2px solid var(--pl-ink, var(--co-ink, var(--fn-ink)));
+    font-size: 0.68rem;
+    font-weight: 800;
+    line-height: 14px;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .pl-notif-modal {
+    position: fixed;
+    top: 76px;
+    right: 28px;
+    left: auto;
+    bottom: auto;
+    margin: 0;
+    width: min(440px, calc(100vw - 24px));
+    max-height: min(600px, calc(100vh - 100px));
+    border: 1px solid var(--pl-linea, var(--co-linea, var(--fn-line)));
+    border-radius: 16px;
+    padding: 0;
+    background: #fff;
+    color: var(--pl-ink, var(--co-ink, var(--fn-ink)));
+    box-shadow: 0 24px 60px rgba(15, 23, 42, 0.22), 0 4px 16px rgba(15, 23, 42, 0.08);
+    overflow: hidden;
+    display: none;
+    flex-direction: column;
+  }
+  .pl-notif-modal[open] {
+    display: flex;
+    animation: plNotifIn 0.18s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  .pl-notif-modal::backdrop {
+    background: transparent;
+  }
+  @keyframes plNotifIn {
+    from { opacity: 0; transform: translateY(-8px) scale(0.98); }
+    to { opacity: 1; transform: none; }
+  }
+
+  .pl-notif-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 18px 20px 12px;
+  }
+  .pl-notif-head h2 {
+    margin: 0;
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--pl-ink, var(--co-ink, var(--fn-ink)));
+  }
+  .pl-notif-head-acc {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .pl-notif-markall {
+    border: 0;
+    background: none;
+    padding: 4px 6px;
+    font: inherit;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--pl-acc-osc, var(--co-oro-osc, var(--fn-acc)));
+    cursor: pointer;
+    border-radius: 6px;
+  }
+  .pl-notif-markall:hover {
+    background: var(--pl-acc-suave, var(--co-acento-suave, #f8fafc));
+    text-decoration: underline;
+  }
+  .pl-notif-markall:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  .pl-notif-close {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    border: 0;
+    background: transparent;
+    color: var(--pl-muted, var(--co-muted, var(--fn-muted)));
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    font-size: 0.9rem;
+  }
+  .pl-notif-close:hover {
+    background: #f1f5f9;
+    color: var(--pl-ink, var(--co-ink, var(--fn-ink)));
+  }
+
+  .pl-notif-tabs {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    padding: 0 20px;
+    border-bottom: 1px solid var(--pl-linea, var(--co-linea, var(--fn-line)));
+  }
+  .pl-notif-tab {
+    border: 0;
+    background: none;
+    padding: 10px 2px;
+    font: inherit;
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--pl-muted, var(--co-muted, var(--fn-muted)));
+    cursor: pointer;
+    position: relative;
+    transition: color 0.15s;
+  }
+  .pl-notif-tab:hover {
+    color: var(--pl-ink, var(--co-ink, var(--fn-ink)));
+  }
+  .pl-notif-tab.is-active {
+    color: var(--pl-ink, var(--co-ink, var(--fn-ink)));
+  }
+  .pl-notif-tab.is-active::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -1px;
+    height: 2px;
+    background: var(--pl-ink, var(--co-ink, var(--fn-ink)));
+    border-radius: 2px;
+  }
+
+  .pl-notif-list {
+    overflow-y: auto;
+    flex: 1;
+    min-height: 160px;
+  }
+  .pl-notif-row {
+    width: 100%;
+    border: 0;
+    border-bottom: 1px solid #f1f5f9;
+    background: #fff;
+    padding: 13px 20px;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    text-align: left;
+    cursor: pointer;
+    font: inherit;
+    color: inherit;
+    transition: background 0.14s;
+  }
+  .pl-notif-row:last-child {
+    border-bottom: 0;
+  }
+  .pl-notif-row:hover {
+    background: #f8fafc;
+  }
+  .pl-notif-row--unread {
+    background: #fcfefd;
+  }
+  .pl-notif-ico {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: var(--pl-acc-suave, var(--co-acento-suave, #f8fafc));
+    color: var(--pl-acc-osc, var(--co-oro-osc, var(--fn-acc)));
+    display: grid;
+    place-items: center;
+    font-size: 1rem;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+  .pl-notif-body {
+    flex: 1;
+    min-width: 0;
+    display: grid;
+    gap: 2px;
+  }
+  .pl-notif-body strong {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: var(--pl-ink, var(--co-ink, var(--fn-ink)));
+    line-height: 1.3;
+  }
+  .pl-notif-body p {
+    margin: 0;
+    font-size: 0.82rem;
+    color: var(--pl-muted, var(--co-muted, var(--fn-muted)));
+    line-height: 1.35;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .pl-notif-meta {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 8px;
+    flex-shrink: 0;
+    padding-top: 2px;
+  }
+  .pl-notif-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--pl-acc-osc, var(--co-oro, var(--fn-acc)));
+  }
+  .pl-notif-time {
+    font-size: 0.75rem;
+    color: var(--pl-muted, var(--co-muted, var(--fn-muted)));
+    white-space: nowrap;
+  }
+  .pl-notif-empty {
+    padding: 36px 20px;
+    text-align: center;
+    color: var(--pl-muted, var(--co-muted, var(--fn-muted)));
+    font-size: 0.88rem;
+  }
+  .pl-notif-foot {
+    border-top: 1px solid var(--pl-linea, var(--co-linea, var(--fn-line)));
+    padding: 11px 20px;
+    text-align: center;
+    background: #f8fafc;
+  }
+  .pl-notif-foot a {
+    font-size: 0.84rem;
+    font-weight: 600;
+    color: var(--pl-acc-osc, var(--co-oro-osc, var(--fn-acc)));
+    text-decoration: none;
+  }
+  .pl-notif-foot a:hover {
+    text-decoration: underline;
+  }
+
+  @media (max-width: 600px) {
+    .pl-notif-modal {
+      inset: 0;
+      margin: auto;
+      width: calc(100vw - 24px);
+      max-height: calc(100dvh - 32px);
+    }
+  }
+</style>
+
+<script>
+  import { api, esc, aviso } from "./comun";
+  import { iconoNotificacion, enlaceNotificacion } from "./avisos";
+
+  const btn = document.getElementById("plNotifBtn") as HTMLButtonElement | null;
+  const badge = document.getElementById("plNotifBadge") as HTMLElement | null;
+  const modal = document.getElementById("plNotifModal") as HTMLDialogElement | null;
+  const list = document.getElementById("plNotifList") as HTMLElement | null;
+  const tabCount = document.getElementById("plNotifTabCount") as HTMLElement | null;
+  const btnMarkAll = document.getElementById("plNotifMarkAll") as HTMLButtonElement | null;
+  const btnClose = document.getElementById("plNotifClose") as HTMLButtonElement | null;
+
+  if (btn && badge && modal && list && tabCount && btnMarkAll && btnClose) {
+    const rol = document.querySelector<HTMLElement>(".sidebar")?.dataset.rol ?? "Usuario";
+    let tabActual: "todas" | "noleidas" = "todas";
+    let notificaciones: any[] = [];
+    let noLeidas = 0;
+
+    function tiempoRelativo(iso: string): string {
+      const f = new Date(iso);
+      if (Number.isNaN(f.getTime())) return "";
+      const diffSeg = Math.max(0, Math.floor((Date.now() - f.getTime()) / 1000));
+      if (diffSeg < 60) return "Ahora";
+      const mins = Math.floor(diffSeg / 60);
+      if (mins < 60) return `Hace ${mins} min`;
+      const horas = Math.floor(mins / 60);
+      if (horas < 24) return `Hace ${horas} h`;
+      const dias = Math.floor(horas / 24);
+      if (dias === 1) return "Ayer";
+      if (dias < 7) return `Hace ${dias} d`;
+      return f.toLocaleDateString("es-CO", { day: "numeric", month: "short" });
+    }
+
+    function actualizarBadge(cantidad: number) {
+      noLeidas = cantidad;
+      badge.hidden = cantidad <= 0;
+      badge.textContent = cantidad > 99 ? "99+" : String(cantidad);
+      tabCount.textContent = `(${cantidad})`;
+      btnMarkAll.disabled = cantidad <= 0;
+    }
+
+    function renderLista() {
+      const visibles = tabActual === "noleidas"
+        ? notificaciones.filter((n) => !n.leida)
+        : notificaciones;
+
+      if (!visibles.length) {
+        list.innerHTML = `<div class="pl-notif-empty">${
+          tabActual === "noleidas"
+            ? "No tienes notificaciones sin leer."
+            : "Aún no tienes notificaciones."
+        }</div>`;
+        return;
+      }
+
+      list.innerHTML = visibles.map((n) => `
+        <button type="button" class="pl-notif-row ${n.leida ? "" : "pl-notif-row--unread"}" data-id="${Number(n.notificacionID)}" data-tipo="${esc(n.tipoNotificacion)}" data-leida="${n.leida ? "1" : "0"}">
+          <span class="pl-notif-ico"><i class="bi ${iconoNotificacion(n.tipoNotificacion)}" aria-hidden="true"></i></span>
+          <span class="pl-notif-body">
+            <strong>${esc(n.titulo)}</strong>
+            <p>${esc(n.mensaje)}</p>
+          </span>
+          <span class="pl-notif-meta">
+            ${n.leida ? "" : '<span class="pl-notif-dot" aria-label="Sin leer"></span>'}
+            <span class="pl-notif-time">${esc(tiempoRelativo(n.fechaCreacion))}</span>
+          </span>
+        </button>
+      `).join("");
+    }
+
+    async function cargarNotificaciones() {
+      try {
+        const d = await api("/notificaciones");
+        notificaciones = d.notificaciones ?? [];
+        actualizarBadge(Number(d.noLeidas ?? 0));
+        renderLista();
+      } catch (e) {
+        list.innerHTML = `<div class="pl-notif-empty">${esc((e as Error).message)}</div>`;
+      }
+    }
+
+    btn.addEventListener("click", () => {
+      cargarNotificaciones();
+      modal.showModal();
+    });
+
+    btnClose.addEventListener("click", () => modal.close());
+
+    modal.addEventListener("click", (ev) => {
+      if (ev.target === modal) modal.close();
+    });
+
+    modal.querySelectorAll<HTMLButtonElement>("[data-tab]").forEach((tabBtn) => {
+      tabBtn.addEventListener("click", () => {
+        tabActual = tabBtn.dataset.tab === "noleidas" ? "noleidas" : "todas";
+        modal.querySelectorAll<HTMLButtonElement>("[data-tab]").forEach((t) => {
+          const activo = t === tabBtn;
+          t.classList.toggle("is-active", activo);
+          t.setAttribute("aria-selected", activo ? "true" : "false");
+        });
+        renderLista();
+      });
+    });
+
+    btnMarkAll.addEventListener("click", async () => {
+      try {
+        await api("/notificaciones/leer-todas", "POST");
+        notificaciones = notificaciones.map((n) => ({ ...n, leida: true }));
+        actualizarBadge(0);
+        renderLista();
+        aviso("Notificaciones marcadas como leídas");
+        document.dispatchEvent(new CustomEvent("avisos:actualizados", { detail: { noLeidas: 0 } }));
+      } catch (e) {
+        aviso((e as Error).message, "error");
+      }
+    });
+
+    list.addEventListener("click", async (ev) => {
+      const item = (ev.target as HTMLElement).closest<HTMLButtonElement>("[data-id]");
+      if (!item) return;
+      const id = Number(item.dataset.id);
+      const tipo = item.dataset.tipo ?? "";
+      if (item.dataset.leida === "0") {
+        api(`/notificaciones/${id}/leida`, "PATCH").catch(() => {});
+        notificaciones = notificaciones.map((n) => (Number(n.notificacionID) === id ? { ...n, leida: true } : n));
+        actualizarBadge(Math.max(0, noLeidas - 1));
+        renderLista();
+      }
+      const destino = enlaceNotificacion(tipo, rol);
+      if (destino && destino !== location.pathname) {
+        modal.close();
+        location.href = destino;
+      }
+    });
+
+    document.addEventListener("avisos:actualizados", (ev) => {
+      const detalle = (ev as CustomEvent<{ noLeidas?: number }>).detail;
+      if (typeof detalle?.noLeidas === "number") {
+        actualizarBadge(detalle.noLeidas);
+      }
+      if (modal.open) cargarNotificaciones();
+    });
+
+    api("/notificaciones?soloNoLeidas=1")
+      .then((d) => actualizarBadge(Number(d.noLeidas ?? 0)))
+      .catch(() => {});
+  }
+</script>

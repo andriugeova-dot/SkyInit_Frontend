@@ -2,24 +2,45 @@
 /** Propiedades de la constructora: misma linea visual que el panel del administrador (tarjetas + modales). */
 import "../funciones/funciones.css";
 import "./propiedades.css";
+import "./constructora.css";
 import SelectorUbicacion from "../funciones/SelectorUbicacion.astro";
 import DialogosPanel from "./DialogosPanel.astro";
+import NotifModalPanel from "../funciones/NotifModalPanel.astro";
 ---
 
-<section class="fn cp" id="cpPropiedades">
-  <header class="fn-head">
-    <div>
+<section class="fn cp co-page" id="cpPropiedades" style="max-width:1240px">
+  <header class="co-hero">
+    <div class="co-hero-info">
+      <div class="co-hero-tags">
+        <span class="co-hero-tag"><i class="bi bi-house-fill" aria-hidden="true"></i> Catálogo inmobiliario</span>
+      </div>
       <h1>Propiedades</h1>
       <p>Publica y administra los inmuebles de tu constructora.</p>
     </div>
-    <button type="button" class="fn-btn cp-btn-nuevo" id="propNueva"><i class="bi bi-plus-lg" aria-hidden="true"></i> Nueva propiedad</button>
+    <div class="co-hero-acc">
+      <button type="button" class="co-hero-btn" id="propNueva"><i class="bi bi-plus-lg" aria-hidden="true"></i> Nueva propiedad</button>
+      <a class="co-hero-btn co-hero-btn--sec" href="/constructora"><i class="bi bi-arrow-left" aria-hidden="true"></i> Volver al panel</a>
+      <NotifModalPanel />
+    </div>
   </header>
 
-  <div class="fn-stats" aria-label="Resumen de propiedades">
-    <div class="fn-stat"><span>Total</span><b id="propStatTotal">—</b></div>
-    <div class="fn-stat"><span>Disponibles</span><b id="propStatDisponibles">—</b></div>
-    <div class="fn-stat"><span>Reservadas</span><b id="propStatReservadas">—</b></div>
-    <div class="fn-stat"><span>Destacadas</span><b id="propStatDestacadas">—</b></div>
+  <div class="co-kpis" aria-label="Resumen de propiedades">
+    <div class="co-kpi co-kpi--destacado">
+      <div class="co-kpi-top"><span class="co-kpi-lbl">Total</span><span class="co-kpi-ico"><i class="bi bi-house-fill" aria-hidden="true"></i></span></div>
+      <b class="co-kpi-val" id="propStatTotal">—</b>
+    </div>
+    <div class="co-kpi co-kpi--ok">
+      <div class="co-kpi-top"><span class="co-kpi-lbl">Disponibles</span><span class="co-kpi-ico"><i class="bi bi-check-circle-fill" aria-hidden="true"></i></span></div>
+      <b class="co-kpi-val" id="propStatDisponibles">—</b>
+    </div>
+    <div class="co-kpi co-kpi--prog">
+      <div class="co-kpi-top"><span class="co-kpi-lbl">Reservadas</span><span class="co-kpi-ico"><i class="bi bi-bookmark-fill" aria-hidden="true"></i></span></div>
+      <b class="co-kpi-val" id="propStatReservadas">—</b>
+    </div>
+    <div class="co-kpi">
+      <div class="co-kpi-top"><span class="co-kpi-lbl">Destacadas</span><span class="co-kpi-ico"><i class="bi bi-star-fill" aria-hidden="true"></i></span></div>
+      <b class="co-kpi-val" id="propStatDestacadas">—</b>
+    </div>
   </div>
 
   <div class="cp-filtros" role="search">

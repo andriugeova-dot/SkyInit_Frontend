@@ -1,6 +1,9 @@
 ---
 import ResumenPanel from "../funciones/ResumenPanel.astro";
-import "../admin/dashboard.css";
+import NotifModalPanel from "../funciones/NotifModalPanel.astro";
+import UltimasNotifsCard from "../funciones/UltimasNotifsCard.astro";
+import "../funciones/funciones.css";
+import "../funciones/panelUnificado.css";
 import { COOKIE_NAME, getTokenSSR } from "../../utils/auth";
 import { MENSAJE_SIN_INMOBILIARIA, esErrorSinInmobiliaria } from "../../utils/agente";
 
@@ -8,179 +11,233 @@ const BACKEND = import.meta.env.BACKEND_URL ?? "http://localhost:8001";
 const token = getTokenSSR(Astro.cookies);
 
 type ResumenDashboard = {
-    totales: {
-        propiedades: number;
-        misPropiedades: number;
-        destacadas: number;
-        proyectos: number;
-        constructoras: number;
-    };
-    propiedadesPorEstado: { estado: string; total: number }[];
-    proyectosPorEstado: { estadoProyectoID: number; total: number }[];
-    message?: string;
+  totales: {
+    propiedades: number;
+    misPropiedades: number;
+    destacadas: number;
+    proyectos: number;
+    constructoras: number;
+  };
+  propiedadesPorEstado: { estado: string; total: number }[];
+  proyectosPorEstado: { estadoProyectoID: number; total: number }[];
+  message?: string;
 };
 
 let resumen: ResumenDashboard | null = null;
 let errorCarga: string | null = null;
 
 if (token) {
-    try {
-        const res = await fetch(`${BACKEND}/agente/dashboard`, {
-        headers: {
-            Cookie: `${COOKIE_NAME}=${token}`,
-            Authorization: `Bearer ${token}`,
-            Accept: "application/json",
-        },
-        });
-        if (res.ok) {
-            const data = await res.json();
-            const posibleMsg = data.message || data.error || data.mensaje;
-            if (data.success === false || esErrorSinInmobiliaria(posibleMsg) || esErrorSinInmobiliaria(data)) {
-                errorCarga = MENSAJE_SIN_INMOBILIARIA;
-            } else {
-                resumen = data;
-                if (resumen && resumen.message && esErrorSinInmobiliaria(resumen.message)) {
-                    resumen.message = MENSAJE_SIN_INMOBILIARIA;
-                }
-            }
-        } else {
-            const errData = await res.json().catch(() => ({}));
-            const msgServidor = errData.error || errData.message || errData.mensaje;
-            if (esErrorSinInmobiliaria(msgServidor) || esErrorSinInmobiliaria(errData)) {
-                errorCarga = MENSAJE_SIN_INMOBILIARIA;
-            } else {
-                errorCarga = msgServidor || `No se pudieron cargar las estadísticas (${res.status})`;
-            }
+  try {
+    const res = await fetch(`${BACKEND}/agente/dashboard`, {
+      headers: {
+        Cookie: `${COOKIE_NAME}=${token}`,
+        Authorization: `Bearer ${token}`,
+        Accept: "application/json",
+      },
+    });
+    if (res.ok) {
+      const data = await res.json();
+      const posibleMsg = data.message || data.error || data.mensaje;
+      if (data.success === false || esErrorSinInmobiliaria(posibleMsg) || esErrorSinInmobiliaria(data)) {
+        errorCarga = MENSAJE_SIN_INMOBILIARIA;
+      } else {
+        resumen = data;
+        if (resumen && resumen.message && esErrorSinInmobiliaria(resumen.message)) {
+          resumen.message = MENSAJE_SIN_INMOBILIARIA;
         }
-    } catch {
-        errorCarga = "No se pudo conectar con el backend";
+      }
+    } else {
+      const errData = await res.json().catch(() => ({}));
+      const msgServidor = errData.error || errData.message || errData.mensaje;
+      if (esErrorSinInmobiliaria(msgServidor) || esErrorSinInmobiliaria(errData)) {
+        errorCarga = MENSAJE_SIN_INMOBILIARIA;
+      } else {
+        errorCarga = msgServidor || `No se pudieron cargar las estadísticas (${res.status})`;
+      }
     }
+  } catch {
+    errorCarga = "No se pudo conectar con el backend";
+  }
 } else {
-    errorCarga = "Sesión no válida";
+  errorCarga = "Sesión no válida";
 }
 
 const nombreEstadoProy = (id: number) =>
-     id === 3 ? "Finalizados" : id === 2 ? "En construcción" : "Planificados";
+  id === 3 ? "Finalizados" : id === 2 ? "En construcción" : "Planificados";
 
 const iconoEstadoProp = (estado: string) => {
-    if (estado === "Disponible") return "bi-house-check";
-    if (estado === "Reservada") return "bi-hourglass-split";
-    if (estado === "Mantenimiento") return "bi-cone-striped";
-    return "bi-slash-circle";
+  if (estado === "Disponible") return "bi-house-check";
+  if (estado === "Reservada") return "bi-hourglass-split";
+  if (estado === "Mantenimiento") return "bi-cone-striped";
+  return "bi-slash-circle";
 };
 
 const iconoEstadoProy = (id: number) => {
-    if (id === 3) return "bi-flag-fill";
-    if (id === 2) return "bi-hammer";
-    return "bi-clipboard2-pulse";
+  if (id === 3) return "bi-flag-fill";
+  if (id === 2) return "bi-hammer";
+  return "bi-clipboard2-pulse";
 };
 ---
 
-<div class="panel-body">
-    <div class="topbar-panel">
-        <h1>Panel agente</h1>
-        <p>Resumen de tu inmobiliaria y propiedades a cargo.</p>
+<div class="pl-page pl-theme-agente">
+  <header class="pl-hero">
+    <div class="pl-hero-info">
+      <div class="pl-hero-tags">
+        <span class="pl-hero-tag"><i class="bi bi-person-badge-fill" aria-hidden="true"></i> Panel de agente</span>
+        <span class="pl-hero-tag"><i class="bi bi-calendar-event" aria-hidden="true"></i> <span id="agenteFechaTag">Hoy</span></span>
+      </div>
+      <h1>Panel de agente</h1>
+      <p>Resumen de tu inmobiliaria, propiedades a cargo y agenda de citas.</p>
     </div>
-    <ResumenPanel />
+    <div class="pl-hero-acc">
+      <a class="pl-hero-btn" href="/agente/agenda"><i class="bi bi-calendar-check-fill" aria-hidden="true"></i> Agenda</a>
+      <a class="pl-hero-btn pl-hero-btn--sec" href="/agente/propiedades"><i class="bi bi-houses" aria-hidden="true"></i> Propiedades</a>
+      <NotifModalPanel />
+    </div>
+  </header>
 
-    {errorCarga && (
-        <div class="alert-error" role="alert">
-        <i class="bi bi-exclamation-octagon" aria-hidden="true"></i>
-        {errorCarga}
+  {errorCarga && (
+    <div class="alert alert-danger d-flex align-items-center gap-2 mb-0" role="alert">
+      <i class="bi bi-exclamation-octagon" aria-hidden="true"></i>
+      {errorCarga}
+    </div>
+  )}
+
+  {resumen && (
+    <>
+      {resumen.message && (
+        <div class="alert alert-danger mb-0" role="alert">{resumen.message}</div>
+      )}
+
+      <section class="pl-kpis" aria-label="Totales">
+        <div class="pl-kpi pl-kpi--destacado">
+          <div class="pl-kpi-top"><span class="pl-kpi-lbl">Propiedades</span><span class="pl-kpi-ico"><i class="bi bi-houses" aria-hidden="true"></i></span></div>
+          <b class="pl-kpi-val">{resumen.totales.propiedades}</b>
         </div>
-    )}
+        <div class="pl-kpi pl-kpi--alerta">
+          <div class="pl-kpi-top"><span class="pl-kpi-lbl">Destacadas</span><span class="pl-kpi-ico"><i class="bi bi-star-fill" aria-hidden="true"></i></span></div>
+          <b class="pl-kpi-val">{resumen.totales.destacadas}</b>
+        </div>
+        <div class="pl-kpi">
+          <div class="pl-kpi-top"><span class="pl-kpi-lbl">Proyectos</span><span class="pl-kpi-ico"><i class="bi bi-building-fill-up" aria-hidden="true"></i></span></div>
+          <b class="pl-kpi-val">{resumen.totales.proyectos}</b>
+        </div>
+        <div class="pl-kpi">
+          <div class="pl-kpi-top"><span class="pl-kpi-lbl">Constructoras</span><span class="pl-kpi-ico"><i class="bi bi-hammer" aria-hidden="true"></i></span></div>
+          <b class="pl-kpi-val">{resumen.totales.constructoras}</b>
+        </div>
+        <div class="pl-kpi" id="plKpiSinLeerCard">
+          <div class="pl-kpi-top"><span class="pl-kpi-lbl">Sin leer</span><span class="pl-kpi-ico"><i class="bi bi-bell-fill" aria-hidden="true"></i></span></div>
+          <b class="pl-kpi-val" id="plKpiSinLeer">—</b>
+        </div>
+      </section>
 
-    {resumen && (
-        <>
-        {resumen.message && (
-            <div class="alert-error" role="alert">{resumen.message}</div>
-        )}
+      <ResumenPanel />
 
-        <section class="stats-grid" aria-label="Totales">
-            <div class="stat-card">
-            <i class="bi bi-houses stat-icon" aria-hidden="true"></i>
-            <div class="stat-info">
-                <span class="stat-label">Propiedades (inmobiliaria)</span>
-                <span class="stat-value">{resumen.totales.propiedades}</span>
-            </div>
-            </div>
-            <div class="stat-card">
-            <i class="bi bi-star-fill stat-icon" aria-hidden="true"></i>
-            <div class="stat-info">
-                <span class="stat-label">Destacadas</span>
-                <span class="stat-value">{resumen.totales.destacadas}</span>
-            </div>
-            </div>
-            <div class="stat-card">
-            <i class="bi bi-building-fill-up stat-icon" aria-hidden="true"></i>
-            <div class="stat-info">
-                <span class="stat-label">Proyectos</span>
-                <span class="stat-value">{resumen.totales.proyectos}</span>
-            </div>
-            </div>
-            <div class="stat-card">
-            <i class="bi bi-hammer stat-icon" aria-hidden="true"></i>
-            <div class="stat-info">
-                <span class="stat-label">Constructoras</span>
-                <span class="stat-value">{resumen.totales.constructoras}</span>
-            </div>
-            </div>
-        </section>
-
-        <section class="card">
-            <h2><i class="bi bi-grid-1x2" aria-hidden="true"></i> Accesos rápidos</h2>
-            <div class="accesos-grid">
-            <a href="/agente/propiedades" class="acceso-btn">
-                <i class="bi bi-houses" aria-hidden="true"></i> Propiedades
-            </a>
-            <a href="/agente/proyectos" class="acceso-btn">
-                <i class="bi bi-building-fill-up" aria-hidden="true"></i> Proyectos
-            </a>
-            <a href="/agente/perfil" class="acceso-btn">
-                <i class="bi bi-person-fill" aria-hidden="true"></i> Perfil
-            </a>
-            </div>
-        </section>
-
-        <div class="estados-grid">
-            <section class="card">
-            <h2><i class="bi bi-houses" aria-hidden="true"></i> Propiedades por estado</h2>
-            <div class="breakdown-list">
+      <div class="pl-split">
+        <div class="pl-stack">
+          <div class="pl-estados-grid">
+            <section class="pl-card">
+              <div class="pl-card-head">
+                <div class="pl-card-titulo">
+                  <div class="pl-card-ico"><i class="bi bi-houses" aria-hidden="true"></i></div>
+                  <div>
+                    <h2>Propiedades por estado</h2>
+                    <small>Estado actual del catálogo.</small>
+                  </div>
+                </div>
+              </div>
+              <div class="pl-breakdown-list">
                 {resumen.propiedadesPorEstado.length === 0 ? (
-                <p class="empty-hint">Sin propiedades</p>
+                  <p class="fn-muted" style="margin:0">Sin propiedades</p>
                 ) : (
-                resumen.propiedadesPorEstado.map((p) => (
-                    <div class="breakdown-row">
-                    <span class="breakdown-dot">
-                        <i class={`bi ${iconoEstadoProp(p.estado)}`} aria-hidden="true"></i>
-                    </span>
-                    <span class="breakdown-label">{p.estado}</span>
-                    <span class="breakdown-value">{p.total}</span>
+                  resumen.propiedadesPorEstado.map((p) => (
+                    <div class="pl-breakdown-row">
+                      <span class="pl-breakdown-dot"><i class={`bi ${iconoEstadoProp(p.estado)}`} aria-hidden="true"></i></span>
+                      <span class="pl-breakdown-label">{p.estado}</span>
+                      <span class="pl-breakdown-value">{p.total}</span>
                     </div>
-                ))
+                  ))
                 )}
-            </div>
+              </div>
             </section>
 
-            <section class="card">
-            <h2><i class="bi bi-building-fill-up" aria-hidden="true"></i> Proyectos por estado</h2>
-            <div class="breakdown-list">
+            <section class="pl-card">
+              <div class="pl-card-head">
+                <div class="pl-card-titulo">
+                  <div class="pl-card-ico pl-card-ico--acc"><i class="bi bi-building-fill-up" aria-hidden="true"></i></div>
+                  <div>
+                    <h2>Proyectos por estado</h2>
+                    <small>Seguimiento de obras.</small>
+                  </div>
+                </div>
+              </div>
+              <div class="pl-breakdown-list">
                 {resumen.proyectosPorEstado.length === 0 ? (
-                <p class="empty-hint">Sin proyectos</p>
+                  <p class="fn-muted" style="margin:0">Sin proyectos</p>
                 ) : (
-                resumen.proyectosPorEstado.map((p) => (
-                    <div class="breakdown-row">
-                    <span class="breakdown-dot">
-                        <i class={`bi ${iconoEstadoProy(p.estadoProyectoID)}`} aria-hidden="true"></i>
-                    </span>
-                    <span class="breakdown-label">{nombreEstadoProy(p.estadoProyectoID)}</span>
-                    <span class="breakdown-value">{p.total}</span>
+                  resumen.proyectosPorEstado.map((p) => (
+                    <div class="pl-breakdown-row">
+                      <span class="pl-breakdown-dot"><i class={`bi ${iconoEstadoProy(p.estadoProyectoID)}`} aria-hidden="true"></i></span>
+                      <span class="pl-breakdown-label">{nombreEstadoProy(p.estadoProyectoID)}</span>
+                      <span class="pl-breakdown-value">{p.total}</span>
                     </div>
-                ))
+                  ))
                 )}
-            </div>
+              </div>
             </section>
+          </div>
+
+          <article class="pl-card">
+            <div class="pl-card-head">
+              <div class="pl-card-titulo">
+                <div class="pl-card-ico"><i class="bi bi-lightning-charge-fill" aria-hidden="true"></i></div>
+                <div>
+                  <h2>Acciones rápidas</h2>
+                  <small>Accesos directos a tu gestión diaria.</small>
+                </div>
+              </div>
+            </div>
+            <div class="pl-acciones-grid">
+              <a class="pl-accion pl-accion--destacada" href="/agente/agenda">
+                <span class="pl-accion-ico"><i class="bi bi-calendar-check-fill" aria-hidden="true"></i></span>
+                <span class="pl-accion-txt"><strong>Agenda</strong><small>Citas y visitas</small></span>
+                <i class="bi bi-chevron-right" aria-hidden="true"></i>
+              </a>
+              <a class="pl-accion" href="/agente/propiedades">
+                <span class="pl-accion-ico"><i class="bi bi-houses" aria-hidden="true"></i></span>
+                <span class="pl-accion-txt"><strong>Propiedades</strong><small>Inmuebles asignados</small></span>
+                <i class="bi bi-chevron-right" aria-hidden="true"></i>
+              </a>
+              <a class="pl-accion" href="/agente/proyectos">
+                <span class="pl-accion-ico"><i class="bi bi-buildings-fill" aria-hidden="true"></i></span>
+                <span class="pl-accion-txt"><strong>Proyectos</strong><small>Obras disponibles</small></span>
+                <i class="bi bi-chevron-right" aria-hidden="true"></i>
+              </a>
+              <a class="pl-accion" href="/notificaciones">
+                <span class="pl-accion-ico"><i class="bi bi-bell-fill" aria-hidden="true"></i></span>
+                <span class="pl-accion-txt"><strong>Notificaciones</strong><small>Historial completo</small></span>
+                <i class="bi bi-chevron-right" aria-hidden="true"></i>
+              </a>
+              <a class="pl-accion" href="/agente/perfil">
+                <span class="pl-accion-ico"><i class="bi bi-person-fill" aria-hidden="true"></i></span>
+                <span class="pl-accion-txt"><strong>Mi perfil</strong><small>Datos y contraseña</small></span>
+                <i class="bi bi-chevron-right" aria-hidden="true"></i>
+              </a>
+            </div>
+          </article>
         </div>
-        </>
-    )}
+
+        <UltimasNotifsCard />
+      </div>
+    </>
+  )}
 </div>
+
+<script>
+  const tag = document.getElementById("agenteFechaTag");
+  if (tag) {
+    const f = new Date().toLocaleDateString("es-CO", { weekday: "long", day: "numeric", month: "long" });
+    tag.textContent = f.charAt(0).toUpperCase() + f.slice(1);
+  }
+</script>

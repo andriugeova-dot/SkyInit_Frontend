@@ -1,12 +1,16 @@
 ---
 /** Agenda del agente / administrador: calendario semanal, crear, editar y cancelar citas. */
 import "./funciones.css";
+interface Props { mostrarCabecera?: boolean }
+const { mostrarCabecera = true } = Astro.props;
 ---
-<section class="fn">
-  <div class="fn-head">
-    <div><h1>Agenda de citas</h1><p>Crea, edita y cancela citas con clientes. Los recordatorios se envían solos cuando la cita está próxima.</p></div>
-    <button class="fn-btn" id="btnNuevaCita" type="button"><i class="bi bi-calendar-plus" aria-hidden="true"></i> Nueva cita</button>
-  </div>
+<section class="fn" style={mostrarCabecera ? undefined : "max-width:none;margin-top:0"}>
+  {mostrarCabecera && (
+    <div class="fn-head">
+      <div><h1>Agenda de citas</h1><p>Crea, edita y cancela citas con clientes. Los recordatorios se envían solos cuando la cita está próxima.</p></div>
+      <button class="fn-btn" id="btnNuevaCita" type="button"><i class="bi bi-calendar-plus" aria-hidden="true"></i> Nueva cita</button>
+    </div>
+  )}
   <div class="fn-stats" id="agStats"></div>
 
   <div class="fn-card" style="margin-bottom:18px">

@@ -2,24 +2,45 @@
 /** Proyectos de la constructora: misma linea visual que el panel del administrador (tarjetas + modales). */
 import "../funciones/funciones.css";
 import "./proyectos.css";
+import "./constructora.css";
 import SelectorUbicacion from "../funciones/SelectorUbicacion.astro";
 import DialogosPanel from "./DialogosPanel.astro";
+import NotifModalPanel from "../funciones/NotifModalPanel.astro";
 ---
 
-<section class="fn cp" id="cpProyectos">
-  <header class="fn-head">
-    <div>
+<section class="fn cp co-page" id="cpProyectos" style="max-width:1240px">
+  <header class="co-hero">
+    <div class="co-hero-info">
+      <div class="co-hero-tags">
+        <span class="co-hero-tag"><i class="bi bi-buildings-fill" aria-hidden="true"></i> Gestión de proyectos</span>
+      </div>
       <h1>Proyectos</h1>
       <p>Administra los proyectos de tu constructora, sus fotos y su estado.</p>
     </div>
-    <button type="button" class="fn-btn cp-btn-nuevo" id="proyNuevo"><i class="bi bi-plus-lg" aria-hidden="true"></i> Nuevo proyecto</button>
+    <div class="co-hero-acc">
+      <button type="button" class="co-hero-btn" id="proyNuevo"><i class="bi bi-plus-lg" aria-hidden="true"></i> Nuevo proyecto</button>
+      <a class="co-hero-btn co-hero-btn--sec" href="/constructora"><i class="bi bi-arrow-left" aria-hidden="true"></i> Volver al panel</a>
+      <NotifModalPanel />
+    </div>
   </header>
 
-  <div class="fn-stats" aria-label="Resumen de proyectos">
-    <div class="fn-stat"><span>Total</span><b id="proyStatTotal">—</b></div>
-    <div class="fn-stat"><span>Planificados</span><b id="proyStatPlan">—</b></div>
-    <div class="fn-stat"><span>En construcción</span><b id="proyStatObra">—</b></div>
-    <div class="fn-stat"><span>Finalizados</span><b id="proyStatFin">—</b></div>
+  <div class="co-kpis" aria-label="Resumen de proyectos">
+    <div class="co-kpi co-kpi--destacado">
+      <div class="co-kpi-top"><span class="co-kpi-lbl">Total</span><span class="co-kpi-ico"><i class="bi bi-buildings-fill" aria-hidden="true"></i></span></div>
+      <b class="co-kpi-val" id="proyStatTotal">—</b>
+    </div>
+    <div class="co-kpi">
+      <div class="co-kpi-top"><span class="co-kpi-lbl">Planificados</span><span class="co-kpi-ico"><i class="bi bi-clipboard-check" aria-hidden="true"></i></span></div>
+      <b class="co-kpi-val" id="proyStatPlan">—</b>
+    </div>
+    <div class="co-kpi co-kpi--prog">
+      <div class="co-kpi-top"><span class="co-kpi-lbl">En construcción</span><span class="co-kpi-ico"><i class="bi bi-hammer" aria-hidden="true"></i></span></div>
+      <b class="co-kpi-val" id="proyStatObra">—</b>
+    </div>
+    <div class="co-kpi co-kpi--ok">
+      <div class="co-kpi-top"><span class="co-kpi-lbl">Finalizados</span><span class="co-kpi-ico"><i class="bi bi-check-circle-fill" aria-hidden="true"></i></span></div>
+      <b class="co-kpi-val" id="proyStatFin">—</b>
+    </div>
   </div>
 
   <div class="cp-filtros cp-filtros--dos" role="search">

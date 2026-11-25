@@ -1,6 +1,9 @@
 ---
 import ResumenPanel from "../funciones/ResumenPanel.astro";
-import "./dashboard.css";
+import NotifModalPanel from "../funciones/NotifModalPanel.astro";
+import UltimasNotifsCard from "../funciones/UltimasNotifsCard.astro";
+import "../funciones/funciones.css";
+import "../funciones/panelUnificado.css";
 import { COOKIE_NAME, getTokenSSR } from "../../utils/auth";
 
 const BACKEND = import.meta.env.BACKEND_URL ?? "http://localhost:8001";
@@ -13,10 +16,10 @@ type ResumenDashboard = {
     constructoras: number;
     servicios: number;
     serviciosActivos: number;
-    solicitudesServicios: number;   
+    solicitudesServicios: number;
   };
   propiedadesPorEstado: { estado: string; total: number }[];
-  proyectosPorEstado: { estadoProyectoID: number ; total: number}[];
+  proyectosPorEstado: { estadoProyectoID: number; total: number }[];
   solicitudesServiciosPorEstado: { estadoReparacionID: number | null; estado: string; total: number }[];
 };
 
@@ -36,14 +39,14 @@ if (token) {
     } else {
       errorCarga = `No se pudieron cargar las estadisticas (${res.status})`;
     }
-  } catch (error) {
+  } catch {
     errorCarga = "No se pudo conectar con el backend";
   }
 } else {
   errorCarga = "Sesion no valida";
 }
 
-const nombreEstadoProy = (id: number) => 
+const nombreEstadoProy = (id: number) =>
   id === 3 ? "Finalizados" : id === 2 ? "En construccion" : "Planificados";
 
 const iconoEstadoProp = (estado: string) => {
@@ -60,142 +63,205 @@ const iconoEstadoProy = (id: number) => {
 };
 
 const iconoEstadoSolicitud = (estado: string) => {
-    const e = estado.toLowerCase();
-    if (e.includes("final")) return "bi-check-circle";
-    if (e.includes("proceso")) return "bi-gear";
-    if (e.includes("aceptada") && !e.includes("no")) return "bi-hand-thumbs-up";
-    return "bi-hourglass-split";
+  const e = estado.toLowerCase();
+  if (e.includes("final")) return "bi-check-circle";
+  if (e.includes("proceso")) return "bi-gear";
+  if (e.includes("aceptada") && !e.includes("no")) return "bi-hand-thumbs-up";
+  return "bi-hourglass-split";
 };
-
 ---
-<div class="panel-body">
-    <div class="topbar-panel">
-        <h1>Panel inmobiliaria</h1>
-        <p>Resumen general de la inmobiliaria.</p>
-    </div>
-    <ResumenPanel />
 
-    {errorCarga && (
-        <div class="alert-error" role="alert">
-            <i class="bi bi-exclamation-octagon" aria-hidden="true"></i>
-            {errorCarga}
-        </div>
-    )}
-
-    {resumen && (
-        <>
-            <!-- Tarjetas de totales -->
-            <section class="stats-grid" aria-label="Totales">
-                <div class="stat-card">
-                    <i class="bi bi-houses stat-icon" aria-hidden="true"></i>
-                    <div class="stat-info">
-                        <span class="stat-label">Propiedades</span>
-                        <span class="stat-value">{resumen.totales.propiedades}</span>
-                    </div>
-                </div>
-                <div class="stat-card">
-                    <i class="bi bi-building-fill-up stat-icon" aria-hidden="true"></i>
-                    <div class="stat-info">
-                        <span class="stat-label">Proyectos</span>
-                        <span class="stat-value">{resumen.totales.proyectos}</span>
-                    </div>
-                </div>
-                <div class="stat-card">
-                    <i class="bi bi-hammer stat-icon" aria-hidden="true"></i>
-                    <div class="stat-info">
-                        <span class="stat-label">Constructoras</span>
-                        <span class="stat-value">{resumen.totales.constructoras}</span>
-                    </div>
-                </div>
-                <div class="stat-card">
-                    <i class="bi bi-briefcase stat-icon" aria-hidden="true"></i>
-                    <div class="stat-info">
-                        <span class="stat-label">Servicios</span>
-                        <span class="stat-value">{resumen.totales.servicios}</span>
-                    </div>
-                </div>
-                <div class="stat-card">
-    <i class="bi bi-inbox stat-icon" aria-hidden="true"></i>
-    <div class="stat-info">
-        <span class="stat-label">Solicitudes de servicios</span>
-        <span class="stat-value">{resumen.totales.solicitudesServicios ?? 0}</span>
+<div class="pl-page pl-theme-admin">
+  <header class="pl-hero">
+    <div class="pl-hero-info">
+      <div class="pl-hero-tags">
+        <span class="pl-hero-tag"><i class="bi bi-building" aria-hidden="true"></i> Inmobiliaria</span>
+        <span class="pl-hero-tag"><i class="bi bi-calendar-event" aria-hidden="true"></i> <span id="adminFechaTag">Hoy</span></span>
       </div>
-</div>
-            </section>
+      <h1>Panel de administración</h1>
+      <p>Resumen general de tu inmobiliaria, propiedades, proyectos y solicitudes.</p>
+    </div>
+    <div class="pl-hero-acc">
+      <a class="pl-hero-btn" href="/admin/propiedades"><i class="bi bi-houses" aria-hidden="true"></i> Propiedades</a>
+      <a class="pl-hero-btn pl-hero-btn--sec" href="/admin/agenda"><i class="bi bi-calendar-check" aria-hidden="true"></i> Agenda</a>
+      <NotifModalPanel />
+    </div>
+  </header>
 
-            <!-- Accesos rápidos -->
-            <section class="card">
-                <h2><i class="bi bi-grid-1x2" aria-hidden="true"></i> Accesos rápidos</h2>
-                <div class="accesos-grid">
-                    <a href="/admin/propiedades" class="acceso-btn">
-                        <i class="bi bi-houses" aria-hidden="true"></i> Propiedades
-                    </a>
-                    <a href="/admin/proyectos" class="acceso-btn">
-                        <i class="bi bi-building-fill-up" aria-hidden="true"></i> Proyectos
-                    </a>
-                    <a href="/admin/constructoras" class="acceso-btn">
-                        <i class="bi bi-hammer" aria-hidden="true"></i> Constructoras
-                    </a>
-                    <a href="/admin/servicios" class="acceso-btn">
-                        <i class="bi bi-briefcase" aria-hidden="true"></i> Servicios
-                    </a>
-                    <a href="/admin/solicitudes" class="acceso-btn">
-                        <i class="bi bi-inbox" aria-hidden="true"></i> Solicitudes
-                    </a>
+  {errorCarga && (
+    <div class="alert alert-danger d-flex align-items-center gap-2 mb-0" role="alert">
+      <i class="bi bi-exclamation-octagon" aria-hidden="true"></i>
+      {errorCarga}
+    </div>
+  )}
+
+  {resumen && (
+    <>
+      <section class="pl-kpis" aria-label="Totales">
+        <div class="pl-kpi pl-kpi--destacado">
+          <div class="pl-kpi-top"><span class="pl-kpi-lbl">Propiedades</span><span class="pl-kpi-ico"><i class="bi bi-houses" aria-hidden="true"></i></span></div>
+          <b class="pl-kpi-val">{resumen.totales.propiedades}</b>
+        </div>
+        <div class="pl-kpi">
+          <div class="pl-kpi-top"><span class="pl-kpi-lbl">Proyectos</span><span class="pl-kpi-ico"><i class="bi bi-building-fill-up" aria-hidden="true"></i></span></div>
+          <b class="pl-kpi-val">{resumen.totales.proyectos}</b>
+        </div>
+        <div class="pl-kpi">
+          <div class="pl-kpi-top"><span class="pl-kpi-lbl">Constructoras</span><span class="pl-kpi-ico"><i class="bi bi-hammer" aria-hidden="true"></i></span></div>
+          <b class="pl-kpi-val">{resumen.totales.constructoras}</b>
+        </div>
+        <div class="pl-kpi">
+          <div class="pl-kpi-top"><span class="pl-kpi-lbl">Servicios</span><span class="pl-kpi-ico"><i class="bi bi-briefcase" aria-hidden="true"></i></span></div>
+          <b class="pl-kpi-val">{resumen.totales.servicios}</b>
+        </div>
+        <div class="pl-kpi pl-kpi--prog">
+          <div class="pl-kpi-top"><span class="pl-kpi-lbl">Solicitudes</span><span class="pl-kpi-ico"><i class="bi bi-inbox" aria-hidden="true"></i></span></div>
+          <b class="pl-kpi-val">{resumen.totales.solicitudesServicios ?? 0}</b>
+        </div>
+        <div class="pl-kpi" id="plKpiSinLeerCard">
+          <div class="pl-kpi-top"><span class="pl-kpi-lbl">Sin leer</span><span class="pl-kpi-ico"><i class="bi bi-bell-fill" aria-hidden="true"></i></span></div>
+          <b class="pl-kpi-val" id="plKpiSinLeer">—</b>
+        </div>
+      </section>
+
+      <ResumenPanel />
+
+      <div class="pl-split">
+        <div class="pl-stack">
+          <div class="pl-estados-grid">
+            <section class="pl-card">
+              <div class="pl-card-head">
+                <div class="pl-card-titulo">
+                  <div class="pl-card-ico"><i class="bi bi-houses" aria-hidden="true"></i></div>
+                  <div>
+                    <h2>Propiedades por estado</h2>
+                    <small>Distribución del catálogo.</small>
+                  </div>
                 </div>
+              </div>
+              <div class="pl-breakdown-list">
+                {resumen.propiedadesPorEstado.map((p) => (
+                  <div class="pl-breakdown-row">
+                    <span class="pl-breakdown-dot"><i class={`bi ${iconoEstadoProp(p.estado)}`} aria-hidden="true"></i></span>
+                    <span class="pl-breakdown-label">{p.estado}</span>
+                    <span class="pl-breakdown-value">{p.total}</span>
+                  </div>
+                ))}
+              </div>
             </section>
 
-            <!-- Estados: propiedades y proyectos lado a lado -->
-            <div class="estados-grid">
-                <section class="card">
-                    <h2><i class="bi bi-houses" aria-hidden="true"></i> Propiedades por estado</h2>
-                    <div class="breakdown-list">
-                        {resumen.propiedadesPorEstado.map((p) => (
-                            <div class="breakdown-row">
-                                <span class="breakdown-dot">
-                                    <i class={`bi ${iconoEstadoProp(p.estado)}`} aria-hidden="true"></i>
-                                </span>
-                                <span class="breakdown-label">{p.estado}</span>
-                                <span class="breakdown-value">{p.total}</span>
-                            </div>
-                        ))}
-                    </div>
-                </section>
+            <section class="pl-card">
+              <div class="pl-card-head">
+                <div class="pl-card-titulo">
+                  <div class="pl-card-ico pl-card-ico--acc"><i class="bi bi-building-fill-up" aria-hidden="true"></i></div>
+                  <div>
+                    <h2>Proyectos por estado</h2>
+                    <small>Avance de proyectos.</small>
+                  </div>
+                </div>
+              </div>
+              <div class="pl-breakdown-list">
+                {resumen.proyectosPorEstado.map((p) => (
+                  <div class="pl-breakdown-row">
+                    <span class="pl-breakdown-dot"><i class={`bi ${iconoEstadoProy(p.estadoProyectoID)}`} aria-hidden="true"></i></span>
+                    <span class="pl-breakdown-label">{nombreEstadoProy(p.estadoProyectoID)}</span>
+                    <span class="pl-breakdown-value">{p.total}</span>
+                  </div>
+                ))}
+              </div>
+            </section>
 
-                <section class="card">
-                    <h2><i class="bi bi-building-fill-up" aria-hidden="true"></i> Proyectos por estado</h2>
-                    <div class="breakdown-list">
-                        {resumen.proyectosPorEstado.map((p) => (
-                            <div class="breakdown-row">
-                                <span class="breakdown-dot">
-                                    <i class={`bi ${iconoEstadoProy(p.estadoProyectoID)}`} aria-hidden="true"></i>
-                                </span>
-                                <span class="breakdown-label">{nombreEstadoProy(p.estadoProyectoID)}</span>
-                                <span class="breakdown-value">{p.total}</span>
-                            </div>
-                        ))}
+            <section class="pl-card" style="grid-column: 1 / -1">
+              <div class="pl-card-head">
+                <div class="pl-card-titulo">
+                  <div class="pl-card-ico"><i class="bi bi-inbox" aria-hidden="true"></i></div>
+                  <div>
+                    <h2>Solicitudes de servicios por estado</h2>
+                    <small>Seguimiento de requerimientos recibidos.</small>
+                  </div>
+                </div>
+              </div>
+              <div class="pl-breakdown-list">
+                {(resumen.solicitudesServiciosPorEstado ?? []).length === 0 ? (
+                  <p class="fn-muted" style="margin:0">Aún no hay solicitudes.</p>
+                ) : (
+                  resumen.solicitudesServiciosPorEstado.map((s) => (
+                    <div class="pl-breakdown-row">
+                      <span class="pl-breakdown-dot"><i class={`bi ${iconoEstadoSolicitud(s.estado)}`} aria-hidden="true"></i></span>
+                      <span class="pl-breakdown-label">{s.estado}</span>
+                      <span class="pl-breakdown-value">{s.total}</span>
                     </div>
-                </section>
+                  ))
+                )}
+              </div>
+            </section>
+          </div>
+
+          <article class="pl-card">
+            <div class="pl-card-head">
+              <div class="pl-card-titulo">
+                <div class="pl-card-ico"><i class="bi bi-lightning-charge-fill" aria-hidden="true"></i></div>
+                <div>
+                  <h2>Acciones rápidas</h2>
+                  <small>Accesos directos a los módulos de administración.</small>
+                </div>
+              </div>
             </div>
-                <!-- Solicitudes de servicios por estado -->
-            <section class="card">
-                <h2><i class="bi bi-inbox" aria-hidden="true"></i> Solicitudes de servicios por estado</h2>
-                <div class="breakdown-list">
-                    {(resumen.solicitudesServiciosPorEstado ?? []).length === 0 ? (
-                        <p class="breakdown-label">Aún no hay solicitudes.</p>
-                    ) : (
-                        resumen.solicitudesServiciosPorEstado.map((s) => (
-                            <div class="breakdown-row">
-                                <span class="breakdown-dot">
-                                    <i class={`bi ${iconoEstadoSolicitud(s.estado)}`} aria-hidden="true"></i>
-                                </span>
-                                <span class="breakdown-label">{s.estado}</span>
-                                <span class="breakdown-value">{s.total}</span>
-                            </div>
-                        ))
-                    )}
-                </div>
-            </section>
-        </>
-    )}
+            <div class="pl-acciones-grid">
+              <a class="pl-accion pl-accion--destacada" href="/admin/propiedades">
+                <span class="pl-accion-ico"><i class="bi bi-houses" aria-hidden="true"></i></span>
+                <span class="pl-accion-txt"><strong>Propiedades</strong><small>Catálogo y precios</small></span>
+                <i class="bi bi-chevron-right" aria-hidden="true"></i>
+              </a>
+              <a class="pl-accion" href="/admin/proyectos">
+                <span class="pl-accion-ico"><i class="bi bi-building-fill-up" aria-hidden="true"></i></span>
+                <span class="pl-accion-txt"><strong>Proyectos</strong><small>Obras y avances</small></span>
+                <i class="bi bi-chevron-right" aria-hidden="true"></i>
+              </a>
+              <a class="pl-accion" href="/admin/constructoras">
+                <span class="pl-accion-ico"><i class="bi bi-hammer" aria-hidden="true"></i></span>
+                <span class="pl-accion-txt"><strong>Constructoras</strong><small>Empresas vinculadas</small></span>
+                <i class="bi bi-chevron-right" aria-hidden="true"></i>
+              </a>
+              <a class="pl-accion" href="/admin/servicios">
+                <span class="pl-accion-ico"><i class="bi bi-tools" aria-hidden="true"></i></span>
+                <span class="pl-accion-txt"><strong>Servicios</strong><small>Catálogo técnico</small></span>
+                <i class="bi bi-chevron-right" aria-hidden="true"></i>
+              </a>
+              <a class="pl-accion" href="/admin/solicitudes">
+                <span class="pl-accion-ico"><i class="bi bi-envelope-fill" aria-hidden="true"></i></span>
+                <span class="pl-accion-txt"><strong>Solicitudes</strong><small>Peticiones recibidas</small></span>
+                <i class="bi bi-chevron-right" aria-hidden="true"></i>
+              </a>
+              <a class="pl-accion" href="/admin/mantenimiento">
+                <span class="pl-accion-ico"><i class="bi bi-wrench-adjustable" aria-hidden="true"></i></span>
+                <span class="pl-accion-txt"><strong>Mantenimiento</strong><small>Asignación y control</small></span>
+                <i class="bi bi-chevron-right" aria-hidden="true"></i>
+              </a>
+              <a class="pl-accion" href="/admin/agentes">
+                <span class="pl-accion-ico"><i class="bi bi-person-badge-fill" aria-hidden="true"></i></span>
+                <span class="pl-accion-txt"><strong>Agentes</strong><small>Cuentas de equipo</small></span>
+                <i class="bi bi-chevron-right" aria-hidden="true"></i>
+              </a>
+              <a class="pl-accion" href="/admin/agenda">
+                <span class="pl-accion-ico"><i class="bi bi-calendar-check-fill" aria-hidden="true"></i></span>
+                <span class="pl-accion-txt"><strong>Agenda</strong><small>Citas programadas</small></span>
+                <i class="bi bi-chevron-right" aria-hidden="true"></i>
+              </a>
+            </div>
+          </article>
+        </div>
+
+        <UltimasNotifsCard />
+      </div>
+    </>
+  )}
 </div>
+
+<script>
+  const tag = document.getElementById("adminFechaTag");
+  if (tag) {
+    const f = new Date().toLocaleDateString("es-CO", { weekday: "long", day: "numeric", month: "long" });
+    tag.textContent = f.charAt(0).toUpperCase() + f.slice(1);
+  }
+</script>

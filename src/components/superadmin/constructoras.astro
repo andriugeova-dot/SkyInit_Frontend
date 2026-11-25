@@ -1,57 +1,70 @@
 ---
+import NotifModalPanel from "../funciones/NotifModalPanel.astro";
+import "../funciones/funciones.css";
+import "../funciones/panelUnificado.css";
 import "./constructoras.css";
 ---
 
-<div class="page" id="page-sa-constructoras">
-    <header class="page-header">
-        <div>
-        <h1>Constructoras</h1>
-        <p>Todas las constructoras, inmobiliarias vinculadas y cuentas de acceso para el panel</p>
+<div class="page pl-page pl-theme-superadmin" id="page-sa-constructoras" style="max-width:1240px">
+    <header class="pl-hero">
+        <div class="pl-hero-info">
+            <div class="pl-hero-tags">
+                <span class="pl-hero-tag"><i class="bi bi-hammer" aria-hidden="true"></i> Red de constructoras</span>
+            </div>
+            <h1>Constructoras</h1>
+            <p>Todas las constructoras, inmobiliarias vinculadas y cuentas de acceso para el panel</p>
         </div>
-        <button type="button" class="btn-nueva" id="btn-nueva">+ Nueva constructora</button>
+        <div class="pl-hero-acc">
+            <button type="button" class="pl-hero-btn" id="btn-nueva"><i class="bi bi-plus-lg" aria-hidden="true"></i> Nueva constructora</button>
+            <a class="pl-hero-btn pl-hero-btn--sec" href="/superadmin"><i class="bi bi-arrow-left" aria-hidden="true"></i> Volver al panel</a>
+            <NotifModalPanel />
+        </div>
     </header>
-    <div class="toolbar">
-        <input type="search" id="filtro-q" placeholder="Buscar nombre, ciudad, correo…" />
-        <select id="filtro-estado">
-            <option value="">Todos los estados</option>
-            <option value="Activo">Activo</option>
-            <option value="Pendiente">Pendiente</option>
-            <option value="Inactivo">Inactivo</option>
-        </select>
-    </div>
 
-    <div class="stats">
-        <div class="stat-card">
-        <span class="stat-label">Total</span>
-        <span class="stat-value" id="stat-total">—</span>
+    <div class="pl-kpis">
+        <div class="pl-kpi pl-kpi--destacado">
+            <div class="pl-kpi-top"><span class="pl-kpi-lbl">Total</span><span class="pl-kpi-ico"><i class="bi bi-hammer" aria-hidden="true"></i></span></div>
+            <span class="pl-kpi-val" id="stat-total">—</span>
         </div>
-        <div class="stat-card">
-        <span class="stat-label">Activas</span>
-        <span class="stat-value" id="stat-activas">—</span>
+        <div class="pl-kpi pl-kpi--ok">
+            <div class="pl-kpi-top"><span class="pl-kpi-lbl">Activas</span><span class="pl-kpi-ico"><i class="bi bi-check-circle-fill" aria-hidden="true"></i></span></div>
+            <span class="pl-kpi-val" id="stat-activas">—</span>
         </div>
-        <div class="stat-card">
-        <span class="stat-label">Con cuenta</span>
-        <span class="stat-value" id="stat-cuenta">—</span>
+        <div class="pl-kpi pl-kpi--prog">
+            <div class="pl-kpi-top"><span class="pl-kpi-lbl">Con cuenta</span><span class="pl-kpi-ico"><i class="bi bi-person-badge-fill" aria-hidden="true"></i></span></div>
+            <span class="pl-kpi-val" id="stat-cuenta">—</span>
         </div>
     </div>
 
-    <div class="table-wrap">
-        <table class="tabla">
-        <thead>
-            <tr>
-            <th>ID</th>
-            <th>Nombre</th>
-            <th>Ciudad</th>
-            <th>Estado</th>
-            <th>Inmobiliarias</th>
-            <th>Acceso panel</th>
-            <th>Acciones</th>
-            </tr>
-        </thead>
-        <tbody id="tbody">
-            <tr><td colspan="7" class="loading">Cargando…</td></tr>
-        </tbody>
-        </table>
+    <div class="pl-card" style="display:grid;gap:14px">
+        <div class="toolbar" style="margin-bottom:0">
+            <input type="search" id="filtro-q" placeholder="Buscar nombre, ciudad, correo…" />
+            <select id="filtro-estado">
+                <option value="">Todos los estados</option>
+                <option value="Activo">Activo</option>
+                <option value="Pendiente">Pendiente</option>
+                <option value="Inactivo">Inactivo</option>
+            </select>
+        </div>
+
+        <div class="table-wrap">
+            <table class="tabla">
+            <thead>
+                <tr>
+                <th>ID</th>
+                <th>Nombre</th>
+                <th>Ciudad</th>
+                <th>Estado</th>
+                <th>Inmobiliarias</th>
+                <th>Acceso panel</th>
+                <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="tbody">
+                <tr><td colspan="7" class="loading">Cargando…</td></tr>
+            </tbody>
+            </table>
+        </div>
     </div>
 </div>
 

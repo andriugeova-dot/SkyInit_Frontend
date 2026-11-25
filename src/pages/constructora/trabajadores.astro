@@ -1,15 +1,59 @@
 ---
 import Layout from "../../layouts/LayoutVistas.astro";
 import "../../components/funciones/funciones.css";
+import "../../components/constructora/constructora.css";
+import NotifModalPanel from "../../components/funciones/NotifModalPanel.astro";
 ---
 <Layout>
-  <section class="fn">
-    <div class="fn-head">
-      <div><h1>Trabajadores</h1><p>Crea las cuentas de tu equipo. Cada trabajador entra con su correo y ve solo sus tareas.</p></div>
-      <button class="fn-btn" id="btnNuevoTrab" type="button"><i class="bi bi-person-plus"></i> Nuevo trabajador</button>
+  <div class="co-page">
+    <header class="co-hero">
+      <div class="co-hero-info">
+        <div class="co-hero-tags">
+          <span class="co-hero-tag"><i class="bi bi-people-fill" aria-hidden="true"></i> Equipo técnico</span>
+        </div>
+        <h1>Trabajadores</h1>
+        <p>Crea las cuentas de tu equipo. Cada trabajador entra con su correo y ve solo sus tareas.</p>
+      </div>
+      <div class="co-hero-acc">
+        <button class="co-hero-btn" id="btnNuevoTrab" type="button"><i class="bi bi-person-plus" aria-hidden="true"></i> Nuevo trabajador</button>
+        <a class="co-hero-btn co-hero-btn--sec" href="/constructora"><i class="bi bi-arrow-left" aria-hidden="true"></i> Volver al panel</a>
+        <NotifModalPanel />
+      </div>
+    </header>
+
+    <div class="co-kpis" id="trabStats" aria-label="Resumen de trabajadores">
+      <div class="co-kpi co-kpi--destacado">
+        <div class="co-kpi-top"><span class="co-kpi-lbl">Total equipo</span><span class="co-kpi-ico"><i class="bi bi-people-fill" aria-hidden="true"></i></span></div>
+        <b class="co-kpi-val" id="trabStatTotal">—</b>
+      </div>
+      <div class="co-kpi co-kpi--ok">
+        <div class="co-kpi-top"><span class="co-kpi-lbl">Activos</span><span class="co-kpi-ico"><i class="bi bi-person-check-fill" aria-hidden="true"></i></span></div>
+        <b class="co-kpi-val" id="trabStatActivos">—</b>
+      </div>
+      <div class="co-kpi">
+        <div class="co-kpi-top"><span class="co-kpi-lbl">Inactivos</span><span class="co-kpi-ico"><i class="bi bi-person-dash-fill" aria-hidden="true"></i></span></div>
+        <b class="co-kpi-val" id="trabStatInactivos">—</b>
+      </div>
+      <div class="co-kpi co-kpi--prog">
+        <div class="co-kpi-top"><span class="co-kpi-lbl">Tareas abiertas</span><span class="co-kpi-ico"><i class="bi bi-tools" aria-hidden="true"></i></span></div>
+        <b class="co-kpi-val" id="trabStatTareas">—</b>
+      </div>
     </div>
-    <div id="trabLista"></div>
-  </section>
+
+    <section class="co-card">
+      <div class="co-card-head">
+        <div class="co-card-titulo">
+          <div class="co-card-ico"><i class="bi bi-person-lines-fill" aria-hidden="true"></i></div>
+          <div>
+            <h2>Directorio de trabajadores</h2>
+            <small>Administra las cuentas activas y revisa la carga de tareas abiertas.</small>
+          </div>
+        </div>
+      </div>
+      <div id="trabLista"></div>
+    </section>
+  </div>
+
   <dialog class="fn-modal" id="dlgTrab">
     <form class="fn-modal-cuerpo fn-form" id="formTrab" autocomplete="off">
       <h2>Nuevo trabajador</h2>
@@ -34,9 +78,17 @@ import "../../components/funciones/funciones.css";
   import { api, esc, aviso } from "../../components/funciones/comun";
   const lista = document.getElementById("trabLista")!;
   const dlg = document.getElementById("dlgTrab") as HTMLDialogElement;
+
   async function cargar() {
     try {
       const { trabajadores } = await api("/organizacion/trabajadores");
+      const activos = trabajadores.filter((t: any) => t.estadoCuenta === "Activa").length;
+      const tareas = trabajadores.reduce((acc: number, t: any) => acc + Number(t.tareasAbiertas ?? 0), 0);
+      document.getElementById("trabStatTotal")!.textContent = String(trabajadores.length);
+      document.getElementById("trabStatActivos")!.textContent = String(activos);
+      document.getElementById("trabStatInactivos")!.textContent = String(trabajadores.length - activos);
+      document.getElementById("trabStatTareas")!.textContent = String(tareas);
+
       if (!trabajadores.length) {
         lista.innerHTML = `<div class="fn-vacio"><i class="bi bi-people"></i>Aún no has creado trabajadores. Crea el primero para poder asignarle tareas.</div>`;
         return;

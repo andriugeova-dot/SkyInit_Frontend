@@ -1,196 +1,257 @@
 ---
 import ResumenPanel from "../funciones/ResumenPanel.astro";
-import "../admin/dashboard.css";
+import NotifModalPanel from "../funciones/NotifModalPanel.astro";
+import UltimasNotifsCard from "../funciones/UltimasNotifsCard.astro";
+import "../funciones/funciones.css";
+import "../funciones/panelUnificado.css";
 import { COOKIE_NAME, getTokenSSR } from "../../utils/auth";
 
 const BACKEND = import.meta.env.BACKEND_URL ?? "http://localhost:8001";
 const token = getTokenSSR(Astro.cookies);
 
 type Resumen = {
-    totales: {
-        usuarios: number;
-        inmobiliarias: number;
-        constructoras: number;
-        propiedades: number;
-        proyectos: number;
-    };
-    usuariosPorRol: { rolID: number; nombreRol: string; total: number }[];
-    propiedadesPorEstado: { estado: string; total: number }[];
-    proyectosPorEstado: { estadoProyectoID: number; total: number }[];
-    constructorasPorEstado: { estado: string; total: number }[];
+  totales: {
+    usuarios: number;
+    inmobiliarias: number;
+    constructoras: number;
+    propiedades: number;
+    proyectos: number;
+  };
+  usuariosPorRol: { rolID: number; nombreRol: string; total: number }[];
+  propiedadesPorEstado: { estado: string; total: number }[];
+  proyectosPorEstado: { estadoProyectoID: number; total: number }[];
+  constructorasPorEstado: { estado: string; total: number }[];
 };
 
 let resumen: Resumen | null = null;
 let errorCarga: string | null = null;
 
 if (token) {
-    try {
-        const res = await fetch(`${BACKEND}/superadmin/dashboard`, {
-        headers: {
-            Cookie: `${COOKIE_NAME}=${token}`,
-            Authorization: `Bearer ${token}`,
-            Accept: "application/json",
-        },
-        });
-        if (res.ok) resumen = await res.json();
-        else errorCarga = `No se pudieron cargar las estadísticas (${res.status})`;
-    } catch {
-        errorCarga = "No se pudo conectar con el backend";
-    }
-    } else {
-    errorCarga = "Sesión no válida";
+  try {
+    const res = await fetch(`${BACKEND}/superadmin/dashboard`, {
+      headers: {
+        Cookie: `${COOKIE_NAME}=${token}`,
+        Authorization: `Bearer ${token}`,
+        Accept: "application/json",
+      },
+    });
+    if (res.ok) resumen = await res.json();
+    else errorCarga = `No se pudieron cargar las estadísticas (${res.status})`;
+  } catch {
+    errorCarga = "No se pudo conectar con el backend";
+  }
+} else {
+  errorCarga = "Sesión no válida";
 }
 
 const nombreEstadoProy = (id: number) =>
-      id === 3 ? "Finalizados" : id === 2 ? "En construcción" : "Planificados";
+  id === 3 ? "Finalizados" : id === 2 ? "En construcción" : "Planificados";
 
 const iconoEstadoProp = (estado: string) => {
-    if (estado === "Disponible") return "bi-house-check";
-    if (estado === "Reservada") return "bi-hourglass-split";
-    if (estado === "Mantenimiento") return "bi-cone-striped";
-    return "bi-slash-circle";
+  if (estado === "Disponible") return "bi-house-check";
+  if (estado === "Reservada") return "bi-hourglass-split";
+  if (estado === "Mantenimiento") return "bi-cone-striped";
+  return "bi-slash-circle";
 };
 ---
 
-<div class="panel-body">
-    <div class="topbar-panel">
-        <h1>Panel SuperAdmin</h1>
-        <p>Resumen global de la plataforma SkyInit.</p>
+<div class="pl-page pl-theme-superadmin">
+  <header class="pl-hero">
+    <div class="pl-hero-info">
+      <div class="pl-hero-tags">
+        <span class="pl-hero-tag"><i class="bi bi-shield-lock-fill" aria-hidden="true"></i> Administración global</span>
+        <span class="pl-hero-tag"><i class="bi bi-calendar-event" aria-hidden="true"></i> <span id="saFechaTag">Hoy</span></span>
+      </div>
+      <h1>Panel SuperAdmin</h1>
+      <p>Resumen global de usuarios, inmobiliarias, constructoras y avisos de la plataforma.</p>
     </div>
-    <ResumenPanel />
+    <div class="pl-hero-acc">
+      <a class="pl-hero-btn" href="/superadmin/usuarios"><i class="bi bi-people-fill" aria-hidden="true"></i> Usuarios</a>
+      <a class="pl-hero-btn pl-hero-btn--sec" href="/superadmin/inmobiliarias"><i class="bi bi-shop" aria-hidden="true"></i> Inmobiliarias</a>
+      <NotifModalPanel />
+    </div>
+  </header>
 
-    {errorCarga && (
-        <div class="alert-error" role="alert">
-        <i class="bi bi-exclamation-octagon" aria-hidden="true"></i>
-        {errorCarga}
+  {errorCarga && (
+    <div class="alert alert-danger d-flex align-items-center gap-2 mb-0" role="alert">
+      <i class="bi bi-exclamation-octagon" aria-hidden="true"></i>
+      {errorCarga}
+    </div>
+  )}
+
+  {resumen && (
+    <>
+      <section class="pl-kpis" aria-label="Totales">
+        <div class="pl-kpi pl-kpi--destacado">
+          <div class="pl-kpi-top"><span class="pl-kpi-lbl">Usuarios</span><span class="pl-kpi-ico"><i class="bi bi-people-fill" aria-hidden="true"></i></span></div>
+          <b class="pl-kpi-val">{resumen.totales.usuarios}</b>
         </div>
-    )}
+        <div class="pl-kpi">
+          <div class="pl-kpi-top"><span class="pl-kpi-lbl">Inmobiliarias</span><span class="pl-kpi-ico"><i class="bi bi-building" aria-hidden="true"></i></span></div>
+          <b class="pl-kpi-val">{resumen.totales.inmobiliarias}</b>
+        </div>
+        <div class="pl-kpi">
+          <div class="pl-kpi-top"><span class="pl-kpi-lbl">Constructoras</span><span class="pl-kpi-ico"><i class="bi bi-hammer" aria-hidden="true"></i></span></div>
+          <b class="pl-kpi-val">{resumen.totales.constructoras}</b>
+        </div>
+        <div class="pl-kpi">
+          <div class="pl-kpi-top"><span class="pl-kpi-lbl">Propiedades</span><span class="pl-kpi-ico"><i class="bi bi-houses" aria-hidden="true"></i></span></div>
+          <b class="pl-kpi-val">{resumen.totales.propiedades}</b>
+        </div>
+        <div class="pl-kpi">
+          <div class="pl-kpi-top"><span class="pl-kpi-lbl">Proyectos</span><span class="pl-kpi-ico"><i class="bi bi-building-fill-up" aria-hidden="true"></i></span></div>
+          <b class="pl-kpi-val">{resumen.totales.proyectos}</b>
+        </div>
+        <div class="pl-kpi" id="plKpiSinLeerCard">
+          <div class="pl-kpi-top"><span class="pl-kpi-lbl">Sin leer</span><span class="pl-kpi-ico"><i class="bi bi-bell-fill" aria-hidden="true"></i></span></div>
+          <b class="pl-kpi-val" id="plKpiSinLeer">—</b>
+        </div>
+      </section>
 
-    {resumen && (
-        <>
-        <section class="stats-grid" aria-label="Totales">
-            <div class="stat-card">
-            <i class="bi bi-people-fill stat-icon" aria-hidden="true"></i>
-            <div class="stat-info">
-                <span class="stat-label">Usuarios</span>
-                <span class="stat-value">{resumen.totales.usuarios}</span>
-            </div>
-            </div>
-            <div class="stat-card">
-            <i class="bi bi-building stat-icon" aria-hidden="true"></i>
-            <div class="stat-info">
-                <span class="stat-label">Inmobiliarias</span>
-                <span class="stat-value">{resumen.totales.inmobiliarias}</span>
-            </div>
-            </div>
-            <div class="stat-card">
-            <i class="bi bi-hammer stat-icon" aria-hidden="true"></i>
-            <div class="stat-info">
-                <span class="stat-label">Constructoras</span>
-                <span class="stat-value">{resumen.totales.constructoras}</span>
-            </div>
-            </div>
-            <div class="stat-card">
-            <i class="bi bi-houses stat-icon" aria-hidden="true"></i>
-            <div class="stat-info">
-                <span class="stat-label">Propiedades</span>
-                <span class="stat-value">{resumen.totales.propiedades}</span>
-            </div>
-            </div>
-            <div class="stat-card">
-            <i class="bi bi-building-fill-up stat-icon" aria-hidden="true"></i>
-            <div class="stat-info">
-                <span class="stat-label">Proyectos</span>
-                <span class="stat-value">{resumen.totales.proyectos}</span>
-            </div>
-            </div>
-        </section>
+      <ResumenPanel />
 
-        <section class="card">
-            <h2><i class="bi bi-grid-1x2" aria-hidden="true"></i> Accesos rápidos</h2>
-            <div class="accesos-grid">
-            <a href="/superadmin/usuarios" class="acceso-btn">
-                <i class="bi bi-people-fill" aria-hidden="true"></i> Usuarios
-            </a>
-            <a href="/superadmin/inmobiliarias" class="acceso-btn">
-                <i class="bi bi-building" aria-hidden="true"></i> Inmobiliarias
-            </a>
-            <a href="/superadmin/constructoras" class="acceso-btn">
-                <i class="bi bi-hammer" aria-hidden="true"></i> Constructoras
-            </a>
-            <a href="/superadmin/perfil" class="acceso-btn">
-                <i class="bi bi-person-fill" aria-hidden="true"></i> Perfil
-            </a>
-            </div>
-        </section>
-
-        <div class="estados-grid">
-            <section class="card">
-            <h2><i class="bi bi-people" aria-hidden="true"></i> Usuarios por rol</h2>
-            <div class="breakdown-list">
+      <div class="pl-split">
+        <div class="pl-stack">
+          <div class="pl-estados-grid">
+            <section class="pl-card">
+              <div class="pl-card-head">
+                <div class="pl-card-titulo">
+                  <div class="pl-card-ico"><i class="bi bi-people" aria-hidden="true"></i></div>
+                  <div>
+                    <h2>Usuarios por rol</h2>
+                    <small>Cuentas registradas.</small>
+                  </div>
+                </div>
+              </div>
+              <div class="pl-breakdown-list">
                 {resumen.usuariosPorRol.map((u) => (
-                <div class="breakdown-row">
-                    <span class="breakdown-dot">
-                    <i class="bi bi-person-badge" aria-hidden="true"></i>
-                    </span>
-                    <span class="breakdown-label">{u.nombreRol}</span>
-                    <span class="breakdown-value">{u.total}</span>
-                </div>
+                  <div class="pl-breakdown-row">
+                    <span class="pl-breakdown-dot"><i class="bi bi-person-badge" aria-hidden="true"></i></span>
+                    <span class="pl-breakdown-label">{u.nombreRol}</span>
+                    <span class="pl-breakdown-value">{u.total}</span>
+                  </div>
                 ))}
-            </div>
+              </div>
             </section>
 
-            <section class="card">
-            <h2><i class="bi bi-hammer" aria-hidden="true"></i> Constructoras por estado</h2>
-            <div class="breakdown-list">
+            <section class="pl-card">
+              <div class="pl-card-head">
+                <div class="pl-card-titulo">
+                  <div class="pl-card-ico pl-card-ico--acc"><i class="bi bi-hammer" aria-hidden="true"></i></div>
+                  <div>
+                    <h2>Constructoras por estado</h2>
+                    <small>Estado de operación.</small>
+                  </div>
+                </div>
+              </div>
+              <div class="pl-breakdown-list">
                 {resumen.constructorasPorEstado.length === 0 ? (
-                <p class="empty-hint">Sin datos</p>
+                  <p class="fn-muted" style="margin:0">Sin datos</p>
                 ) : (
-                resumen.constructorasPorEstado.map((c) => (
-                    <div class="breakdown-row">
-                    <span class="breakdown-dot">
-                        <i class="bi bi-circle-fill" aria-hidden="true"></i>
-                    </span>
-                    <span class="breakdown-label">{c.estado}</span>
-                    <span class="breakdown-value">{c.total}</span>
+                  resumen.constructorasPorEstado.map((c) => (
+                    <div class="pl-breakdown-row">
+                      <span class="pl-breakdown-dot"><i class="bi bi-circle-fill" aria-hidden="true"></i></span>
+                      <span class="pl-breakdown-label">{c.estado}</span>
+                      <span class="pl-breakdown-value">{c.total}</span>
                     </div>
-                ))
+                  ))
                 )}
-            </div>
+              </div>
             </section>
-        </div>
 
-        <div class="estados-grid">
-            <section class="card">
-            <h2><i class="bi bi-houses" aria-hidden="true"></i> Propiedades por estado</h2>
-            <div class="breakdown-list">
+            <section class="pl-card">
+              <div class="pl-card-head">
+                <div class="pl-card-titulo">
+                  <div class="pl-card-ico"><i class="bi bi-houses" aria-hidden="true"></i></div>
+                  <div>
+                    <h2>Propiedades por estado</h2>
+                    <small>Catálogo global.</small>
+                  </div>
+                </div>
+              </div>
+              <div class="pl-breakdown-list">
                 {resumen.propiedadesPorEstado.map((p) => (
-                <div class="breakdown-row">
-                    <span class="breakdown-dot">
-                    <i class={`bi ${iconoEstadoProp(p.estado ?? "")}`} aria-hidden="true"></i>
-                    </span>
-                    <span class="breakdown-label">{p.estado}</span>
-                    <span class="breakdown-value">{p.total}</span>
-                </div>
+                  <div class="pl-breakdown-row">
+                    <span class="pl-breakdown-dot"><i class={`bi ${iconoEstadoProp(p.estado ?? "")}`} aria-hidden="true"></i></span>
+                    <span class="pl-breakdown-label">{p.estado}</span>
+                    <span class="pl-breakdown-value">{p.total}</span>
+                  </div>
                 ))}
-            </div>
+              </div>
             </section>
 
-            <section class="card">
-            <h2><i class="bi bi-building-fill-up" aria-hidden="true"></i> Proyectos por estado</h2>
-            <div class="breakdown-list">
-                {resumen.proyectosPorEstado.map((p) => (
-                <div class="breakdown-row">
-                    <span class="breakdown-dot">
-                    <i class="bi bi-clipboard2-pulse" aria-hidden="true"></i>
-                    </span>
-                    <span class="breakdown-label">{nombreEstadoProy(p.estadoProyectoID)}</span>
-                    <span class="breakdown-value">{p.total}</span>
+            <section class="pl-card">
+              <div class="pl-card-head">
+                <div class="pl-card-titulo">
+                  <div class="pl-card-ico pl-card-ico--acc"><i class="bi bi-building-fill-up" aria-hidden="true"></i></div>
+                  <div>
+                    <h2>Proyectos por estado</h2>
+                    <small>Avance general.</small>
+                  </div>
                 </div>
+              </div>
+              <div class="pl-breakdown-list">
+                {resumen.proyectosPorEstado.map((p) => (
+                  <div class="pl-breakdown-row">
+                    <span class="pl-breakdown-dot"><i class="bi bi-clipboard2-pulse" aria-hidden="true"></i></span>
+                    <span class="pl-breakdown-label">{nombreEstadoProy(p.estadoProyectoID)}</span>
+                    <span class="pl-breakdown-value">{p.total}</span>
+                  </div>
                 ))}
-            </div>
+              </div>
             </section>
+          </div>
+
+          <article class="pl-card">
+            <div class="pl-card-head">
+              <div class="pl-card-titulo">
+                <div class="pl-card-ico"><i class="bi bi-lightning-charge-fill" aria-hidden="true"></i></div>
+                <div>
+                  <h2>Acciones rápidas</h2>
+                  <small>Accesos directos a la gestión global.</small>
+                </div>
+              </div>
+            </div>
+            <div class="pl-acciones-grid">
+              <a class="pl-accion pl-accion--destacada" href="/superadmin/usuarios">
+                <span class="pl-accion-ico"><i class="bi bi-people-fill" aria-hidden="true"></i></span>
+                <span class="pl-accion-txt"><strong>Usuarios</strong><small>Cuentas y roles</small></span>
+                <i class="bi bi-chevron-right" aria-hidden="true"></i>
+              </a>
+              <a class="pl-accion" href="/superadmin/inmobiliarias">
+                <span class="pl-accion-ico"><i class="bi bi-shop" aria-hidden="true"></i></span>
+                <span class="pl-accion-txt"><strong>Inmobiliarias</strong><small>Empresas y agentes</small></span>
+                <i class="bi bi-chevron-right" aria-hidden="true"></i>
+              </a>
+              <a class="pl-accion" href="/superadmin/constructoras">
+                <span class="pl-accion-ico"><i class="bi bi-hammer" aria-hidden="true"></i></span>
+                <span class="pl-accion-txt"><strong>Constructoras</strong><small>Cuentas de acceso</small></span>
+                <i class="bi bi-chevron-right" aria-hidden="true"></i>
+              </a>
+              <a class="pl-accion" href="/notificaciones">
+                <span class="pl-accion-ico"><i class="bi bi-bell-fill" aria-hidden="true"></i></span>
+                <span class="pl-accion-txt"><strong>Notificaciones</strong><small>Historial completo</small></span>
+                <i class="bi bi-chevron-right" aria-hidden="true"></i>
+              </a>
+              <a class="pl-accion" href="/superadmin/perfil">
+                <span class="pl-accion-ico"><i class="bi bi-person-fill" aria-hidden="true"></i></span>
+                <span class="pl-accion-txt"><strong>Mi perfil</strong><small>Datos y contraseña</small></span>
+                <i class="bi bi-chevron-right" aria-hidden="true"></i>
+              </a>
+            </div>
+          </article>
         </div>
-        </>
-    )}
+
+        <UltimasNotifsCard />
+      </div>
+    </>
+  )}
 </div>
+
+<script>
+  const tag = document.getElementById("saFechaTag");
+  if (tag) {
+    const f = new Date().toLocaleDateString("es-CO", { weekday: "long", day: "numeric", month: "long" });
+    tag.textContent = f.charAt(0).toUpperCase() + f.slice(1);
+  }
+</script>

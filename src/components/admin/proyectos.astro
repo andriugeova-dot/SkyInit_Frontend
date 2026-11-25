@@ -1,5 +1,8 @@
 ---
 import SelectorUbicacion from "../funciones/SelectorUbicacion.astro";
+import NotifModalPanel from "../funciones/NotifModalPanel.astro";
+import "../funciones/funciones.css";
+import "../funciones/panelUnificado.css";
 import "../admin/propiedades.css";
 import "./proyectosAdmin.css";
 import { COOKIE_NAME, getTokenSSR } from "../../utils/auth";
@@ -136,15 +139,22 @@ const finalizados = filas.filter((f) => f.estadoProyectoID === 3).length;
 const filasJson = JSON.stringify(filas).replace(/</g, "\\u003c");
 ---
 
-<div class="page" data-backend={BACKEND_PUBLIC}>
-    <header class="page-header">
-        <div>
+<div class="page pl-page pl-theme-admin" data-backend={BACKEND_PUBLIC} style="max-width:1240px">
+    <header class="pl-hero">
+        <div class="pl-hero-info">
+            <div class="pl-hero-tags">
+                <span class="pl-hero-tag"><i class="bi bi-building-fill-up" aria-hidden="true"></i> Obras y desarrollos</span>
+            </div>
             <h1>Proyectos</h1>
             <p>Gestiona los proyectos de cada constructora.</p>
         </div>
-        <button type="button" class="btn-nueva" id="btn-nuevo-proyecto">
-            <i class="bi bi-plus-lg" aria-hidden="true"></i> Nuevo proyecto
-        </button>
+        <div class="pl-hero-acc">
+            <button type="button" class="pl-hero-btn" id="btn-nuevo-proyecto">
+                <i class="bi bi-plus-lg" aria-hidden="true"></i> Nuevo proyecto
+            </button>
+            <a class="pl-hero-btn pl-hero-btn--sec" href="/admin"><i class="bi bi-arrow-left" aria-hidden="true"></i> Volver al panel</a>
+            <NotifModalPanel />
+        </div>
     </header>
 
     {
@@ -155,22 +165,22 @@ const filasJson = JSON.stringify(filas).replace(/</g, "\\u003c");
         )
     }
 
-    <section class="stats" aria-label="Resumen">
-        <div class="stat-card">
-            <div class="stat-title">Total</div>
-            <div class="stat-value">{total}</div>
+    <section class="pl-kpis" aria-label="Resumen">
+        <div class="pl-kpi pl-kpi--destacado">
+            <div class="pl-kpi-top"><span class="pl-kpi-lbl">Total</span><span class="pl-kpi-ico"><i class="bi bi-buildings-fill" aria-hidden="true"></i></span></div>
+            <div class="pl-kpi-val">{total}</div>
         </div>
-        <div class="stat-card stat-gray">
-            <div class="stat-title">Planificados</div>
-            <div class="stat-value">{planificados}</div>
+        <div class="pl-kpi">
+            <div class="pl-kpi-top"><span class="pl-kpi-lbl">Planificados</span><span class="pl-kpi-ico"><i class="bi bi-clipboard-check" aria-hidden="true"></i></span></div>
+            <div class="pl-kpi-val">{planificados}</div>
         </div>
-        <div class="stat-card stat-warn">
-            <div class="stat-title">En construcción</div>
-            <div class="stat-value">{enConstruccion}</div>
+        <div class="pl-kpi pl-kpi--alerta">
+            <div class="pl-kpi-top"><span class="pl-kpi-lbl">En construcción</span><span class="pl-kpi-ico"><i class="bi bi-hammer" aria-hidden="true"></i></span></div>
+            <div class="pl-kpi-val">{enConstruccion}</div>
         </div>
-        <div class="stat-card stat-ok">
-            <div class="stat-title">Finalizados</div>
-            <div class="stat-value">{finalizados}</div>
+        <div class="pl-kpi pl-kpi--ok">
+            <div class="pl-kpi-top"><span class="pl-kpi-lbl">Finalizados</span><span class="pl-kpi-ico"><i class="bi bi-check-circle-fill" aria-hidden="true"></i></span></div>
+            <div class="pl-kpi-val">{finalizados}</div>
         </div>
     </section>
 

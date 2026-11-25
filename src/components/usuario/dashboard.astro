@@ -1,5 +1,9 @@
 ---
 import ResumenPanel from "../funciones/ResumenPanel.astro";
+import NotifModalPanel from "../funciones/NotifModalPanel.astro";
+import UltimasNotifsCard from "../funciones/UltimasNotifsCard.astro";
+import "../funciones/funciones.css";
+import "../funciones/panelUnificado.css";
 import { BACKEND_URL } from "../../utils/config";
 import { COOKIE_NAME, getTokenSSR } from "../../utils/auth";
 
@@ -10,240 +14,227 @@ let totalFavoritos = 0;
 let totalSolicitudes = 0;
 
 if (token) {
-    try {
-        const headers = {
-            Cookie: `${COOKIE_NAME}=${token}`,
-            Authorization: `Bearer ${token}`,
-        };
+  try {
+    const headers = {
+      Cookie: `${COOKIE_NAME}=${token}`,
+      Authorization: `Bearer ${token}`,
+    };
 
-        const [resPerfil, resFavs, resSols] = await Promise.allSettled([
-            fetch(`${BACKEND_URL}/auth/perfil`,            { headers }),
-            fetch(`${BACKEND_URL}/usuario/favoritos`,      { headers }),
-            fetch(`${BACKEND_URL}/usuario/solicitudes`,    { headers }),
-        ]);
+    const [resPerfil, resFavs, resSols] = await Promise.allSettled([
+      fetch(`${BACKEND_URL}/auth/perfil`, { headers }),
+      fetch(`${BACKEND_URL}/usuario/favoritos`, { headers }),
+      fetch(`${BACKEND_URL}/usuario/solicitudes`, { headers }),
+    ]);
 
-        if (resPerfil.status === "fulfilled" && resPerfil.value.ok) {
-            const j = await resPerfil.value.json();
-            const u = j.usuario ?? j;
-            usuario = { nombre: u.nombre ?? "Usuario", correo: u.correo ?? "", fotoPerfil: u.fotoPerfil ?? null, telefono: u.telefono ?? "" };
-        }
-        if (resFavs.status === "fulfilled" && resFavs.value.ok) {
-            const j = await resFavs.value.json();
-            const lista = j.favoritos ?? j.data ?? j ?? [];
-            totalFavoritos = Array.isArray(lista) ? lista.length : 0;
-        }
-        if (resSols.status === "fulfilled" && resSols.value.ok) {
-            const j = await resSols.value.json();
-            const lista = j.solicitudes ?? j.data ?? j ?? [];
-            totalSolicitudes = Array.isArray(lista) ? lista.length : 0;
-        }
-    } catch { /* defaults */ }
+    if (resPerfil.status === "fulfilled" && resPerfil.value.ok) {
+      const j = await resPerfil.value.json();
+      const u = j.usuario ?? j;
+      usuario = {
+        nombre: u.nombre ?? "Usuario",
+        correo: u.correo ?? "",
+        fotoPerfil: u.fotoPerfil ?? null,
+        telefono: u.telefono ?? "",
+      };
+    }
+    if (resFavs.status === "fulfilled" && resFavs.value.ok) {
+      const j = await resFavs.value.json();
+      const lista = j.favoritos ?? j.data ?? j ?? [];
+      totalFavoritos = Array.isArray(lista) ? lista.length : 0;
+    }
+    if (resSols.status === "fulfilled" && resSols.value.ok) {
+      const j = await resSols.value.json();
+      const lista = j.solicitudes ?? j.data ?? j ?? [];
+      totalSolicitudes = Array.isArray(lista) ? lista.length : 0;
+    }
+  } catch { /* defaults */ }
 }
 
 function obtenerIniciales(nombre: string): string {
-    const p = nombre.trim().split(/\s+/).filter(Boolean);
-    if (!p.length) return "U";
-    if (p.length === 1) return p[0].slice(0, 2).toUpperCase();
-    return (p[0][0] + p[1][0]).toUpperCase();
+  const p = nombre.trim().split(/\s+/).filter(Boolean);
+  if (!p.length) return "U";
+  if (p.length === 1) return p[0].slice(0, 2).toUpperCase();
+  return (p[0][0] + p[1][0]).toUpperCase();
 }
 
 const fotoSrc = usuario.fotoPerfil
-    ? (usuario.fotoPerfil.startsWith("http") ? usuario.fotoPerfil : `/backend${usuario.fotoPerfil}`)
-    : null;
+  ? (usuario.fotoPerfil.startsWith("http") ? usuario.fotoPerfil : `/backend${usuario.fotoPerfil}`)
+  : null;
 ---
 
-<div class="panel-body">
-
-    <!-- TOPBAR -->
-    <div class="topbar-panel">
-        <h1>Bienvenido, {usuario.nombre}</h1>
-        <p>Gestiona tu cuenta y tus propiedades favoritas.</p>
+<div class="pl-page pl-theme-usuario">
+  <!-- Hero -->
+  <header class="pl-hero">
+    <div class="pl-hero-info">
+      <div class="pl-hero-tags">
+        <span class="pl-hero-tag"><i class="bi bi-person-circle" aria-hidden="true"></i> Cuenta de usuario</span>
+        <span class="pl-hero-tag"><i class="bi bi-calendar-event" aria-hidden="true"></i> <span id="usuarioFechaTag">Hoy</span></span>
+      </div>
+      <h1>Bienvenido, {usuario.nombre}</h1>
+      <p>Gestiona tu cuenta, propiedades favoritas, visitas y solicitudes.</p>
     </div>
-    <ResumenPanel />
+    <div class="pl-hero-acc">
+      <a href="/usuario/favoritos" class="pl-hero-btn"><i class="bi bi-heart-fill" aria-hidden="true"></i> Mis Favoritos</a>
+      <a href="/usuario/agenda" class="pl-hero-btn pl-hero-btn--sec"><i class="bi bi-calendar-check-fill" aria-hidden="true"></i> Mis visitas</a>
+      <NotifModalPanel />
+    </div>
+  </header>
 
-    <!-- ESTADÍSTICAS -->
-    <section class="stats-grid">
-        <div class="stat-card">
-            <h2>{totalFavoritos}</h2>
-            <p>Propiedades Favoritas</p>
-        </div>
-        <div class="stat-card">
-            <h2>{totalSolicitudes}</h2>
-            <p>Solicitudes Activas</p>
-        </div>
-    </section>
+  <!-- KPIs -->
+  <section class="pl-kpis" aria-label="Resumen de cuenta">
+    <div class="pl-kpi pl-kpi--destacado">
+      <div class="pl-kpi-top">
+        <span class="pl-kpi-lbl">Propiedades Favoritas</span>
+        <span class="pl-kpi-ico"><i class="bi bi-heart-fill" aria-hidden="true"></i></span>
+      </div>
+      <b class="pl-kpi-val">{totalFavoritos}</b>
+    </div>
+    <div class="pl-kpi pl-kpi--prog">
+      <div class="pl-kpi-top">
+        <span class="pl-kpi-lbl">Solicitudes Activas</span>
+        <span class="pl-kpi-ico"><i class="bi bi-file-earmark-text-fill" aria-hidden="true"></i></span>
+      </div>
+      <b class="pl-kpi-val">{totalSolicitudes}</b>
+    </div>
+    <div class="pl-kpi" id="plKpiSinLeerCard">
+      <div class="pl-kpi-top">
+        <span class="pl-kpi-lbl">Sin leer</span>
+        <span class="pl-kpi-ico"><i class="bi bi-bell-fill" aria-hidden="true"></i></span>
+      </div>
+      <b class="pl-kpi-val" id="plKpiSinLeer">—</b>
+    </div>
+  </section>
 
-    <!-- ACCESOS RÁPIDOS -->
-    <section class="card">
-        <h2>Accesos rápidos</h2>
-        <div class="accesos-grid">
-            <a href="/usuario/favoritos"   class="acceso-btn"><i class="bi bi-star-fill" aria-hidden="true"></i> Mis Favoritos</a>
-            <a href="/usuario/solicitudes" class="acceso-btn"><i class="bi bi-tools" aria-hidden="true"></i> Mis Solicitudes</a>
-            <a href="/usuario/perfil"      class="acceso-btn"><i class="bi bi-person-fill" aria-hidden="true"></i> Mi Perfil</a>
-        </div>
-    </section>
+  <ResumenPanel />
 
-    <!-- PERFIL -->
-    <section class="card">
-        <h2>Mi Perfil</h2>
-        <div class="profile">
-            <div class="profile-image">
-                {fotoSrc
-                    ? <img src={fotoSrc} alt={`Avatar de ${usuario.nombre}`} class="profile-pic-img" />
-                    : <span class="profile-iniciales">{obtenerIniciales(usuario.nombre)}</span>
-                }
+  <!-- Distribución 2 columnas -->
+  <div class="pl-split">
+    <div class="pl-stack">
+      <article class="pl-card">
+        <div class="pl-card-head">
+          <div class="pl-card-titulo">
+            <div class="pl-card-ico"><i class="bi bi-lightning-charge-fill" aria-hidden="true"></i></div>
+            <div>
+              <h2>Accesos rápidos</h2>
+              <small>Accesos directos a tus secciones principales.</small>
             </div>
-            <div class="profile-info">
-                <p><strong>Nombre:</strong> {usuario.nombre}</p>
-                <p><strong>Correo:</strong> {usuario.correo || "—"}</p>
-                <p><strong>Teléfono:</strong> {usuario.telefono || "No registrado"}</p>
-                <a href="/usuario/perfil" class="btn"><i class="bi bi-pencil-square" aria-hidden="true"></i> Editar Perfil</a>
-            </div>
+          </div>
         </div>
-    </section>
+        <div class="pl-acciones-grid">
+          <a href="/usuario/favoritos" class="pl-accion pl-accion--destacada">
+            <span class="pl-accion-ico"><i class="bi bi-star-fill" aria-hidden="true"></i></span>
+            <span class="pl-accion-txt"><strong>Mis Favoritos</strong><small>Propiedades guardadas</small></span>
+            <i class="bi bi-chevron-right" aria-hidden="true"></i>
+          </a>
+          <a href="/usuario/solicitudes" class="pl-accion">
+            <span class="pl-accion-ico"><i class="bi bi-tools" aria-hidden="true"></i></span>
+            <span class="pl-accion-txt"><strong>Mis Solicitudes</strong><small>Seguimiento de servicios</small></span>
+            <i class="bi bi-chevron-right" aria-hidden="true"></i>
+          </a>
+          <a href="/usuario/agenda" class="pl-accion">
+            <span class="pl-accion-ico"><i class="bi bi-calendar-check-fill" aria-hidden="true"></i></span>
+            <span class="pl-accion-txt"><strong>Mis visitas</strong><small>Citas agendadas</small></span>
+            <i class="bi bi-chevron-right" aria-hidden="true"></i>
+          </a>
+          <a href="/notificaciones" class="pl-accion">
+            <span class="pl-accion-ico"><i class="bi bi-bell-fill" aria-hidden="true"></i></span>
+            <span class="pl-accion-txt"><strong>Notificaciones</strong><small>Historial completo</small></span>
+            <i class="bi bi-chevron-right" aria-hidden="true"></i>
+          </a>
+          <a href="/usuario/perfil" class="pl-accion">
+            <span class="pl-accion-ico"><i class="bi bi-person-fill" aria-hidden="true"></i></span>
+            <span class="pl-accion-txt"><strong>Mi Perfil</strong><small>Datos y contraseña</small></span>
+            <i class="bi bi-chevron-right" aria-hidden="true"></i>
+          </a>
+        </div>
+      </article>
 
+      <article class="pl-card">
+        <div class="pl-card-head">
+          <div class="pl-card-titulo">
+            <div class="pl-card-ico pl-card-ico--acc"><i class="bi bi-person-lines-fill" aria-hidden="true"></i></div>
+            <div>
+              <h2>Mi Perfil</h2>
+              <small>Resumen de tu información personal.</small>
+            </div>
+          </div>
+          <a href="/usuario/perfil" class="fn-btn fn-btn--sec fn-btn--mini"><i class="bi bi-pencil-square" aria-hidden="true"></i> Editar Perfil</a>
+        </div>
+        <div class="u-profile">
+          <div class="u-profile-image">
+            {fotoSrc
+              ? <img src={fotoSrc} alt={`Avatar de ${usuario.nombre}`} class="u-profile-pic-img" />
+              : <span class="u-profile-iniciales">{obtenerIniciales(usuario.nombre)}</span>
+            }
+          </div>
+          <div class="u-profile-info">
+            <p><strong>Nombre:</strong> {usuario.nombre}</p>
+            <p><strong>Correo:</strong> {usuario.correo || "—"}</p>
+            <p><strong>Teléfono:</strong> {usuario.telefono || "No registrado"}</p>
+          </div>
+        </div>
+      </article>
+    </div>
+
+    <UltimasNotifsCard />
+  </div>
 </div>
 
 <style>
-* { box-sizing: border-box; }
-
-.panel-body {
-    display: flex;
-    flex-direction: column;
-    gap: 25px;
-    font-family: 'Inter', 'Segoe UI', sans-serif;
-    background: #F8F6F0;
-    min-height: 100%;
-}
-
-/* TOPBAR */
-.topbar-panel { margin-bottom: 5px; }
-.topbar-panel h1 {
-    color: #14532d;
-    font-size: 32px;
-    font-weight: 700;
-    margin: 0 0 6px;
-}
-.topbar-panel p { color: #666; margin: 0; font-size: 15px; }
-
-/* STATS */
-.stats-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 20px;
-}
-
-.stat-card {
-    background: white;
-    border-radius: 20px;
-    padding: 25px;
-    text-align: center;
-    box-shadow: 0 5px 15px rgba(0,0,0,.08);
-    transition: transform .25s;
-}
-.stat-card:hover { transform: translateY(-4px); }
-.stat-card h2 {
-    color: #14532d;
-    font-size: 48px;
-    font-weight: 700;
-    margin: 0 0 8px;
-    line-height: 1;
-}
-.stat-card p { color: #666; font-weight: 500; margin: 0; font-size: 15px; }
-
-/* CARD GENÉRICA */
-.card {
-    background: white;
-    border-radius: 20px;
-    padding: 25px;
-    box-shadow: 0 5px 15px rgba(0,0,0,.08);
-}
-.card h2 { color: #0F4C5C; margin: 0 0 20px; font-size: 20px; }
-
-/* ACCESOS RÁPIDOS */
-.accesos-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 12px;
-}
-.acceso-btn {
+  .u-profile {
     display: flex;
     align-items: center;
-    gap: 10px;
-    background: #f1f8f4;
-    border: 1.5px solid #c8e6c9;
-    color: #14532d;
-    text-decoration: none;
-    padding: 14px 18px;
-    border-radius: 12px;
-    font-size: 15px;
-    font-weight: 500;
-    transition: all .25s;
-}
-.acceso-btn:hover {
-    background: #14532d;
-    color: white;
-    border-color: #14532d;
-    transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(20,83,45,.2);
-}
-
-/* PERFIL */
-.profile {
-    display: flex;
-    align-items: center;
-    gap: 25px;
+    gap: 22px;
     flex-wrap: wrap;
-}
-
-.profile-image {
-    width: 120px;
-    height: 120px;
+  }
+  .u-profile-image {
+    width: 96px;
+    height: 96px;
     border-radius: 50%;
-    background: #D9EEF2;
+    background: #d9eef2;
     display: flex;
     justify-content: center;
     align-items: center;
-    font-size: 50px;
     flex-shrink: 0;
     overflow: hidden;
     border: 3px solid #a7f3d0;
-}
-.profile-pic-img {
+  }
+  .u-profile-pic-img {
     width: 100%;
     height: 100%;
     object-fit: cover;
     border-radius: 50%;
-}
-.profile-iniciales {
-    font-size: 2.5rem;
+  }
+  .u-profile-iniciales {
+    font-size: 2rem;
     font-weight: 700;
     color: #14532d;
-}
-
-.profile-info { flex: 1; }
-.profile-info p { margin-bottom: 10px; color: #444; font-size: 15px; }
-.profile-info p strong { color: #14532d; }
-
-.btn {
-    border: none;
-    background: #2e8b57;
-    color: white;
-    padding: 10px 18px;
-    border-radius: 10px;
-    cursor: pointer;
-    font-weight: 600;
-    transition: .3s;
-    text-decoration: none;
-    display: inline-block;
-    font-size: 14px;
-}
-.btn:hover { background: #14532d; color: white; }
-
-/* RESPONSIVE */
-@media (max-width: 900px) {
-    .stats-grid { grid-template-columns: 1fr; }
-    .profile { flex-direction: column; text-align: center; }
-    .profile-info { text-align: center; }
-}
+  }
+  .u-profile-info {
+    flex: 1;
+    min-width: 180px;
+    display: grid;
+    gap: 6px;
+  }
+  .u-profile-info p {
+    margin: 0;
+    color: #374151;
+    font-size: 0.92rem;
+  }
+  .u-profile-info p strong {
+    color: #14532d;
+  }
+  @media (max-width: 600px) {
+    .u-profile {
+      flex-direction: column;
+      text-align: center;
+    }
+  }
 </style>
+
+<script>
+  const tag = document.getElementById("usuarioFechaTag");
+  if (tag) {
+    const f = new Date().toLocaleDateString("es-CO", { weekday: "long", day: "numeric", month: "long" });
+    tag.textContent = f.charAt(0).toUpperCase() + f.slice(1);
+  }
+</script>

@@ -1,60 +1,73 @@
 ---
+import NotifModalPanel from "../funciones/NotifModalPanel.astro";
+import "../funciones/funciones.css";
+import "../funciones/panelUnificado.css";
 import "./usuarios.css";
 ---
 
-<div class="page" id="page-usuarios">
-    <header class="page-header">
-        <div>
-        <h1>Usuarios</h1>
-        <p>Gestiona cuentas, roles y estado de la plataforma</p>
+<div class="page pl-page pl-theme-superadmin" id="page-usuarios" style="max-width:1240px">
+    <header class="pl-hero">
+        <div class="pl-hero-info">
+            <div class="pl-hero-tags">
+                <span class="pl-hero-tag"><i class="bi bi-people-fill" aria-hidden="true"></i> Control de cuentas</span>
+            </div>
+            <h1>Usuarios</h1>
+            <p>Gestiona cuentas, roles y estado de la plataforma</p>
         </div>
-        <button type="button" class="btn-nueva" id="btn-nueva">+ Nuevo usuario</button>
+        <div class="pl-hero-acc">
+            <button type="button" class="pl-hero-btn" id="btn-nueva"><i class="bi bi-plus-lg" aria-hidden="true"></i> Nuevo usuario</button>
+            <a class="pl-hero-btn pl-hero-btn--sec" href="/superadmin"><i class="bi bi-arrow-left" aria-hidden="true"></i> Volver al panel</a>
+            <NotifModalPanel />
+        </div>
     </header>
-    <div class="toolbar">
-        <input type="search" id="filtro-q" placeholder="Buscar nombre o correo…" />
-        <select id="filtro-rol">
-            <option value="">Todos los roles</option>
-        </select>
-        <select id="filtro-estado">
-            <option value="">Todos los estados</option>
-            <option value="Activa">Activa</option>
-            <option value="Inactiva">Inactiva</option>
-            <option value="Suspendida">Suspendida</option>
-        </select>
-    </div>
 
-    <div class="stats">
-        <div class="stat-card">
-        <span class="stat-label">Total</span>
-        <span class="stat-value" id="stat-total">—</span>
+    <div class="pl-kpis">
+        <div class="pl-kpi pl-kpi--destacado">
+            <div class="pl-kpi-top"><span class="pl-kpi-lbl">Total</span><span class="pl-kpi-ico"><i class="bi bi-people-fill" aria-hidden="true"></i></span></div>
+            <span class="pl-kpi-val" id="stat-total">—</span>
         </div>
-        <div class="stat-card">
-        <span class="stat-label">Activos</span>
-        <span class="stat-value" id="stat-activos">—</span>
+        <div class="pl-kpi pl-kpi--ok">
+            <div class="pl-kpi-top"><span class="pl-kpi-lbl">Activos</span><span class="pl-kpi-ico"><i class="bi bi-person-check-fill" aria-hidden="true"></i></span></div>
+            <span class="pl-kpi-val" id="stat-activos">—</span>
         </div>
-        <div class="stat-card">
-        <span class="stat-label">Inactivos</span>
-        <span class="stat-value" id="stat-inactivos">—</span>
+        <div class="pl-kpi pl-kpi--alerta">
+            <div class="pl-kpi-top"><span class="pl-kpi-lbl">Inactivos</span><span class="pl-kpi-ico"><i class="bi bi-person-dash-fill" aria-hidden="true"></i></span></div>
+            <span class="pl-kpi-val" id="stat-inactivos">—</span>
         </div>
     </div>
 
-    <div class="table-wrap">
-        <table class="tabla">
-        <thead>
-            <tr>
-            <th>ID</th>
-            <th>Nombre</th>
-            <th>Correo</th>
-            <th>Rol</th>
-            <th>Inmobiliaria</th>
-            <th>Estado</th>
-            <th>Acciones</th>
-            </tr>
-        </thead>
-        <tbody id="tbody">
-            <tr><td colspan="7" class="loading">Cargando…</td></tr>
-        </tbody>
-        </table>
+    <div class="pl-card" style="display:grid;gap:14px">
+        <div class="toolbar" style="margin-bottom:0">
+            <input type="search" id="filtro-q" placeholder="Buscar nombre o correo…" />
+            <select id="filtro-rol">
+                <option value="">Todos los roles</option>
+            </select>
+            <select id="filtro-estado">
+                <option value="">Todos los estados</option>
+                <option value="Activa">Activa</option>
+                <option value="Inactiva">Inactiva</option>
+                <option value="Suspendida">Suspendida</option>
+            </select>
+        </div>
+
+        <div class="table-wrap">
+            <table class="tabla">
+            <thead>
+                <tr>
+                <th>ID</th>
+                <th>Nombre</th>
+                <th>Correo</th>
+                <th>Rol</th>
+                <th>Inmobiliaria</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="tbody">
+                <tr><td colspan="7" class="loading">Cargando…</td></tr>
+            </tbody>
+            </table>
+        </div>
     </div>
 </div>
 
