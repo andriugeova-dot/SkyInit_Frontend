@@ -106,13 +106,45 @@ import "./funciones.css";
     cuerpo.querySelectorAll<HTMLElement>(".det-punto").forEach((p, n) => p.setAttribute("aria-current", String(n === foto)));
   }
 
+  function bloqueBanner(): string {
+    const d = datos;
+    const etiqueta =
+      d.tipo === "propiedad"
+        ? d.tipoOperacion ?? "Propiedad"
+        : d.tipo === "proyecto"
+          ? d.estado ?? "Proyecto inmobiliario"
+          : "Servicio de mantenimiento";
+    const ubic =
+      d.tipo === "propiedad"
+        ? [d.direccion, d.ciudad].filter(Boolean).join(", ")
+        : d.tipo === "proyecto"
+          ? d.ubicacion ?? ""
+          : d.inmobiliaria ?? "";
+    const precioHtml =
+      d.tipo === "propiedad"
+        ? `<div class="det-banner-precio"><small>Precio</small><strong>${esc(pesos(d.precio))}</strong></div>`
+        : d.tipo === "servicio"
+          ? `<div class="det-banner-precio"><small>Tarifa desde</small><strong>${esc(pesos(d.precio))}</strong></div>`
+          : `<div class="det-banner-precio"><small>Avance de obra</small><strong>${Number(d.avance || 0).toFixed(0)} %</strong></div>`;
+
+    return `
+      <div class="det-banner">
+        <div class="det-banner-main">
+          <span class="det-banner-badge">${esc(etiqueta)}</span>
+          <h2 id="detTitulo">${esc(d.titulo)}</h2>
+          ${ubic ? `<p class="det-banner-ubic"><i class="bi bi-geo-alt-fill" aria-hidden="true"></i> ${esc(ubic)}</p>` : ""}
+        </div>
+        ${precioHtml}
+      </div>`;
+  }
+
   function bloqueInfo(): string {
     const d = datos;
     if (d.tipo === "propiedad") return `
-      <span class="fn-chip fn-chip--prog">${esc(d.tipoOperacion ?? "Propiedad")}</span>
-      <h2 id="detTitulo">${esc(d.titulo)}</h2>
-      <div class="det-precio">${esc(pesos(d.precio))}</div>
-      <div>${estrellas(d.calificacion.promedio)} <small class="fn-muted">${d.calificacion.total ? `${d.calificacion.promedio} de 5 · ${d.calificacion.total} calificación(es)` : "Sin calificaciones"}</small></div>
+      <div class="det-ficha-head">
+        <span class="det-ficha-kicker"><i class="bi bi-house-check-fill" aria-hidden="true"></i> Ficha de la propiedad</span>
+        <div class="det-rating-row">${estrellas(d.calificacion.promedio)} <small class="fn-muted">${d.calificacion.total ? `${d.calificacion.promedio} de 5 · ${d.calificacion.total} opinión(es)` : "Sin calificaciones aún"}</small></div>
+      </div>
       <ul class="det-datos">
         ${dato("bi-geo-alt-fill", [d.direccion, d.ciudad].filter(Boolean).join(", "))}
         ${dato("bi-door-closed", d.habitaciones != null ? `${d.habitaciones} habitaciones` : "")}
@@ -122,10 +154,13 @@ import "./funciones.css";
         ${dato("bi-calendar3", d.fechaPublicacion ? `Publicada el ${fechaCorta(d.fechaPublicacion)}` : "")}
       </ul>`;
     if (d.tipo === "proyecto") return `
-      <span class="fn-chip fn-chip--prog">${esc(d.estado ?? "Proyecto")}</span>
-      <h2 id="detTitulo">${esc(d.titulo)}</h2>
-      <div><div style="display:flex;justify-content:space-between;font-size:.9rem"><span>Avance de obra</span><strong>${Number(d.avance).toFixed(0)} %</strong></div>
-        <div class="fn-barra"><span style="width:${Math.min(100, Number(d.avance) || 0)}%"></span></div></div>
+      <div class="det-ficha-head">
+        <span class="det-ficha-kicker"><i class="bi bi-buildings-fill" aria-hidden="true"></i> Estado del proyecto</span>
+      </div>
+      <div class="det-avance-box">
+        <div class="det-avance-row"><span>Avance de obra</span><strong>${Number(d.avance).toFixed(0)} %</strong></div>
+        <div class="fn-barra"><span style="width:${Math.min(100, Number(d.avance) || 0)}%"></span></div>
+      </div>
       <ul class="det-datos">
         ${dato("bi-geo-alt-fill", d.ubicacion)}
         ${dato("bi-hammer", d.constructora)}
@@ -134,38 +169,43 @@ import "./funciones.css";
         ${dato("bi-flag-fill", d.fechaFin ? `Entrega estimada: ${fechaCorta(d.fechaFin)}` : "")}
       </ul>`;
     return `
-      <span class="fn-chip fn-chip--ok">Servicio</span>
-      <h2 id="detTitulo">${esc(d.titulo)}</h2>
-      <div class="det-precio">Desde ${esc(pesos(d.precio))}</div>
-      <div>${estrellas(d.calificacion.promedio)} <small class="fn-muted">${d.calificacion.total ? `${d.calificacion.promedio} de 5 · ${d.calificacion.total} calificación(es)` : "Sin calificaciones"}</small></div>
+      <div class="det-ficha-head">
+        <span class="det-ficha-kicker"><i class="bi bi-tools" aria-hidden="true"></i> Detalle del servicio</span>
+        <div class="det-rating-row">${estrellas(d.calificacion.promedio)} <small class="fn-muted">${d.calificacion.total ? `${d.calificacion.promedio} de 5 · ${d.calificacion.total} opinión(es)` : "Sin calificaciones aún"}</small></div>
+      </div>
       <ul class="det-datos">${dato("bi-building", d.inmobiliaria)}</ul>`;
   }
 
   function bloqueOpiniones(): string {
     const d = datos;
     if (d.tipo === "proyecto") {
-      return d.avances?.length ? `<section class="det-seccion"><h3>Avances registrados</h3><ul class="fn-linea">${d.avances.map((a: any) =>
+      return d.avances?.length ? `<section class="det-seccion"><h3><i class="bi bi-graph-up-arrow" aria-hidden="true"></i> Avances registrados</h3><ul class="fn-linea">${d.avances.map((a: any) =>
         `<li><strong>${Number(a.porcentaje).toFixed(0)} %</strong> ${esc(a.nota ?? "")}<small>${esc(fechaHora(a.fecha))}</small></li>`).join("")}</ul></section>` : "";
     }
     const login = `/login?redirect=${encodeURIComponent(location.pathname + location.search)}`;
     return `
       <section class="det-seccion">
-        <h3>Tu calificación</h3>
+        <h3><i class="bi bi-star-fill" aria-hidden="true"></i> Tu calificación</h3>
         ${d.autenticado ? `<div class="det-votar" role="radiogroup" aria-label="Calificar de 1 a 5 estrellas">${[1, 2, 3, 4, 5].map((i) =>
             `<button type="button" data-voto="${i}" role="radio" aria-checked="${d.calificacion.mia === i}" aria-label="${i} estrella${i > 1 ? "s" : ""}"><i class="bi ${i <= (d.calificacion.mia ?? 0) ? "bi-star-fill" : "bi-star"}" aria-hidden="true"></i></button>`).join("")}</div>
-          <small class="fn-muted">${d.calificacion.mia ? `Calificaste con ${d.calificacion.mia} de 5. Puedes cambiarla.` : "Elige de 1 a 5 estrellas."}</small>`
-          : `<p class="fn-muted" style="margin:0"><a href="${esc(login)}">Inicia sesión</a> para calificar y comentar.</p>`}
+          <small class="fn-muted">${d.calificacion.mia ? `Calificaste con ${d.calificacion.mia} de 5. Puedes cambiarla cuando quieras.` : "Selecciona de 1 a 5 estrellas para calificar."}</small>`
+          : `<p class="fn-muted" style="margin:0"><a href="${esc(login)}" class="det-login-link">Inicia sesión</a> para calificar y dejar tu opinión.</p>`}
       </section>
       <section class="det-seccion">
-        <h3>Comentarios (${d.comentarios.length})</h3>
+        <h3><i class="bi bi-chat-left-text-fill" aria-hidden="true"></i> Comentarios (${d.comentarios.length})</h3>
         ${d.autenticado ? `<form class="fn-form" id="detFormComentario">
-            <label>Escribe tu comentario<textarea id="detComentario" rows="2" maxlength="1000" required minlength="3"></textarea></label>
-            <div><button class="fn-btn" type="submit"><i class="bi bi-send" aria-hidden="true"></i> Publicar</button></div></form>` : ""}
+            <label>Escribe tu comentario<textarea id="detComentario" rows="2" maxlength="1000" required minlength="3" placeholder="Comparte tu experiencia o consulta..."></textarea></label>
+            <div><button class="fn-btn" type="submit"><i class="bi bi-send" aria-hidden="true"></i> Publicar comentario</button></div></form>` : ""}
         ${d.comentarios.length ? `<ul class="det-coment">${d.comentarios.map((c: any) => `
-            <li><strong>${esc(c.autor)}</strong> <small>· ${esc(fechaHora(c.fecha))}</small>
-              ${c.mio ? `<button class="fn-btn fn-btn--mal fn-btn--mini" data-borrar-comentario="${Number(c.comentarioID)}" type="button" style="float:right" aria-label="Eliminar mi comentario"><i class="bi bi-trash" aria-hidden="true"></i></button>` : ""}
-              <p>${esc(c.contenido)}</p></li>`).join("")}</ul>`
-          : `<p class="fn-muted" style="margin:0">Todavía no hay comentarios.</p>`}
+            <li>
+              <div class="det-coment-head">
+                <span class="det-coment-avatar">${esc((c.autor || "U").slice(0, 2).toUpperCase())}</span>
+                <div><strong>${esc(c.autor)}</strong><small>${esc(fechaHora(c.fecha))}</small></div>
+                ${c.mio ? `<button class="fn-btn fn-btn--mal fn-btn--mini" data-borrar-comentario="${Number(c.comentarioID)}" type="button" aria-label="Eliminar mi comentario"><i class="bi bi-trash" aria-hidden="true"></i></button>` : ""}
+              </div>
+              <p>${esc(c.contenido)}</p>
+            </li>`).join("")}</ul>`
+          : `<p class="fn-muted" style="margin:0">Todavía no hay comentarios. ¡Sé el primero en opinar!</p>`}
       </section>`;
   }
 
@@ -174,15 +214,18 @@ import "./funciones.css";
     const tieneMapa = d.latitud != null && d.longitud != null;
     const mapaAbierto = !!document.getElementById("detMapa");
     cuerpo.innerHTML = `
-      <div class="det-top">${carrusel()}<div class="det-info">${bloqueInfo()}
-        <div class="fn-acciones">
-          ${d.tipo !== "servicio" ? `<button class="fn-btn fn-btn--sec" id="detVerMapa" type="button" ${tieneMapa ? "" : "disabled title=\"Aún no tiene ubicación registrada\""}><i class="bi bi-geo-alt" aria-hidden="true"></i> ${tieneMapa ? "Ver en mapa" : "Sin ubicación"}</button>` : ""}
-          ${d.tipo === "propiedad" ? `<a class="fn-btn" href="/usuario/agenda?propiedad=${Number(d.id)}"><i class="bi bi-calendar-plus" aria-hidden="true"></i> Agendar visita</a>` : ""}
-          ${d.tipo === "servicio" && d.inmobiliariaID ? `<a class="fn-btn" href="/inmobiliarias/${Number(d.inmobiliariaID)}"><i class="bi bi-tools" aria-hidden="true"></i> Solicitar servicio</a>` : ""}
-        </div></div></div>
-      ${d.descripcion ? `<section class="det-seccion"><h3>Descripción</h3><p class="det-desc">${esc(d.descripcion)}</p></section>` : ""}
-      <section class="det-seccion" id="detSeccionMapa" hidden><h3>Ubicación</h3><div id="detMapa"></div></section>
-      ${bloqueOpiniones()}`;
+      ${bloqueBanner()}
+      <div class="det-body-inner">
+        <div class="det-top">${carrusel()}<div class="det-info">${bloqueInfo()}
+          <div class="fn-acciones det-acciones">
+            ${d.tipo !== "servicio" ? `<button class="fn-btn fn-btn--sec" id="detVerMapa" type="button" ${tieneMapa ? "" : "disabled title=\"Aún no tiene ubicación registrada\""}><i class="bi bi-geo-alt" aria-hidden="true"></i> ${tieneMapa ? "Ver en mapa" : "Sin ubicación"}</button>` : ""}
+            ${d.tipo === "propiedad" ? `<a class="fn-btn" href="/usuario/agenda?propiedad=${Number(d.id)}"><i class="bi bi-calendar-plus" aria-hidden="true"></i> Agendar visita</a>` : ""}
+            ${d.tipo === "servicio" && d.inmobiliariaID ? `<a class="fn-btn" href="/inmobiliarias/${Number(d.inmobiliariaID)}"><i class="bi bi-tools" aria-hidden="true"></i> Solicitar servicio</a>` : ""}
+          </div></div></div>
+        ${d.descripcion ? `<section class="det-seccion"><h3><i class="bi bi-file-text-fill" aria-hidden="true"></i> Descripción</h3><p class="det-desc">${esc(d.descripcion)}</p></section>` : ""}
+        <section class="det-seccion" id="detSeccionMapa" hidden><h3><i class="bi bi-map-fill" aria-hidden="true"></i> Ubicación</h3><div id="detMapa"></div></section>
+        ${bloqueOpiniones()}
+      </div>`;
     const imgEl = document.getElementById("detFoto") as HTMLImageElement | null;
     if (imgEl) {
       imgEl.addEventListener("error", () => {

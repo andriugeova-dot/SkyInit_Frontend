@@ -68,9 +68,42 @@ for (const g of grupos) {
 }
 
 const constructorasUnicas: ConstructoraAgrupada[] = Array.from(mapaC.values());
+const ciudadesUnicas: string[] = Array.from(
+    new Set(
+        constructorasUnicas
+            .map((c) => c.ciudad?.trim())
+            .filter((c): c is string => Boolean(c)),
+    ),
+).sort((a, b) => a.localeCompare(b, "es"));
 ---
 
+<section class="search-container" aria-label="Buscar constructoras">
+    <form class="search-box" id="formBuscarConstructoras">
+        <input
+            type="text"
+            id="busquedaConstructora"
+            placeholder="Buscar constructora por nombre, ciudad o especialidad..."
+            aria-label="Buscar constructora"
+        />
+        <select id="filtroCiudadConstructora" aria-label="Filtrar por ciudad">
+            <option value="">-- Todas las ciudades --</option>
+            {ciudadesUnicas.map((ciu) => <option value={ciu}>{ciu}</option>)}
+        </select>
+        <button type="submit">Buscar</button>
+    </form>
+</section>
+
 <section class="resultados-section contenedor">
+    <div class="directorio-toolbar">
+        <div>
+            <span class="directorio-eyebrow">Directorio verificado</span>
+            <h2 class="directorio-titulo">Constructoras aliadas</h2>
+        </div>
+        <span id="contadorConstructoras" class="directorio-contador">
+            {constructorasUnicas.length} {constructorasUnicas.length === 1 ? "constructora" : "constructoras"}
+        </span>
+    </div>
+
     <script
         id="constructoras-data"
         type="application/json"
@@ -87,29 +120,33 @@ const constructorasUnicas: ConstructoraAgrupada[] = Array.from(mapaC.values());
 
 <!-- Modal detalle constructora -->
 <div id="modal-constructora" class="modal-overlay" aria-hidden="true">
-    <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="modal-titulo">
-        <button class="modal-cerrar" id="modal-cerrar" aria-label="Cerrar">&times;</button>
-
-        <div class="modal-header">
-            <div id="modal-logo-wrap" class="modal-logo-wrap"></div>
-            <div class="modal-header-info">
-                <h2 id="modal-titulo" class="modal-nombre"></h2>
-                <p id="modal-ciudad" class="modal-ciudad"></p>
+    <div class="modal-box modal-entidad" role="dialog" aria-modal="true" aria-labelledby="modal-titulo">
+        <div class="modal-banner-verde">
+            <button class="modal-cerrar" id="modal-cerrar" aria-label="Cerrar">&times;</button>
+            <div class="modal-header">
+                <div id="modal-logo-wrap" class="modal-logo-wrap"></div>
+                <div class="modal-header-info">
+                    <span class="modal-tipo-badge">Constructora aliada</span>
+                    <h2 id="modal-titulo" class="modal-nombre"></h2>
+                    <p id="modal-ciudad" class="modal-ciudad"></p>
+                </div>
             </div>
         </div>
 
         <div class="modal-body">
-            <p id="modal-descripcion" class="modal-descripcion"></p>
+            <div class="modal-info-bloque">
+                <h3 class="modal-subtitulo"><i class="bi bi-info-circle-fill" aria-hidden="true"></i> Acerca de la constructora</h3>
+                <p id="modal-descripcion" class="modal-descripcion"></p>
+            </div>
 
-            <div class="modal-contacto" id="modal-contacto"></div>
+            <div class="modal-info-bloque" id="modal-contacto-bloque">
+                <h3 class="modal-subtitulo"><i class="bi bi-telephone-fill" aria-hidden="true"></i> Información de contacto</h3>
+                <div class="modal-contacto" id="modal-contacto"></div>
+            </div>
 
-            <div id="modal-inmobiliarias-wrap" class="modal-inmob-section">
-                <h3 class="modal-inmob-titulo">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"
-                        ><path
-                            d="M12 7V3H2v18h20V7H12zM6 19H4v-2h2v2zm0-4H4v-2h2v2zm0-4H4V9h2v2zm0-4H4V5h2v2zm4 12H8v-2h2v2zm0-4H8v-2h2v2zm0-4H8V9h2v2zm0-4H8V5h2v2zm10 12h-8v-2h2v-2h-2v-2h2v-2h-2V9h8v10zm-2-8h-2v2h2v-2zm0 4h-2v2h2v-2z"
-                        ></path></svg
-                    >
+            <div id="modal-inmobiliarias-wrap" class="modal-inmob-section modal-info-bloque">
+                <h3 class="modal-subtitulo">
+                    <i class="bi bi-building-check" aria-hidden="true"></i>
                     Inmobiliarias asociadas
                 </h3>
                 <div id="modal-inmobiliarias-lista" class="modal-inmob-lista"></div>
@@ -151,6 +188,7 @@ function esc(v: unknown): string { return String(v ?? "").replace(/[&<>"']/g, (c
     const todosItems: ConstructoraAgrupadaJS[] = JSON.parse(
         (document.getElementById("constructoras-data") as HTMLScriptElement).textContent ?? "[]",
     );
+    let itemsFiltrados: ConstructoraAgrupadaJS[] = [...todosItems];
 
     /* ── TARJETAS ── */
     function renderCardC(c: ConstructoraAgrupadaJS) {
@@ -223,19 +261,26 @@ function esc(v: unknown): string { return String(v ?? "").replace(/[&<>"']/g, (c
             ? `<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:-2px;margin-right:4px"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>${esc(c.ciudad)}`
             : "";
 
-        document.getElementById("modal-descripcion")!.textContent = c.descripcion ?? "";
+        document.getElementById("modal-descripcion")!.textContent =
+            c.descripcion?.trim() || "Constructora activa y verificada dentro de la red de aliados de SkyInit.";
 
         // Contacto
         const contactoEl = document.getElementById("modal-contacto")!;
+        const contactoBloque = document.getElementById("modal-contacto-bloque")!;
         const items: string[] = [];
         if (c.telefono)
             items.push(
-                `<span class="contacto-chip"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>${esc(c.telefono)}</span>`,
+                `<a href="tel:${esc(c.telefono)}" class="contacto-chip"><i class="bi bi-telephone-fill" aria-hidden="true"></i> ${esc(c.telefono)}</a>`,
             );
         if (c.correo)
             items.push(
-                `<span class="contacto-chip"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>${esc(c.correo)}</span>`,
+                `<a href="mailto:${esc(c.correo)}" class="contacto-chip"><i class="bi bi-envelope-fill" aria-hidden="true"></i> ${esc(c.correo)}</a>`,
             );
+        if (c.ciudad)
+            items.push(
+                `<span class="contacto-chip"><i class="bi bi-geo-alt-fill" aria-hidden="true"></i> ${esc(c.ciudad)}</span>`,
+            );
+        contactoBloque.style.display = items.length ? "" : "none";
         contactoEl.innerHTML = items.join("");
 
         // Inmobiliarias
@@ -326,7 +371,7 @@ function esc(v: unknown): string { return String(v ?? "").replace(/[&<>"']/g, (c
             }
         });
         nav.querySelector(".pag-next")?.addEventListener("click", () => {
-            const tp = Math.ceil(todosItems.length / ITEMS_POR_PAG_C);
+            const tp = Math.ceil(itemsFiltrados.length / ITEMS_POR_PAG_C);
             if (paginaC < tp) {
                 paginaC++;
                 irAPaginaC();
@@ -334,14 +379,49 @@ function esc(v: unknown): string { return String(v ?? "").replace(/[&<>"']/g, (c
         });
     }
 
-    function irAPaginaC() {
-        const inicio = (paginaC - 1) * ITEMS_POR_PAG_C;
-        renderGridC(todosItems.slice(inicio, inicio + ITEMS_POR_PAG_C));
-        renderPaginacionC(todosItems.length);
-        window.scrollTo({ top: 0, behavior: "smooth" });
+    function actualizarContadorC() {
+        const el = document.getElementById("contadorConstructoras");
+        if (!el) return;
+        const n = itemsFiltrados.length;
+        el.textContent = `${n} ${n === 1 ? "constructora" : "constructoras"}`;
     }
 
-    irAPaginaC();
+    function aplicarFiltrosC() {
+        const q = (document.getElementById("busquedaConstructora") as HTMLInputElement)?.value.trim().toLowerCase() ?? "";
+        const ciudad = (document.getElementById("filtroCiudadConstructora") as HTMLSelectElement)?.value.trim().toLowerCase() ?? "";
+
+        itemsFiltrados = todosItems.filter((c) => {
+            const matchQ =
+                !q ||
+                (c.nombre ?? "").toLowerCase().includes(q) ||
+                (c.ciudad ?? "").toLowerCase().includes(q) ||
+                (c.descripcion ?? "").toLowerCase().includes(q) ||
+                c.inmobiliarias.some((i) => i.nombre.toLowerCase().includes(q));
+            const matchCiudad = !ciudad || (c.ciudad ?? "").trim().toLowerCase() === ciudad;
+            return matchQ && matchCiudad;
+        });
+
+        paginaC = 1;
+        actualizarContadorC();
+        irAPaginaC(false);
+    }
+
+    function irAPaginaC(scroll = true) {
+        const inicio = (paginaC - 1) * ITEMS_POR_PAG_C;
+        renderGridC(itemsFiltrados.slice(inicio, inicio + ITEMS_POR_PAG_C));
+        renderPaginacionC(itemsFiltrados.length);
+        if (scroll) window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    document.getElementById("formBuscarConstructoras")?.addEventListener("submit", (e) => {
+        e.preventDefault();
+        aplicarFiltrosC();
+    });
+    document.getElementById("busquedaConstructora")?.addEventListener("input", aplicarFiltrosC);
+    document.getElementById("filtroCiudadConstructora")?.addEventListener("change", aplicarFiltrosC);
+
+    actualizarContadorC();
+    irAPaginaC(false);
 </script>
 
 <style is:global>

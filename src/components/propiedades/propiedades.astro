@@ -1,5 +1,6 @@
 ---
 import Navbar from "../menu/Navbar.astro";
+import Hero from "../menu/Hero.astro";
 import FooterMenu from "../menu/FooterMenu.astro";
 import "./propiedades.css";
 
@@ -32,15 +33,11 @@ const { propiedades, filtros } = Astro.props;
 
 <header id="header">
     <Navbar />
-
-    <div class="hero-inner">
-        <div class="hero-eyebrow">Catálogo completo</div>
-        <h1>Encuentra tu <em>propiedad ideal</em></h1>
-        <p class="hero-sub">
-            Explora casas, apartamentos y encuentra el hogar que se ajusta a lo
-            que buscas.
-        </p>
-    </div>
+    <Hero
+        eyebrow="Catálogo completo"
+        title="Encuentra tu <em>propiedad ideal</em>"
+        subtitle="Explora casas, apartamentos y encuentra el hogar que se ajusta a lo que buscas."
+    />
 </header>
 
 <section class="search-container">
@@ -118,12 +115,15 @@ const { propiedades, filtros } = Astro.props;
 
 <div id="modalRegistro" class="modal-overlay">
     <div class="modal-box modal-box-login">
-        <button class="modal-close" id="cerrarModalRegistro">X</button>
+        <div class="modal-login-banner">
+            <button class="modal-close" id="cerrarModalRegistro" aria-label="Cerrar">&times;</button>
+            <div class="modal-login-icon"><i class="bi bi-heart-fill" aria-hidden="true"></i></div>
+            <h2>Guarda tus favoritos</h2>
+        </div>
         <div class="modal-info">
-            <h2>Debes estar registrado</h2>
-            <p>Para guardar favoritos debes iniciar sesion</p>
+            <p>Inicia sesión en tu cuenta de SkyInit para guardar propiedades favoritas, agendar visitas y hacer seguimiento.</p>
             <div class="acciones-login">
-                <a href="/login" class="btn-contacto">Iniciar Sesion</a>
+                <a href="/login" class="btn-contacto"><i class="bi bi-box-arrow-in-right" aria-hidden="true"></i> Iniciar Sesión</a>
             </div>
         </div>
     </div>
@@ -131,9 +131,12 @@ const { propiedades, filtros } = Astro.props;
 
 <div id="modalPropiedad" class="modal">
     <div class="modal-content modal-content-propiedad">
-        <span class="modal-close">&times;</span>
-        <div id="modal-body">
+        <div class="modal-prop-banner">
+            <span class="modal-close" aria-label="Cerrar">&times;</span>
+            <span class="modal-tipo-badge">Ficha inmobiliaria</span>
             <h2 id="modalTitulo"></h2>
+        </div>
+        <div id="modal-body" class="modal-prop-body">
             <img
                 id="modalImagen"
                 src=""

@@ -5,50 +5,80 @@ import DetalleModal from "../funciones/DetalleModal.astro";
 <footer class="footer-section">
   <div class="contenedor">
     <div class="footer-grid">
-
-      <div class="footer-col">
-        <h2 class="footer-logo">SkyInit</h2>
-        <p>Conectamos personas con los inmuebles que merecen. Con más de 12 años de experiencia en el mercado colombiano.</p>
+      <div class="footer-col footer-col-brand">
+        <a href="/" class="footer-brand-row" aria-label="SkyInit Inicio">
+          <img src="/img/logo-skyinit.jpg" alt="Logo SkyInit" class="footer-logo-img" />
+          <div>
+            <h2 class="footer-logo">SkyInit</h2>
+            <span class="footer-tagline">Inmobiliaria Web</span>
+          </div>
+        </a>
+        <p class="footer-desc">
+          Conectamos personas con los inmuebles, proyectos y servicios que merecen. Más de 12 años
+          respaldando operaciones inmobiliarias seguras en Colombia.
+        </p>
+        <div class="footer-socials" aria-label="Redes sociales">
+          <a href="#" aria-label="Instagram"><i class="bi bi-instagram" aria-hidden="true"></i></a>
+          <a href="#" aria-label="Facebook"><i class="bi bi-facebook" aria-hidden="true"></i></a>
+          <a
+            href="https://wa.me/573124143860?text=Hola,%20estoy%20interesado%20en%20una%20propiedad."
+            target="_blank"
+            rel="noopener"
+            aria-label="WhatsApp"
+          >
+            <i class="bi bi-whatsapp" aria-hidden="true"></i>
+          </a>
+        </div>
       </div>
 
       <div class="footer-col">
-        <h3>BUSCAR</h3>
+        <h3>EXPLORAR</h3>
         <ul>
-          <li><a href="/propiedades">Casas en venta</a></li>
-          <li><a href="/propiedades">Apartamentos</a></li>
-          <li><a href="/propiedades">Locales comerciales</a></li>
-          <li><a href="/propiedades">Fincas y lotes</a></li>
-          <li><a href="/proyectos">Proyectos nuevos</a></li>
+          <li><a href="/propiedades"><i class="bi bi-chevron-right" aria-hidden="true"></i> Propiedades disponibles</a></li>
+          <li><a href="/proyectos"><i class="bi bi-chevron-right" aria-hidden="true"></i> Proyectos nuevos</a></li>
+          <li><a href="/servicios"><i class="bi bi-chevron-right" aria-hidden="true"></i> Servicios de mantenimiento</a></li>
+          <li><a href="/mapa"><i class="bi bi-chevron-right" aria-hidden="true"></i> Mapa interactivo</a></li>
         </ul>
       </div>
 
       <div class="footer-col">
-        <h3>EMPRESA</h3>
+        <h3>ALIADOS Y EMPRESA</h3>
         <ul>
-          <li><a href="/#quienes-somos">Quiénes somos</a></li>
-          <li><a href="/constructoras">Constructoras aliadas</a></li>
-          <li><a href="/terminos">Términos de uso</a></li>
+          <li><a href="/inmobiliarias"><i class="bi bi-chevron-right" aria-hidden="true"></i> Inmobiliarias</a></li>
+          <li><a href="/constructoras"><i class="bi bi-chevron-right" aria-hidden="true"></i> Constructoras aliadas</a></li>
+          <li><a href="/#quienes-somos"><i class="bi bi-chevron-right" aria-hidden="true"></i> Quiénes somos</a></li>
+          <li><a href="/terminos"><i class="bi bi-chevron-right" aria-hidden="true"></i> Términos de uso</a></li>
         </ul>
       </div>
 
-      <div class="footer-col">
+      <div class="footer-col footer-col-contact">
         <h3>CONTACTO</h3>
         <ul class="footer-contacto">
-          <li><i class="bi bi-telephone-fill" aria-hidden="true"></i> +57 3124143860</li>
-          <li><i class="bi bi-envelope-fill" aria-hidden="true"></i> skyinit2026@gmail.com</li>
-          <li><i class="bi bi-geo-alt-fill" aria-hidden="true"></i> Duitama, Colombia</li>
-          <li class="redes">
-            <a href="#">Instagram</a> · <a href="#">Facebook</a>
+          <li>
+            <span class="footer-icon-badge"><i class="bi bi-telephone-fill" aria-hidden="true"></i></span>
+            <span>+57 312 414 3860</span>
+          </li>
+          <li>
+            <span class="footer-icon-badge"><i class="bi bi-envelope-fill" aria-hidden="true"></i></span>
+            <span>skyinit2026@gmail.com</span>
+          </li>
+          <li>
+            <span class="footer-icon-badge"><i class="bi bi-geo-alt-fill" aria-hidden="true"></i></span>
+            <span>Duitama, Boyacá · Colombia</span>
           </li>
         </ul>
+        <a href="/propiedades" class="footer-cta-btn">
+          <i class="bi bi-search" aria-hidden="true"></i> Buscar inmueble ahora
+        </a>
       </div>
-
     </div>
 
     <div class="footer-bottom">
-      <p>&copy; 2026 SkyInit. Todos los derechos reservados.</p>
+      <p>&copy; 2026 SkyInit Inmobiliaria Web. Todos los derechos reservados.</p>
       <div class="footer-links">
-        <a href="/terminos">Política de privacidad</a> · <a href="/terminos">Términos de uso</a>
+        <a href="/terminos">Política de privacidad</a>
+        <span aria-hidden="true">·</span>
+        <a href="/terminos">Términos de uso</a>
       </div>
     </div>
   </div>

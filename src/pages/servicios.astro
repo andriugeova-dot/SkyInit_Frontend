@@ -1,7 +1,9 @@
 ---
 import Navbar from "../components/menu/Navbar.astro";
+import Hero from "../components/menu/Hero.astro";
 import FooterMenu from "../components/menu/FooterMenu.astro";
 import "../components/menu/menu.css";
+import "../components/menu/portalPublico.css";
 ---
 
 <!doctype html>
@@ -15,16 +17,33 @@ import "../components/menu/menu.css";
 		<!-- ▌HEADER / HERO ▐ -->
 		<header id="header">
             <Navbar />
-
-			<div class="hero-inner">
-				<div class="hero-eyebrow">Cuidamos tu hogar</div>
-				<h1>Mantenimiento <em>profesional</em> para tu vivienda</h1>
-				<p class="hero-sub">
-					Conecta con especialistas certificados para reparaciones, mantenimiento y mejoras en tu
-					hogar, con la confianza que solo SkyInit te ofrece.
-				</p>
-			</div>
+			<Hero
+				eyebrow="Cuidamos tu hogar"
+				title="Mantenimiento <em>profesional</em> para tu vivienda"
+				subtitle="Conecta con especialistas certificados para reparaciones, mantenimiento y mejoras en tu hogar, con la confianza que solo SkyInit te ofrece."
+			/>
 		</header>
+
+		<!-- ▌BARRA DE BÚSQUEDA DE SERVICIOS ▐ -->
+		<section class="search-container" aria-label="Buscar servicios de mantenimiento">
+			<form class="search-box" id="formBuscarServicios">
+				<input
+					type="text"
+					id="busquedaServicios"
+					placeholder="Buscar por servicio, descripción o inmobiliaria..."
+					aria-label="Buscar servicios"
+				/>
+				<select id="filtroInmobServicios" aria-label="Filtrar por inmobiliaria">
+					<option value="">-- Todas las inmobiliarias --</option>
+				</select>
+				<select id="ordenServicios" aria-label="Ordenar por precio">
+					<option value="">-- Ordenar precio --</option>
+					<option value="asc">Menor precio</option>
+					<option value="desc">Mayor precio</option>
+				</select>
+				<button type="submit">Buscar</button>
+			</form>
+		</section>
 
 		<!-- ▌ENCABEZADO DE SECCIÓN ▐ -->
 		<section class="contenedor">
@@ -52,11 +71,16 @@ import "../components/menu/menu.css";
 				<button type="button" class="modal-close" id="btnCerrarModal">&times;</button>
 				<div class="modal-header">
 					<div class="modal-title-wrap">
+						<span class="modal-tipo-badge">Solicitud de mantenimiento</span>
 						<h2>Solicitar servicio</h2>
 						<p id="modalServicioNombre"></p>
 					</div>
 				</div>
 				<div class="modal-body">
+					<div class="modal-hint-pill">
+						<i class="bi bi-shield-check" aria-hidden="true"></i>
+						<span>Un especialista verificado de la inmobiliaria revisará tu solicitud y se pondrá en contacto contigo.</span>
+					</div>
 					<form id="formSolicitud">
 						<input type="hidden" name="servicioId" id="modalServicioId" />
 
@@ -260,7 +284,50 @@ function renderGrupo(grupo: GrupoServiciosInmobiliaria) {
 // ── Paginación de servicios (por grupos de inmobiliaria) ───────────────────
 const GRUPOS_POR_PAGINA_SVC = 4; // 4 inmobiliarias por página (cada una puede tener múltiples servicios)
 let paginaSvc = 1;
+let todosGruposOriginalSvc: GrupoServiciosInmobiliaria[] = [];
 let todosGruposSvc: GrupoServiciosInmobiliaria[] = [];
+
+function poblarFiltroInmobiliariasSvc() {
+    const sel = document.getElementById('filtroInmobServicios') as HTMLSelectElement | null;
+    if (!sel) return;
+    const nombres = Array.from(new Set(todosGruposOriginalSvc.map((g) => g.inmobiliaria).filter(Boolean))).sort((a, b) =>
+        a.localeCompare(b, 'es'),
+    );
+    sel.innerHTML =
+        `<option value="">Todas las inmobiliarias</option>` +
+        nombres.map((n) => `<option value="${escapeHtml(n)}">${escapeHtml(n)}</option>`).join('');
+}
+
+function aplicarFiltrosServicios(scroll = false) {
+    const q = (document.getElementById('busquedaServicios') as HTMLInputElement | null)?.value.trim().toLowerCase() ?? '';
+    const inmob = (document.getElementById('filtroInmobServicios') as HTMLSelectElement | null)?.value.trim().toLowerCase() ?? '';
+    const orden = (document.getElementById('ordenServicios') as HTMLSelectElement | null)?.value ?? '';
+
+    const filtrados: GrupoServiciosInmobiliaria[] = [];
+    for (const g of todosGruposOriginalSvc) {
+        if (inmob && g.inmobiliaria.toLowerCase() !== inmob) continue;
+        let svcs = g.servicios.filter((s) => {
+            if (!q) return true;
+            return (
+                (s.nombre ?? '').toLowerCase().includes(q) ||
+                (s.descripcion ?? '').toLowerCase().includes(q) ||
+                (g.inmobiliaria ?? '').toLowerCase().includes(q)
+            );
+        });
+        if (orden === 'asc') {
+            svcs = [...svcs].sort((a, b) => Number(a.precio) - Number(b.precio));
+        } else if (orden === 'desc') {
+            svcs = [...svcs].sort((a, b) => Number(b.precio) - Number(a.precio));
+        }
+        if (svcs.length > 0) {
+            filtrados.push({ ...g, servicios: svcs });
+        }
+    }
+
+    todosGruposSvc = filtrados;
+    paginaSvc = 1;
+    renderPaginaSvc(scroll);
+}
 
 function renderPaginacionSvc() {
     let nav = document.getElementById('paginacionServicios');
@@ -302,9 +369,18 @@ function renderPaginacionSvc() {
     nav.querySelector('.pag-next')?.addEventListener('click', () => { const tp = Math.ceil(todosGruposSvc.length / GRUPOS_POR_PAGINA_SVC); if (paginaSvc < tp) { paginaSvc++; renderPaginaSvc(); } });
 }
 
-function renderPaginaSvc() {
+function renderPaginaSvc(scroll = true) {
     const grid = document.getElementById('serviciosGrid');
     if (!grid) return;
+    if (!todosGruposSvc.length) {
+        grid.innerHTML = `
+            <div class="empty-state">
+                <span><i class="bi bi-search" aria-hidden="true"></i></span>
+                No encontramos servicios que coincidan con tu búsqueda.
+            </div>`;
+        renderPaginacionSvc();
+        return;
+    }
     const inicio = (paginaSvc - 1) * GRUPOS_POR_PAGINA_SVC;
     const slice = todosGruposSvc.slice(inicio, inicio + GRUPOS_POR_PAGINA_SVC);
     grid.innerHTML = slice.map(renderGrupo).join('');
@@ -316,7 +392,7 @@ function renderPaginaSvc() {
         });
     });
     renderPaginacionSvc();
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (scroll) window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 async function cargarServicios() {
@@ -339,9 +415,19 @@ async function cargarServicios() {
             return;
         }
 
+        todosGruposOriginalSvc = grupos;
         todosGruposSvc = grupos;
+        poblarFiltroInmobiliariasSvc();
         paginaSvc = 1;
-        renderPaginaSvc();
+        renderPaginaSvc(false);
+
+        document.getElementById('formBuscarServicios')?.addEventListener('submit', (e) => {
+            e.preventDefault();
+            aplicarFiltrosServicios(false);
+        });
+        document.getElementById('busquedaServicios')?.addEventListener('input', () => aplicarFiltrosServicios(false));
+        document.getElementById('filtroInmobServicios')?.addEventListener('change', () => aplicarFiltrosServicios(false));
+        document.getElementById('ordenServicios')?.addEventListener('change', () => aplicarFiltrosServicios(false));
     } catch (e) {
         grid.innerHTML = `
             <div class="empty-state">

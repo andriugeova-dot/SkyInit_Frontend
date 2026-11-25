@@ -1,0 +1,56 @@
+---
+import { BACKEND_URL } from "../../utils/config";
+import Navbar from "../../components/menu/Navbar.astro";
+import Hero from "../../components/menu/Hero.astro";
+import FooterMenu from "../../components/menu/FooterMenu.astro";
+import Inmobiliarias from "../../components/InmobiliariasUsuario/inmobiliarias.astro";
+import "../../components/menu/menu.css";
+import "../../components/menu/portalPublico.css";
+
+let lista: any[] = [];
+try {
+    const res = await fetch(`${BACKEND_URL}/api/inmobiliarias`);
+    if (res.ok) {
+        const json = await res.json();
+        lista = Array.isArray(json.data)
+            ? json.data
+            : Array.isArray(json)
+              ? json
+              : [];
+    }
+} catch {
+    lista = [];
+}
+---
+
+<!doctype html>
+<html lang="es">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Inmobiliarias - SkyInit</title>
+        <link
+            href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&display=swap"
+            rel="stylesheet"
+        />
+    </head>
+    <body>
+        <header id="header">
+            <Navbar />
+            <Hero
+                eyebrow="Red inmobiliaria verificada"
+                title="Inmobiliarias <em>que respaldan</em> tu decisión"
+                subtitle="Conoce las inmobiliarias activas en SkyInit, consulta su información de contacto y explora los servicios y propiedades que ofrecen."
+                images={[
+                    "https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=2000&q=80",
+                    "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=2000&q=80",
+                    "https://images.unsplash.com/photo-1582407947304-fd86f028f716?auto=format&fit=crop&w=2000&q=80",
+                ]}
+            />
+        </header>
+
+        <Inmobiliarias lista={lista} />
+
+        <FooterMenu />
+    </body>
+</html>

@@ -6,7 +6,9 @@ import ServiciosHome from "../components/menu/ServiciosHome.astro";
 import QuienesSomos from "../components/menu/QuienesSomos.astro";
 import ContactoCTA from "../components/menu/ContactoCTA.astro";
 import FooterMenu from "../components/menu/FooterMenu.astro";
+import "bootstrap-icons/font/bootstrap-icons.min.css";
 import "../components/menu/menu.css";
+import "../components/menu/portalPublico.css";
 ---
 
 <!doctype html>
@@ -21,9 +23,9 @@ import "../components/menu/menu.css";
     />
   </head>
   <body>
-    <header id="header">
+    <header id="header" class="hero-home-full">
       <Navbar />
-      <Hero />
+      <Hero showSearch={true} />
     </header>
     <Destacadas />
     <ServiciosHome />

@@ -1,10 +1,12 @@
 ---
 import { BACKEND_URL } from "../utils/config";
 import Navbar from "../components/menu/Navbar.astro";
+import Hero from "../components/menu/Hero.astro";
 import FooterMenu from "../components/menu/FooterMenu.astro";
 import "../components/propiedades/propiedades.css";
 import "../components/proyectos/proyectos.css";
 import "../components/menu/menu.css";
+import "../components/menu/portalPublico.css";
 import { getTokenSSR, COOKIE_NAME } from "../utils/auth";
 
 
@@ -75,14 +77,11 @@ function resolverImagenTarjeta(url: string | null) {
     <body>
         <header id="header">
             <Navbar />
-            <div class="hero-inner">
-                <div class="hero-eyebrow">Proyectos SkyInit</div>
-                <h1>Conoce lo que viene <em>construyendo</em> para ti</h1>
-                <p class="hero-sub">
-                    Proyectos planificados y en construcción de nuestras
-                    constructoras asociadas.
-                </p>
-            </div>
+            <Hero
+                eyebrow="Proyectos SkyInit"
+                title="Conoce lo que viene <em>construyendo</em> para ti"
+                subtitle="Proyectos planificados y en construcción de nuestras constructoras asociadas."
+            />
         </header>
         <section class="search-container">
             <form action="/proyectos" method="get" class="search-box">
@@ -138,8 +137,12 @@ function resolverImagenTarjeta(url: string | null) {
 
         <div id="modalProyecto" class="modal">
             <div class="modal-content modal-content-propiedad">
-                <span class="modal-close">&times;</span>
-                <div id="modal-body-proyecto">
+                <div class="modal-prop-banner">
+                    <span class="modal-close" aria-label="Cerrar">&times;</span>
+                    <span class="modal-tipo-badge">Proyecto inmobiliario</span>
+                    <h2 id="modalProyectoNombre"></h2>
+                </div>
+                <div id="modal-body-proyecto" class="modal-prop-body">
                     <p id="modalProyectoCargando" style="display:none;">
                         Cargando información del proyecto...
                     </p>
@@ -150,7 +153,6 @@ function resolverImagenTarjeta(url: string | null) {
                     </p>
 
                     <div id="modalProyectoContenido">
-                        <h2 id="modalProyectoNombre"></h2>
                         <img
                             id="modalProyectoImagen"
                             src=""

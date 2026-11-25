@@ -55,7 +55,7 @@ const iniciales = nombre
     <header id="header" class="header--solo-nav" data-rol={rol}>
 
 <div class="topbar">
-  <span class="logo">SkyInit</span>
+  <a href="/" class="logo" aria-label="SkyInit Inicio">SkyInit</a>
 
   <button type="button" class="menu-toggle" id="menuToggle" aria-label="Abrir menú"><i class="bi bi-list" aria-hidden="true"></i></button>
 
@@ -64,6 +64,7 @@ const iniciales = nombre
     <a href="/propiedades" class={activa("/propiedades")} aria-current={activa("/propiedades") ? "page" : undefined}>Propiedades</a>
     <a href="/proyectos" class={activa("/proyectos")} aria-current={activa("/proyectos") ? "page" : undefined}>Proyectos</a>
     <a href="/servicios" class={activa("/servicios")} aria-current={activa("/servicios") ? "page" : undefined}>Servicios</a>
+    <a href="/inmobiliarias" class={activa("/inmobiliarias")} aria-current={activa("/inmobiliarias") ? "page" : undefined}>Inmobiliarias</a>
     <a href="/constructoras" class={activa("/constructoras")} aria-current={activa("/constructoras") ? "page" : undefined}>Constructoras</a>
     <a href="/mapa" class={activa("/mapa")} aria-current={activa("/mapa") ? "page" : undefined}>Mapa</a>
 
@@ -93,7 +94,7 @@ const iniciales = nombre
   ) : (
 
 <div class="topbar">
-  <span class="logo">SkyInit</span>
+  <a href="/" class="logo" aria-label="SkyInit Inicio">SkyInit</a>
 
   <button type="button" class="menu-toggle" id="menuToggle" aria-label="Abrir menú"><i class="bi bi-list" aria-hidden="true"></i></button>
 
@@ -102,6 +103,7 @@ const iniciales = nombre
     <a href="/propiedades" class={activa("/propiedades")} aria-current={activa("/propiedades") ? "page" : undefined}>Propiedades</a>
     <a href="/proyectos" class={activa("/proyectos")} aria-current={activa("/proyectos") ? "page" : undefined}>Proyectos</a>
     <a href="/servicios" class={activa("/servicios")} aria-current={activa("/servicios") ? "page" : undefined}>Servicios</a>
+    <a href="/inmobiliarias" class={activa("/inmobiliarias")} aria-current={activa("/inmobiliarias") ? "page" : undefined}>Inmobiliarias</a>
     <a href="/constructoras" class={activa("/constructoras")} aria-current={activa("/constructoras") ? "page" : undefined}>Constructoras</a>
     <a href="/mapa" class={activa("/mapa")} aria-current={activa("/mapa") ? "page" : undefined}>Mapa</a>
 
@@ -140,6 +142,15 @@ const iniciales = nombre
     campanas.forEach((c, i) => { c.id = "navCampana" + i; });
     iniciarAvisos(document.getElementById("header")?.dataset.rol ?? "Usuario", campanas.map((c) => c.id));
   }
+
+  // Navbar fijo con estado al hacer scroll
+  const topbarEl = document.querySelector<HTMLElement>(".topbar");
+  const syncTopbarScroll = () => {
+    if (!topbarEl) return;
+    topbarEl.classList.toggle("topbar--scrolled", window.scrollY > 24);
+  };
+  syncTopbarScroll();
+  window.addEventListener("scroll", syncTopbarScroll, { passive: true });
 
   // Toggle menú móvil
   document.getElementById("menuToggle")?.addEventListener("click", () => {

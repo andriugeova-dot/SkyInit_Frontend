@@ -1,11 +1,13 @@
 ---
 import Navbar from "../components/menu/Navbar.astro";
+import Hero from "../components/menu/Hero.astro";
 import FooterMenu from "../components/menu/FooterMenu.astro";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap-icons/font/bootstrap-icons.min.css";
 import "../components/menu/menu.css";
 import "../components/propiedades/propiedades.css";
 import "../components/funciones/funciones.css";
+import "../components/menu/portalPublico.css";
 ---
 <html lang="es">
   <head>
@@ -21,13 +23,11 @@ import "../components/funciones/funciones.css";
   <body>
     <header id="header" class="mapa-hero">
       <Navbar />
-      <div class="hero-inner">
-        <div class="hero-eyebrow">Mapa interactivo</div>
-        <h1>Explora <em>ubicaciones estratégicas</em></h1>
-        <p class="hero-sub">
-          Descubre propiedades y proyectos en el mapa interactivo.
-        </p>
-      </div>
+      <Hero
+        eyebrow="Mapa interactivo"
+        title="Explora <em>ubicaciones estratégicas</em>"
+        subtitle="Descubre propiedades disponibles y proyectos en desarrollo en el mapa interactivo, filtra por zona y encuentra el entorno ideal para tu próximo hogar o inversión."
+      />
     </header>
 
     <section class="search-container" aria-label="Filtros del mapa">

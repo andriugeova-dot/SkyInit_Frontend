@@ -1,9 +1,11 @@
 ---
 import { BACKEND_URL } from "../../utils/config";
 import Navbar from "../../components/menu/Navbar.astro";
+import Hero from "../../components/menu/Hero.astro";
 import FooterMenu from "../../components/menu/FooterMenu.astro";
 import Constructoras from "../../components/ConstructorasUsuario/constructoras.astro";
 import "../../components/menu/menu.css";
+import "../../components/menu/portalPublico.css";
 
 const BACKEND = `${BACKEND_URL}`;
 
@@ -57,36 +59,20 @@ const grupos = Array.from(map.values());
     <body>
         <header id="header">
             <Navbar />
-            <div class="hero-inner">
-                <div class="hero-eyebrow">Aliados de construcción</div>
-                <h1>Constructoras <em>que construyen</em> confianza</h1>
-                <p class="hero-sub">
-                    Constructoras activas vinculadas a nuestras inmobiliarias,
-                    listas para hacer realidad tu próximo proyecto.
-                </p>
-            </div>
+            <Hero
+                eyebrow="Aliados de construcción"
+                title="Constructoras <em>que construyen</em> confianza"
+                subtitle="Constructoras activas vinculadas a nuestras inmobiliarias, listas para hacer realidad tu próximo proyecto."
+                images={[
+                    "https://images.unsplash.com/photo-1503387762-592deb58ef4e?auto=format&fit=crop&w=2000&q=80",
+                    "https://images.unsplash.com/photo-1504307651254-35680f356dfd?auto=format&fit=crop&w=2000&q=80",
+                    "https://images.unsplash.com/photo-1541888946425-d81bb19240f5?auto=format&fit=crop&w=2000&q=80",
+                ]}
+            />
         </header>
 
         <Constructoras grupos={grupos} />
 
         <FooterMenu />
-
-        <script>
-            const images = [
-                "https://images.unsplash.com/photo-1503387762-592deb58ef4e?auto=format&fit=crop&w=2000&q=80",
-                'https://images.unsplash.com/photo-1504307651254-35680f356dfd?auto=format&fit=crop&w=2000&q=80',
-                "https://images.unsplash.com/photo-1541888946425-d81bb19240f5?auto=format&fit=crop&w=2000&q=80",
-            ];
-            let index = 0;
-            const header = document.getElementById("header") as HTMLElement;
-
-            function changeBackground() {
-                if (!header) return;
-                header.style.backgroundImage = `url(${images[index]})`;
-                index = (index + 1) % images.length;
-            }
-            changeBackground();
-            setInterval(changeBackground, 7500);
-        </script>
     </body>
 </html>
