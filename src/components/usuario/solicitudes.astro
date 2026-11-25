@@ -39,6 +39,22 @@ import NotifModalPanel from "../funciones/NotifModalPanel.astro";
         </div>
     </section>
 
+    <section class="pl-card sol-filtros" role="search" aria-label="Filtrar solicitudes">
+        <div class="sol-buscar">
+            <i class="bi bi-search" aria-hidden="true"></i>
+            <input type="search" id="solBuscar" placeholder="Buscar por servicio, inmobiliaria o notas…" aria-label="Buscar solicitudes" />
+        </div>
+        <select id="solFiltroEstado" aria-label="Filtrar por estado">
+            <option value="">Todos los estados</option>
+            <option value="pendiente">Pendiente</option>
+            <option value="aceptada">Aceptada</option>
+            <option value="proceso">En proceso</option>
+            <option value="finalizada">Finalizada</option>
+            <option value="cancelada">Cancelada</option>
+        </select>
+        <button type="button" class="fn-btn fn-btn--sec fn-btn--mini" id="solLimpiar">Limpiar</button>
+    </section>
+
     <div id="estadoCarga" class="estado-carga">
         <div class="spinner"></div>
         <span>Cargando solicitudes...</span>
@@ -56,7 +72,72 @@ import NotifModalPanel from "../funciones/NotifModalPanel.astro";
 </div>
 
 <style is:global>
-.solicitudes-page { display: flex; flex-direction: column; gap: 1.75rem; }
+.solicitudes-page { display: flex; flex-direction: column; gap: 1.5rem; }
+.sol-filtros {
+    display: grid;
+    grid-template-columns: minmax(0, 1.6fr) minmax(180px, 1fr) auto;
+    gap: 10px;
+    padding: 14px 16px;
+    align-items: center;
+}
+.sol-buscar { position: relative; }
+.sol-buscar i { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #64748b; pointer-events: none; }
+.sol-filtros input, .sol-filtros select {
+    width: 100%; height: 40px; border: 1px solid var(--pl-linea, #d9eadf); border-radius: 10px;
+    background: #f8fafc; padding: 0 12px; font: inherit; font-size: 0.88rem; color: #14532d;
+}
+.sol-buscar input { padding-left: 34px; }
+.sol-filtros input:focus, .sol-filtros select:focus { outline: 2px solid #4ade80; background: #fff; }
+@media (max-width: 720px) { .sol-filtros { grid-template-columns: 1fr; } }
+
+/* Línea de tiempo de etapas */
+.sol-timeline {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 4px;
+    padding: 8px 0 4px;
+}
+.sol-step {
+    display: grid;
+    justify-items: center;
+    gap: 4px;
+    text-align: center;
+    position: relative;
+}
+.sol-step::before {
+    content: "";
+    position: absolute;
+    top: 9px;
+    left: -50%;
+    right: 50%;
+    height: 2px;
+    background: #e2e8f0;
+    z-index: 0;
+}
+.sol-step:first-child::before { display: none; }
+.sol-step-dot {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #e2e8f0;
+    color: #94a3b8;
+    font-size: 0.65rem;
+    display: grid;
+    place-items: center;
+    position: relative;
+    z-index: 1;
+}
+.sol-step span { font-size: 0.66rem; color: #94a3b8; font-weight: 600; line-height: 1.1; }
+.sol-step--done::before { background: #15803d; }
+.sol-step--done .sol-step-dot { background: #15803d; color: #fff; }
+.sol-step--done span { color: #14532d; }
+.sol-step--active::before { background: #4ade80; }
+.sol-step--active .sol-step-dot { background: #4ade80; color: #052e16; box-shadow: 0 0 0 3px rgba(74, 222, 128, 0.35); }
+.sol-step--active span { color: #14532d; font-weight: 700; }
+.sol-timeline-cancel {
+    display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border-radius: 8px;
+    background: #fef2f2; color: #b91c1c; font-size: 0.76rem; font-weight: 600;
+}
 
 .page-header {
     display: flex;
@@ -303,20 +384,61 @@ function topClass(estado: string): string {
     return estadoClass(estado).replace("estado-", "top-");
 }
 
+let todasSolicitudes: any[] = [];
+const solBuscar = document.getElementById("solBuscar") as HTMLInputElement;
+const solFiltroEstado = document.getElementById("solFiltroEstado") as HTMLSelectElement;
+
+function pasoActual(estado: string): number {
+    const e = (estado ?? "").toLowerCase();
+    if (e.includes("cancel")) return -1;
+    if (e.includes("complet") || e.includes("finaliz")) return 4;
+    if (e.includes("proceso") || e.includes("progreso")) return 3;
+    if (e.includes("acept") && !e.includes("no")) return 2;
+    return 1;
+}
+
+function renderTimeline(estado: string): string {
+    const paso = pasoActual(estado);
+    if (paso === -1) {
+        return `<div class="sol-timeline-cancel"><i class="bi bi-x-circle-fill" aria-hidden="true"></i> Solicitud cancelada</div>`;
+    }
+    const etiquetas = ["Solicitada", "Aceptada", "En proceso", "Finalizada"];
+    return `<div class="sol-timeline" aria-label="Progreso de la solicitud">${etiquetas.map((lbl, idx) => {
+        const n = idx + 1;
+        const cls = n < paso || paso === 4 ? "sol-step--done" : n === paso ? "sol-step--active" : "";
+        const ico = n < paso || paso === 4 ? "bi-check-lg" : String(n);
+        return `<div class="sol-step ${cls}"><div class="sol-step-dot">${ico.startsWith("bi-") ? `<i class="bi ${ico}" aria-hidden="true"></i>` : ico}</div><span>${lbl}</span></div>`;
+    }).join("")}</div>`;
+}
+
+function coincideFiltroEstado(estado: string, filtro: string): boolean {
+    if (!filtro) return true;
+    const e = (estado ?? "").toLowerCase();
+    if (filtro === "pendiente") return e.includes("pendiente") || e.includes("no acept");
+    if (filtro === "aceptada") return e.includes("acept") && !e.includes("no");
+    if (filtro === "proceso") return e.includes("proceso") || e.includes("progreso");
+    if (filtro === "finalizada") return e.includes("complet") || e.includes("finaliz");
+    if (filtro === "cancelada") return e.includes("cancel");
+    return true;
+}
+
 async function cargarSolicitudes() {
     try {
         const res = await fetch(SOL_API, { credentials: "same-origin" });
         const data = await res.json();
-        const lista = data.solicitudes ?? [];
-        renderSolicitudes(lista);
+        todasSolicitudes = data.solicitudes ?? [];
+        actualizarKpisSolicitudes(todasSolicitudes);
+        aplicarFiltrosSolicitudes();
     } catch {
-        renderSolicitudes([]);
+        todasSolicitudes = [];
+        actualizarKpisSolicitudes([]);
+        aplicarFiltrosSolicitudes();
     } finally {
         document.getElementById("estadoCarga")!.style.display = "none";
     }
 }
 
-function renderSolicitudes(lista: any[]) {
+function actualizarKpisSolicitudes(lista: any[]) {
     const pend = lista.filter((s) => estadoClass(s.estadoReparacion ?? s.estado ?? "Pendiente") === "estado-pendiente").length;
     const proc = lista.filter((s) => estadoClass(s.estadoReparacion ?? s.estado ?? "Pendiente") === "estado-en-proceso").length;
     const fin  = lista.filter((s) => estadoClass(s.estadoReparacion ?? s.estado ?? "Pendiente") === "estado-completado").length;
@@ -328,16 +450,34 @@ function renderSolicitudes(lista: any[]) {
     if (elPend)  elPend.textContent  = String(pend);
     if (elProc)  elProc.textContent  = String(proc);
     if (elFin)   elFin.textContent   = String(fin);
+}
 
+function aplicarFiltrosSolicitudes() {
+    const q = solBuscar.value.trim().toLowerCase();
+    const est = solFiltroEstado.value;
+    const visibles = todasSolicitudes.filter((s) => {
+        const estado = s.estadoReparacion ?? s.estado ?? "Pendiente";
+        if (!coincideFiltroEstado(estado, est)) return false;
+        if (!q) return true;
+        const txt = [s.nombreServicio, s.servicio, s.inmobiliaria, s.nombreInmobiliaria, s.notas, estado].filter(Boolean).join(" ").toLowerCase();
+        return txt.includes(q);
+    });
+    renderSolicitudes(visibles);
+}
+
+function renderSolicitudes(lista: any[]) {
+    const sinEl = document.getElementById("sinSolicitudes")!;
+    const contenedor = document.getElementById("listaSolicitudes")!;
     if (!lista.length) {
-        document.getElementById("sinSolicitudes")!.style.display = "block";
+        contenedor.innerHTML = "";
+        sinEl.style.display = "block";
         return;
     }
-    const contenedor = document.getElementById("listaSolicitudes")!;
+    sinEl.style.display = "none";
     contenedor.innerHTML = lista.map(s => {
         const estado = s.estadoReparacion ?? s.estado ?? "Pendiente";
         const fecha = formatFecha(s.fechaSolicitud ?? "");
-        return ` 
+        return `
     <div class="sol-card">
     <div class="sol-card-top ${topClass(estado)}"></div>
     <div class="sol-icono">
@@ -355,11 +495,12 @@ function renderSolicitudes(lista: any[]) {
             <i class="bi bi-building"></i>
             ${esc(s.inmobiliaria ?? s.nombreInmobiliaria ?? "Inmobiliaria")}
         </p>
+        ${renderTimeline(estado)}
         ${s.notas ? `<p class="sol-notas">"${esc(s.notas)}"</p>` : ""}
         ${fecha ? `
         <div class="sol-card-footer">
             <span class="sol-fecha">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" style="color:#9ca3af"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/></svg>
+                <i class="bi bi-calendar3" aria-hidden="true"></i>
                 ${esc(fecha)}
             </span>
         </div>` : ""}
@@ -367,6 +508,12 @@ function renderSolicitudes(lista: any[]) {
 </div>`
     }).join("");
 }
+
+solBuscar.addEventListener("input", aplicarFiltrosSolicitudes);
+solFiltroEstado.addEventListener("change", aplicarFiltrosSolicitudes);
+document.getElementById("solLimpiar")!.addEventListener("click", () => {
+    solBuscar.value = ""; solFiltroEstado.value = ""; aplicarFiltrosSolicitudes();
+});
 
 cargarSolicitudes();
 </script>

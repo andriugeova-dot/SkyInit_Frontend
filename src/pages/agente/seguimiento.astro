@@ -1,0 +1,164 @@
+---
+import Layout from "../../layouts/LayoutVistas.astro";
+import NotifModalPanel from "../../components/funciones/NotifModalPanel.astro";
+import "../../components/funciones/funciones.css";
+import "../../components/funciones/panelUnificado.css";
+import { getTokenSSR, obtenerRolDesdeToken } from "../../utils/auth";
+
+const token = getTokenSSR(Astro.cookies);
+const rol = obtenerRolDesdeToken(token);
+if (!token || rol !== "Agente") {
+  return Astro.redirect("/login");
+}
+---
+<Layout>
+  <div class="pl-page pl-theme-agente">
+    <header class="pl-hero">
+      <div class="pl-hero-info">
+        <div class="pl-hero-tags">
+          <span class="pl-hero-tag"><i class="bi bi-graph-up-arrow" aria-hidden="true"></i> Seguimiento comercial</span>
+        </div>
+        <h1>Seguimiento e interesados</h1>
+        <p>Prioriza las propiedades con mayor interés, guardados, comentarios y citas pendientes.</p>
+      </div>
+      <div class="pl-hero-acc">
+        <a class="pl-hero-btn" href="/agente/agenda"><i class="bi bi-calendar-check-fill" aria-hidden="true"></i> Ir a agenda</a>
+        <a class="pl-hero-btn pl-hero-btn--sec" href="/agente"><i class="bi bi-arrow-left" aria-hidden="true"></i> Volver al panel</a>
+        <NotifModalPanel />
+      </div>
+    </header>
+
+    <section class="pl-kpis" aria-label="Resumen de interés">
+      <div class="pl-kpi pl-kpi--destacado">
+        <div class="pl-kpi-top"><span class="pl-kpi-lbl">Interacciones totales</span><span class="pl-kpi-ico"><i class="bi bi-graph-up-arrow" aria-hidden="true"></i></span></div>
+        <b class="pl-kpi-val" id="segTotal">—</b>
+      </div>
+      <div class="pl-kpi pl-kpi--ok">
+        <div class="pl-kpi-top"><span class="pl-kpi-lbl">Favoritos</span><span class="pl-kpi-ico"><i class="bi bi-heart-fill" aria-hidden="true"></i></span></div>
+        <b class="pl-kpi-val" id="segFavs">—</b>
+      </div>
+      <div class="pl-kpi pl-kpi--alerta">
+        <div class="pl-kpi-top"><span class="pl-kpi-lbl">Citas pendientes</span><span class="pl-kpi-ico"><i class="bi bi-calendar-event" aria-hidden="true"></i></span></div>
+        <b class="pl-kpi-val" id="segCitasPend">—</b>
+      </div>
+      <div class="pl-kpi pl-kpi--prog">
+        <div class="pl-kpi-top"><span class="pl-kpi-lbl">Comentarios</span><span class="pl-kpi-ico"><i class="bi bi-chat-dots-fill" aria-hidden="true"></i></span></div>
+        <b class="pl-kpi-val" id="segComs">—</b>
+      </div>
+    </section>
+
+    <section class="pl-card">
+      <div class="pl-card-head">
+        <div class="pl-card-titulo">
+          <div class="pl-card-ico"><i class="bi bi-fire" aria-hidden="true"></i></div>
+          <div>
+            <h2>Propiedades por nivel de interés</h2>
+            <small>Filtra por tus propiedades asignadas y ordena por la métrica que quieras priorizar.</small>
+          </div>
+        </div>
+        <div class="seg-toolbar">
+          <input type="search" id="segBuscar" placeholder="Buscar propiedad o ciudad…" aria-label="Buscar propiedades" />
+          <select id="segAlcance" aria-label="Alcance">
+            <option value="todas">Toda la inmobiliaria</option>
+            <option value="mias">Solo mis propiedades</option>
+          </select>
+          <select id="segOrden" aria-label="Ordenar por">
+            <option value="interesTotal">Mayor interés total</option>
+            <option value="guardados">Más favoritos</option>
+            <option value="citasPendientes">Más citas pendientes</option>
+            <option value="comentarios">Más comentarios</option>
+          </select>
+          <button type="button" class="fn-btn fn-btn--sec fn-btn--mini" id="segExportCsv">
+            <i class="bi bi-download" aria-hidden="true"></i> Exportar CSV
+          </button>
+        </div>
+      </div>
+      <div id="segLista"></div>
+    </section>
+  </div>
+</Layout>
+
+<style is:global>
+  .seg-toolbar { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+  .seg-toolbar input, .seg-toolbar select {
+    height:34px; border:1px solid var(--pl-linea, #e5e7eb); border-radius:8px; padding:0 10px;
+    font:inherit; font-size:.84rem; background:#fff; color:var(--pl-ink, #0d3d40);
+  }
+  .seg-toolbar input { min-width:200px; }
+</style>
+
+<script>
+  import { api, esc, exportarCsv } from "../../components/funciones/comun";
+
+  const lista = document.getElementById("segLista")!;
+  const inputBuscar = document.getElementById("segBuscar") as HTMLInputElement;
+  const selAlcance = document.getElementById("segAlcance") as HTMLSelectElement;
+  const selOrden = document.getElementById("segOrden") as HTMLSelectElement;
+
+  let props: any[] = [];
+  let visibles: any[] = [];
+
+  function render() {
+    const q = inputBuscar.value.trim().toLowerCase();
+    const alcance = selAlcance.value;
+    const orden = selOrden.value;
+
+    visibles = props
+      .filter((p) => {
+        if (alcance === "mias" && !p.esMia) return false;
+        if (!q) return true;
+        return `${p.titulo ?? ""} ${p.ciudad ?? ""} ${p.direccion ?? ""} ${p.agente ?? ""}`.toLowerCase().includes(q);
+      })
+      .sort((a, b) => Number(b[orden] ?? 0) - Number(a[orden] ?? 0));
+
+    document.getElementById("segTotal")!.textContent = String(visibles.reduce((s, p) => s + Number(p.interesTotal ?? 0), 0));
+    document.getElementById("segFavs")!.textContent = String(visibles.reduce((s, p) => s + Number(p.guardados ?? 0), 0));
+    document.getElementById("segCitasPend")!.textContent = String(visibles.reduce((s, p) => s + Number(p.citasPendientes ?? 0), 0));
+    document.getElementById("segComs")!.textContent = String(visibles.reduce((s, p) => s + Number(p.comentarios ?? 0), 0));
+
+    if (!visibles.length) {
+      lista.innerHTML = `<div class="fn-vacio"><i class="bi bi-graph-up" aria-hidden="true"></i>No hay propiedades con métricas para el filtro actual.</div>`;
+      return;
+    }
+
+    lista.innerHTML = `<div class="fn-tabla-wrap"><table class="fn-tabla"><thead><tr>
+      <th>Propiedad</th><th>Estado</th><th>Vistas</th><th>Favoritos</th><th>Citas (pend.)</th><th>Comentarios</th><th>Calificación</th><th>Interés total</th><th></th>
+    </tr></thead><tbody>` +
+      visibles.map((p) => `<tr>
+        <td>
+          <strong>${esc(p.titulo)}</strong> ${p.esMia ? '<span class="fn-chip fn-chip--ok">Mía</span>' : ""}
+          <br><small class="fn-muted">${esc([p.direccion, p.ciudad].filter(Boolean).join(", ") || "—")}</small>
+        </td>
+        <td><span class="fn-chip fn-chip--media">${esc(p.estado ?? "—")}</span></td>
+        <td>${Number(p.vistas)}</td>
+        <td><strong>${Number(p.guardados)}</strong></td>
+        <td>${Number(p.citas)} ${Number(p.citasPendientes) > 0 ? `<span class="fn-chip fn-chip--pend">${Number(p.citasPendientes)} pend.</span>` : ""}</td>
+        <td>${Number(p.comentarios)}</td>
+        <td>${p.promedio ? `★ ${p.promedio} (${Number(p.calificaciones)})` : "—"}</td>
+        <td><strong>${Number(p.interesTotal)}</strong></td>
+        <td><a class="fn-btn fn-btn--sec fn-btn--mini" href="/agente/agenda"><i class="bi bi-calendar-plus" aria-hidden="true"></i> Agenda</a></td>
+      </tr>`).join("") + `</tbody></table></div>`;
+  }
+
+  [inputBuscar, selAlcance, selOrden].forEach((el) => el.addEventListener("input", render));
+  document.getElementById("segExportCsv")!.addEventListener("click", () => {
+    exportarCsv(
+      "seguimiento-interesados.csv",
+      ["Propiedad", "Ciudad", "Estado", "Asignada a mí", "Vistas", "Favoritos", "Citas", "Citas pendientes", "Comentarios", "Calificación", "Interés total"],
+      visibles.map((p) => [
+        p.titulo, p.ciudad ?? "", p.estado ?? "", p.esMia ? "Sí" : "No",
+        p.vistas, p.guardados, p.citas, p.citasPendientes, p.comentarios, p.promedio ?? "", p.interesTotal,
+      ]),
+    );
+  });
+
+  (async () => {
+    try {
+      const d = await api("/agente/interes");
+      props = d.propiedades ?? [];
+      render();
+    } catch (e) {
+      lista.innerHTML = `<div class="fn-vacio">${esc((e as Error).message)}</div>`;
+    }
+  })();
+</script>

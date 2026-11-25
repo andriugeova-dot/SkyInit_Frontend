@@ -48,6 +48,7 @@ import "./usuarios.css";
                 <option value="Inactiva">Inactiva</option>
                 <option value="Suspendida">Suspendida</option>
             </select>
+            <button type="button" class="btn-sm" id="usr-export-csv"><i class="bi bi-download" aria-hidden="true"></i> Exportar CSV</button>
         </div>
 
         <div class="table-wrap">
@@ -420,4 +421,13 @@ function esc(v){return String(v ?? "").replace(/[&<>"']/g,function(c){return {"&
 
   Promise.all([cargarRoles(), cargarInmobiliarias()]).then(cargar);
 })();
+</script>
+<script>
+  import { exportarCsv } from "../funciones/comun";
+  document.getElementById("usr-export-csv")?.addEventListener("click", () => {
+    const rows = [...document.querySelectorAll<HTMLTableRowElement>("#page-usuarios #tbody tr")]
+      .filter((tr) => tr.querySelectorAll("td").length >= 6)
+      .map((tr) => [...tr.querySelectorAll("td")].slice(0, 6).map((td) => td.innerText.trim()));
+    exportarCsv("usuarios-superadmin.csv", ["ID", "Nombre", "Correo", "Rol", "Inmobiliaria", "Estado"], rows);
+  });
 </script>

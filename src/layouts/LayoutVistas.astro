@@ -2,6 +2,7 @@
 import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap-icons/font/bootstrap-icons.min.css";
 import SideBar from "../components/SideBar.astro";
+import BusquedaRapidaPanel from "../components/funciones/BusquedaRapidaPanel.astro";
 ---
 
 <!doctype html>
@@ -19,6 +20,7 @@ import SideBar from "../components/SideBar.astro";
 			<main class="panel-main">
 				<slot />
 			</main>
+		<BusquedaRapidaPanel />
 	</body>
 </html>
 

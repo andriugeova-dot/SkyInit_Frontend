@@ -1,6 +1,7 @@
 ---
 import Layout from "../../layouts/LayoutVistas.astro";
 import Mantenimiento from "../../components/funciones/Mantenimiento.astro";
+import AgendaConstructora from "../../components/constructora/AgendaConstructora.astro";
 import NotifModalPanel from "../../components/funciones/NotifModalPanel.astro";
 import "../../components/constructora/constructora.css";
 ---
@@ -20,6 +21,8 @@ import "../../components/constructora/constructora.css";
         <NotifModalPanel />
       </div>
     </header>
+
+    <AgendaConstructora />
 
     <section class="co-card co-mant-wrap">
       <Mantenimiento modo="constructora" titulo={false} />

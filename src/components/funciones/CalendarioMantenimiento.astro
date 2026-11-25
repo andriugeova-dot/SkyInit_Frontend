@@ -1,5 +1,5 @@
 ---
-/** Agenda semanal y listado de citas de mantenimiento asignadas al trabajador (diseño alineado a AgendaGestion). */
+/** Agenda semanal y listado de citas de mantenimiento asignadas al trabajador. */
 import "./funciones.css";
 interface Props { mostrarCabecera?: boolean }
 const { mostrarCabecera = true } = Astro.props;
@@ -39,7 +39,21 @@ const { mostrarCabecera = true } = Astro.props;
     </div>
   </div>
 
-  <h2 style="font-size:1.1rem;font-weight:700;margin:0 0 10px">Todas las citas</h2>
+  <div class="cal-lista-head">
+    <h2 style="font-size:1.1rem;font-weight:700;margin:0">Todas las citas</h2>
+    <div class="cal-lista-filtros">
+      <input type="search" id="calBuscar" placeholder="Buscar cliente, servicio o dirección…" aria-label="Buscar citas" />
+      <select id="calFiltroEstado" aria-label="Filtrar por estado">
+        <option value="">Todos los estados</option>
+        <option value="pend">Pendiente</option>
+        <option value="prog">En proceso</option>
+        <option value="ok">Finalizada</option>
+      </select>
+      <button type="button" class="fn-btn fn-btn--sec fn-btn--mini" id="calExportCsv">
+        <i class="bi bi-download" aria-hidden="true"></i> Exportar CSV
+      </button>
+    </div>
+  </div>
   <div id="agLista"></div>
 
   <dialog class="fn-modal" id="calDetalleModal" aria-labelledby="calModalTitulo">
@@ -78,7 +92,16 @@ const { mostrarCabecera = true } = Astro.props;
   .cal-color--prog { background:#1f5fa8; }
   .cal-color--ok { background:#1b6e3c; }
 
-  .cal-modal-card { display:grid; gap:12px; }
+  .cal-lista-head {
+    display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:12px;
+  }
+  .cal-lista-filtros { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+  .cal-lista-filtros input, .cal-lista-filtros select {
+    height:34px; border:1px solid var(--fn-line); border-radius:8px; padding:0 10px; font:inherit; font-size:.84rem; background:#fff; color:var(--fn-ink);
+  }
+  .cal-lista-filtros input { min-width:220px; }
+
+  .cal-modal-card { display:grid; gap:14px; }
   .cal-modal-top { display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; }
   .cal-cita-hora {
     display:inline-flex; align-items:center; gap:6px; font-size:.82rem; font-weight:700;
@@ -87,10 +110,14 @@ const { mostrarCabecera = true } = Astro.props;
   .cal-cita-meta { margin:0; padding:0; list-style:none; display:grid; gap:8px; font-size:.9rem; color:var(--tr-ink, var(--fn-ink)); }
   .cal-cita-meta li { display:flex; gap:9px; align-items:baseline; }
   .cal-cita-meta i { color:var(--tr-oro, var(--fn-acc)); flex-shrink:0; }
+  .cal-avance-box {
+    border-top:1px solid var(--fn-line); padding-top:12px; display:grid; gap:10px;
+  }
+  .cal-avance-box h3 { margin:0; font-size:.95rem; font-weight:700; }
 </style>
 
 <script>
-  import { api, esc, fechaHora } from "./comun";
+  import { api, esc, fechaHora, aviso, exportarCsv, urlComoLlegar } from "./comun";
 
   const cal = document.getElementById("cal")!;
   const stats = document.getElementById("agStats")!;
@@ -100,10 +127,13 @@ const { mostrarCabecera = true } = Astro.props;
   const modalTitulo = document.getElementById("calModalTitulo")!;
   const modalSub = document.getElementById("calModalSub")!;
   const modalContenido = document.getElementById("calModalContenido")!;
+  const inputBuscar = document.getElementById("calBuscar") as HTMLInputElement;
+  const selEstado = document.getElementById("calFiltroEstado") as HTMLSelectElement;
 
   const FINAL = [3, 6];
-  const HORAS = Array.from({ length: 13 }, (_, i) => i + 7); // 7:00 a 19:00
+  const HORAS = Array.from({ length: 13 }, (_, i) => i + 7);
   let trabajos: any[] = [];
+  let visiblesActuales: { item: any; idx: number; fecha: Date | null }[] = [];
   let lunes = inicioSemana(new Date());
 
   function inicioSemana(d: Date): Date {
@@ -191,26 +221,40 @@ const { mostrarCabecera = true } = Astro.props;
       <div class="fn-stat"><b>${finalizadas}</b><span>Finalizadas</span></div>
     `;
 
-    if (!trabajos.length) {
-      lista.innerHTML = `<div class="fn-vacio"><i class="bi bi-calendar-week" aria-hidden="true"></i>Aún no tienes citas de mantenimiento asignadas.</div>`;
+    const q = inputBuscar.value.trim().toLowerCase();
+    const estFiltro = selEstado.value;
+    visiblesActuales = trabajos
+      .map((item, idx) => ({ item, idx, fecha: fechaCitaDe(item) }))
+      .filter(({ item }) => {
+        if (estFiltro && estadoDe(item) !== estFiltro) return false;
+        if (!q) return true;
+        const texto = [item.servicio, item.cliente, item.propiedad, item.direccion, item.ciudad, item.constructora].filter(Boolean).join(" ").toLowerCase();
+        return texto.includes(q);
+      })
+      .sort((a, b) => (b.fecha?.getTime() ?? 0) - (a.fecha?.getTime() ?? 0));
+
+    if (!visiblesActuales.length) {
+      lista.innerHTML = `<div class="fn-vacio"><i class="bi bi-calendar-week" aria-hidden="true"></i>${
+        trabajos.length ? "No hay citas que coincidan con el filtro aplicado." : "Aún no tienes citas de mantenimiento asignadas."
+      }</div>`;
       return;
     }
 
-    const ordenados = trabajos
-      .map((item, idx) => ({ item, idx, fecha: fechaCitaDe(item) }))
-      .sort((a, b) => (b.fecha?.getTime() ?? 0) - (a.fecha?.getTime() ?? 0));
-
     lista.innerHTML = `<div class="fn-tabla-wrap"><table class="fn-tabla"><thead><tr>
       <th>Fecha</th><th>Servicio</th><th>Propiedad</th><th>Cliente</th><th>Estado</th><th></th></tr></thead><tbody>` +
-      ordenados.map(({ item, idx, fecha }) => {
+      visiblesActuales.map(({ item, idx, fecha }) => {
         const ubicacion = [item.direccion, item.ciudad].filter(Boolean).join(", ");
+        const mapsUrl = urlComoLlegar(item);
         return `<tr>
           <td>${fecha ? esc(fechaHora(fecha.toISOString())) : "—"}</td>
           <td><strong>${esc(item.servicio)}</strong>${item.constructora ? `<br><small class="fn-muted">${esc(item.constructora)}</small>` : ""}</td>
           <td><strong>${esc(item.propiedad ?? "—")}</strong>${ubicacion ? `<br><small class="fn-muted">${esc(ubicacion)}</small>` : ""}</td>
           <td>${esc(item.cliente ?? "—")}${item.clienteTelefono ? `<br><small class="fn-muted">${esc(item.clienteTelefono)}</small>` : ""}</td>
           <td><span class="fn-chip ${claseChip(item)}">${esc(item.estado ?? "Pendiente")}</span></td>
-          <td><div class="fn-acciones"><button class="fn-btn fn-btn--sec fn-btn--mini" data-cita="${idx}" type="button"><i class="bi bi-eye" aria-hidden="true"></i> Ver</button></div></td>
+          <td><div class="fn-acciones">
+            ${mapsUrl ? `<a class="fn-btn fn-btn--sec fn-btn--mini" href="${esc(mapsUrl)}" target="_blank" rel="noopener" title="Abrir en Google Maps"><i class="bi bi-geo-alt-fill" aria-hidden="true"></i> Cómo llegar</a>` : ""}
+            <button class="fn-btn fn-btn--mini" data-cita="${idx}" type="button"><i class="bi bi-clipboard-check" aria-hidden="true"></i> ${FINAL.includes(item.estadoReparacionID) ? "Ver" : "Gestionar"}</button>
+          </div></td>
         </tr>`;
       }).join("") + `</tbody></table></div>`;
   }
@@ -219,7 +263,9 @@ const { mostrarCabecera = true } = Astro.props;
     const item = trabajos[idx];
     if (!item) return;
     const fecha = fechaCitaDe(item);
+    const fin = FINAL.includes(item.estadoReparacionID);
     const ubicacion = [item.propiedad, item.direccion, item.ciudad].filter(Boolean).join(", ");
+    const mapsUrl = urlComoLlegar(item);
     const grupo = Array.isArray(item.trabajadores) && item.trabajadores.length
       ? item.trabajadores.map((t: any) => t.nombre).join(", ")
       : "";
@@ -233,7 +279,10 @@ const { mostrarCabecera = true } = Astro.props;
       <div class="cal-modal-card">
         <div class="cal-modal-top">
           <span class="cal-cita-hora"><i class="bi bi-clock" aria-hidden="true"></i> ${fecha ? esc(fechaHora(fecha.toISOString())) : "Sin fecha"}</span>
-          <span class="fn-chip ${claseChip(item)}">${esc(item.estado ?? "Pendiente")}</span>
+          <div class="fn-acciones">
+            ${mapsUrl ? `<a class="fn-btn fn-btn--sec fn-btn--mini" href="${esc(mapsUrl)}" target="_blank" rel="noopener"><i class="bi bi-geo-alt-fill" aria-hidden="true"></i> Cómo llegar</a>` : ""}
+            <span class="fn-chip ${claseChip(item)}">${esc(item.estado ?? "Pendiente")}</span>
+          </div>
         </div>
         <ul class="cal-cita-meta">
           ${item.servicioDescripcion ? `<li><i class="bi bi-card-text" aria-hidden="true"></i><span>${esc(item.servicioDescripcion)}</span></li>` : ""}
@@ -243,23 +292,32 @@ const { mostrarCabecera = true } = Astro.props;
           ${grupo ? `<li><i class="bi bi-people" aria-hidden="true"></i><span>Equipo: ${esc(grupo)}</span></li>` : ""}
           ${item.notas ? `<li><i class="bi bi-chat-left-text" aria-hidden="true"></i><span>${esc(item.notas)}</span></li>` : ""}
         </ul>
+        ${fin ? `<p class="fn-muted" style="margin:0">Este trabajo ya se encuentra finalizado.</p>` : `
+          <div class="cal-avance-box">
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
+              <h3>Actualizar estado / registrar avance</h3>
+              ${item.estadoReparacionID !== 2 ? `<button type="button" class="fn-btn fn-btn--sec fn-btn--mini" id="calPasarProceso" data-sol-id="${Number(item.solicitudID)}"><i class="bi bi-play-fill" aria-hidden="true"></i> Pasar a En proceso</button>` : ""}
+            </div>
+            <form class="fn-form" id="calAvanceForm" data-sol-id="${Number(item.solicitudID)}">
+              <label>Nuevo estado
+                <select id="calAvanceEstado">
+                  <option value="2" ${item.estadoReparacionID === 2 ? "selected" : ""}>En proceso</option>
+                  <option value="3">Finalizado</option>
+                </select>
+              </label>
+              <label>Comentario del avance
+                <textarea id="calAvanceComentario" rows="2" maxlength="2000" placeholder="Describe el trabajo realizado o novedades…" required></textarea>
+              </label>
+              <div><button class="fn-btn fn-btn--mini" type="submit"><i class="bi bi-check2-circle" aria-hidden="true"></i> Guardar avance</button></div>
+            </form>
+          </div>
+        `}
       </div>
     `;
     modal.showModal();
   }
 
-  document.addEventListener("click", (ev) => {
-    const btn = (ev.target as HTMLElement).closest<HTMLElement>("[data-cita]");
-    if (!btn?.dataset.cita) return;
-    abrirDetalle(Number(btn.dataset.cita));
-  });
-
-  document.getElementById("calModalCerrar")!.addEventListener("click", () => modal.close());
-  document.getElementById("calPrev")!.addEventListener("click", () => { lunes.setDate(lunes.getDate() - 7); pintarCalendario(); });
-  document.getElementById("calNext")!.addEventListener("click", () => { lunes.setDate(lunes.getDate() + 7); pintarCalendario(); });
-  document.getElementById("calHoy")!.addEventListener("click", () => { lunes = inicioSemana(new Date()); pintarCalendario(); });
-
-  (async () => {
+  async function cargarDatos() {
     try {
       const d = await api("/mantenimiento/trabajador");
       trabajos = d.trabajos ?? [];
@@ -269,5 +327,65 @@ const { mostrarCabecera = true } = Astro.props;
       lista.innerHTML = `<div class="fn-vacio">${esc((e as Error).message)}</div>`;
       pintarCalendario();
     }
-  })();
+  }
+
+  modalContenido.addEventListener("click", async (ev) => {
+    const btnProc = (ev.target as HTMLElement).closest<HTMLButtonElement>("#calPasarProceso");
+    if (!btnProc) return;
+    btnProc.disabled = true;
+    try {
+      const r = await api(`/mantenimiento/trabajador/${btnProc.dataset.solId}/avance`, "POST", {
+        estadoReparacionID: 2,
+        comentario: "Trabajo iniciado desde la agenda.",
+      });
+      aviso(r.mensaje ?? "Estado actualizado a En proceso");
+      modal.close();
+      await cargarDatos();
+    } catch (e) {
+      aviso((e as Error).message, "error");
+      btnProc.disabled = false;
+    }
+  });
+
+  modalContenido.addEventListener("submit", async (ev) => {
+    const f = (ev.target as HTMLElement).closest<HTMLFormElement>("#calAvanceForm");
+    if (!f) return;
+    ev.preventDefault();
+    const comentario = (document.getElementById("calAvanceComentario") as HTMLTextAreaElement).value.trim();
+    const estadoReparacionID = Number((document.getElementById("calAvanceEstado") as HTMLSelectElement).value);
+    try {
+      const r = await api(`/mantenimiento/trabajador/${f.dataset.solId}/avance`, "POST", { comentario, estadoReparacionID });
+      aviso(r.mensaje ?? "Avance guardado");
+      modal.close();
+      await cargarDatos();
+    } catch (e) {
+      aviso((e as Error).message, "error");
+    }
+  });
+
+  document.addEventListener("click", (ev) => {
+    const btn = (ev.target as HTMLElement).closest<HTMLElement>("[data-cita]");
+    if (!btn?.dataset.cita) return;
+    abrirDetalle(Number(btn.dataset.cita));
+  });
+
+  inputBuscar.addEventListener("input", pintarLista);
+  selEstado.addEventListener("change", pintarLista);
+  document.getElementById("calExportCsv")!.addEventListener("click", () => {
+    exportarCsv(
+      "agenda-trabajador.csv",
+      ["Fecha", "Servicio", "Propiedad", "Dirección", "Ciudad", "Cliente", "Teléfono", "Estado"],
+      visiblesActuales.map(({ item, fecha }) => [
+        fecha ? fechaHora(fecha.toISOString()) : "",
+        item.servicio, item.propiedad, item.direccion, item.ciudad, item.cliente, item.clienteTelefono, item.estado ?? "Pendiente",
+      ]),
+    );
+  });
+
+  document.getElementById("calModalCerrar")!.addEventListener("click", () => modal.close());
+  document.getElementById("calPrev")!.addEventListener("click", () => { lunes.setDate(lunes.getDate() - 7); pintarCalendario(); });
+  document.getElementById("calNext")!.addEventListener("click", () => { lunes.setDate(lunes.getDate() + 7); pintarCalendario(); });
+  document.getElementById("calHoy")!.addEventListener("click", () => { lunes = inicioSemana(new Date()); pintarCalendario(); });
+
+  cargarDatos();
 </script>

@@ -21,6 +21,12 @@ type ResumenDashboard = {
   propiedadesPorEstado: { estado: string; total: number }[];
   proyectosPorEstado: { estadoProyectoID: number; total: number }[];
   solicitudesServiciosPorEstado: { estadoReparacionID: number | null; estado: string; total: number }[];
+  alertas?: {
+    propiedadesSinFotos: number;
+    propiedadesSinAgente: number;
+    solicitudesSinAceptar24h: number;
+    constructorasPendientes: number;
+  };
 };
 
 let resumen: ResumenDashboard | null = null;
@@ -128,6 +134,42 @@ const iconoEstadoSolicitud = (estado: string) => {
 
       <div class="pl-split">
         <div class="pl-stack">
+          {resumen.alertas && (
+            <article class="pl-card">
+              <div class="pl-card-head">
+                <div class="pl-card-titulo">
+                  <div class="pl-card-ico pl-card-ico--acc"><i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i></div>
+                  <div>
+                    <h2>Alertas y pendientes</h2>
+                    <small>Puntos críticos que requieren atención en tu inmobiliaria.</small>
+                  </div>
+                </div>
+              </div>
+              <div class="pl-breakdown-list">
+                <a class="pl-breakdown-row" href="/admin/propiedades" style="text-decoration:none">
+                  <span class="pl-breakdown-dot"><i class="bi bi-image" aria-hidden="true"></i></span>
+                  <span class="pl-breakdown-label">Propiedades sin fotos</span>
+                  <span class={`fn-chip ${resumen.alertas.propiedadesSinFotos ? "fn-chip--pend" : "fn-chip--ok"}`}>{resumen.alertas.propiedadesSinFotos}</span>
+                </a>
+                <a class="pl-breakdown-row" href="/admin/propiedades" style="text-decoration:none">
+                  <span class="pl-breakdown-dot"><i class="bi bi-person-exclamation" aria-hidden="true"></i></span>
+                  <span class="pl-breakdown-label">Propiedades sin agente asignado</span>
+                  <span class={`fn-chip ${resumen.alertas.propiedadesSinAgente ? "fn-chip--pend" : "fn-chip--ok"}`}>{resumen.alertas.propiedadesSinAgente}</span>
+                </a>
+                <a class="pl-breakdown-row" href="/admin/solicitudes" style="text-decoration:none">
+                  <span class="pl-breakdown-dot"><i class="bi bi-clock-history" aria-hidden="true"></i></span>
+                  <span class="pl-breakdown-label">Solicitudes sin aceptar (+24 h)</span>
+                  <span class={`fn-chip ${resumen.alertas.solicitudesSinAceptar24h ? "fn-chip--mal" : "fn-chip--ok"}`}>{resumen.alertas.solicitudesSinAceptar24h}</span>
+                </a>
+                <a class="pl-breakdown-row" href="/admin/constructoras" style="text-decoration:none">
+                  <span class="pl-breakdown-dot"><i class="bi bi-hammer" aria-hidden="true"></i></span>
+                  <span class="pl-breakdown-label">Constructoras pendientes de activación</span>
+                  <span class={`fn-chip ${resumen.alertas.constructorasPendientes ? "fn-chip--pend" : "fn-chip--ok"}`}>{resumen.alertas.constructorasPendientes}</span>
+                </a>
+              </div>
+            </article>
+          )}
+
           <div class="pl-estados-grid">
             <section class="pl-card">
               <div class="pl-card-head">

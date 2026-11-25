@@ -1,6 +1,7 @@
 ---
 import Layout from "../../layouts/LayoutVistas.astro";
 import Agenda from "../../components/funciones/Agenda.astro";
+import DetalleModal from "../../components/funciones/DetalleModal.astro";
 import NotifModalPanel from "../../components/funciones/NotifModalPanel.astro";
 import "../../components/funciones/funciones.css";
 import "../../components/funciones/panelUnificado.css";
@@ -23,5 +24,6 @@ import "../../components/funciones/panelUnificado.css";
     </header>
 
     <Agenda modo="usuario" mostrarCabecera={false} />
+    <DetalleModal />
   </div>
 </Layout>

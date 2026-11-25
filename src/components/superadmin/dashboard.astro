@@ -21,6 +21,13 @@ type Resumen = {
   propiedadesPorEstado: { estado: string; total: number }[];
   proyectosPorEstado: { estadoProyectoID: number; total: number }[];
   constructorasPorEstado: { estado: string; total: number }[];
+  pendientes?: {
+    inmobiliarias: { inmobiliariaID: number; nombre: string; ciudad: string | null; contacto: string | null; correo: string | null }[];
+    constructoras: { constructoraID: number; nombre: string; ciudad: string | null; contacto: string | null; correo: string | null }[];
+  };
+  actividadReciente?: {
+    usuarioID: number; nombre: string; correo: string; nombreRol: string; estadoCuenta: string; fechaRegistro: string | null;
+  }[];
 };
 
 let resumen: Resumen | null = null;
@@ -112,6 +119,49 @@ const iconoEstadoProp = (estado: string) => {
 
       <div class="pl-split">
         <div class="pl-stack">
+          <!-- Cola de aprobaciones pendientes -->
+          <article class="pl-card" id="saAprobacionesCard">
+            <div class="pl-card-head">
+              <div class="pl-card-titulo">
+                <div class="pl-card-ico pl-card-ico--acc"><i class="bi bi-patch-check-fill" aria-hidden="true"></i></div>
+                <div>
+                  <h2>Cola de aprobaciones pendientes</h2>
+                  <small>Activa rápidamente inmobiliarias y constructoras pendientes de aprobación.</small>
+                </div>
+              </div>
+            </div>
+            <ul class="pl-notif-lista" id="saPendLista">
+              {((resumen.pendientes?.inmobiliarias?.length ?? 0) + (resumen.pendientes?.constructoras?.length ?? 0)) === 0 ? (
+                <li class="fn-vacio" style="padding:18px 12px"><i class="bi bi-check2-circle" aria-hidden="true"></i>No hay inmobiliarias ni constructoras pendientes por aprobar.</li>
+              ) : (
+                <>
+                  {(resumen.pendientes?.inmobiliarias ?? []).map((inm) => (
+                    <li class="pl-notif-item pl-notif-item--nueva">
+                      <div class="pl-notif-cuerpo">
+                        <strong>{inm.nombre} <span class="fn-chip fn-chip--pend">Inmobiliaria</span></strong>
+                        <p>{inm.ciudad ?? "Sin ciudad"}{inm.contacto ? ` · ${inm.contacto}` : ""}{inm.correo ? ` · ${inm.correo}` : ""}</p>
+                      </div>
+                      <button type="button" class="fn-btn fn-btn--mini" data-sa-aprobar="inmobiliaria" data-sa-id={inm.inmobiliariaID}>
+                        <i class="bi bi-check-lg" aria-hidden="true"></i> Activar
+                      </button>
+                    </li>
+                  ))}
+                  {(resumen.pendientes?.constructoras ?? []).map((con) => (
+                    <li class="pl-notif-item pl-notif-item--nueva">
+                      <div class="pl-notif-cuerpo">
+                        <strong>{con.nombre} <span class="fn-chip fn-chip--pend">Constructora</span></strong>
+                        <p>{con.ciudad ?? "Sin ciudad"}{con.contacto ? ` · ${con.contacto}` : ""}{con.correo ? ` · ${con.correo}` : ""}</p>
+                      </div>
+                      <button type="button" class="fn-btn fn-btn--mini" data-sa-aprobar="constructora" data-sa-id={con.constructoraID}>
+                        <i class="bi bi-check-lg" aria-hidden="true"></i> Activar
+                      </button>
+                    </li>
+                  ))}
+                </>
+              )}
+            </ul>
+          </article>
+
           <div class="pl-estados-grid">
             <section class="pl-card">
               <div class="pl-card-head">
@@ -202,6 +252,42 @@ const iconoEstadoProp = (estado: string) => {
             </section>
           </div>
 
+          <!-- Actividad reciente -->
+          <article class="pl-card">
+            <div class="pl-card-head">
+              <div class="pl-card-titulo">
+                <div class="pl-card-ico"><i class="bi bi-clock-history" aria-hidden="true"></i></div>
+                <div>
+                  <h2>Actividad reciente de cuentas</h2>
+                  <small>Últimos usuarios registrados en la plataforma.</small>
+                </div>
+              </div>
+              <div class="fn-acciones">
+                <button type="button" class="fn-btn fn-btn--sec fn-btn--mini" id="saExportActCsv"><i class="bi bi-download" aria-hidden="true"></i> CSV</button>
+                <a class="fn-btn fn-btn--sec fn-btn--mini" href="/superadmin/usuarios">Ver todos</a>
+              </div>
+            </div>
+            {(resumen.actividadReciente ?? []).length === 0 ? (
+              <p class="fn-muted" style="margin:0">Sin registros recientes.</p>
+            ) : (
+              <div class="fn-tabla-wrap">
+                <table class="fn-tabla" id="saActTabla" style="min-width:520px">
+                  <thead><tr><th>Usuario</th><th>Rol</th><th>Estado</th><th>Registro</th></tr></thead>
+                  <tbody>
+                    {(resumen.actividadReciente ?? []).map((u) => (
+                      <tr>
+                        <td><strong>{u.nombre}</strong><br><small class="fn-muted">{u.correo}</small></td>
+                        <td>{u.nombreRol}</td>
+                        <td><span class={`fn-chip ${u.estadoCuenta === "Activa" ? "fn-chip--ok" : "fn-chip--mal"}`}>{u.estadoCuenta}</span></td>
+                        <td>{u.fechaRegistro ? new Date(u.fechaRegistro).toLocaleDateString("es-CO", { day: "numeric", month: "short", year: "numeric" }) : "—"}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </article>
+
           <article class="pl-card">
             <div class="pl-card-head">
               <div class="pl-card-titulo">
@@ -249,9 +335,39 @@ const iconoEstadoProp = (estado: string) => {
 </div>
 
 <script>
+  import { api, aviso, exportarCsv } from "../funciones/comun";
+
   const tag = document.getElementById("saFechaTag");
   if (tag) {
     const f = new Date().toLocaleDateString("es-CO", { weekday: "long", day: "numeric", month: "long" });
     tag.textContent = f.charAt(0).toUpperCase() + f.slice(1);
   }
+
+  document.getElementById("saPendLista")?.addEventListener("click", async (ev) => {
+    const btn = (ev.target as HTMLElement).closest<HTMLButtonElement>("[data-sa-aprobar]");
+    if (!btn) return;
+    btn.disabled = true;
+    try {
+      const r = await api("/superadmin/aprobar", "PATCH", {
+        tipo: btn.dataset.saAprobar,
+        id: Number(btn.dataset.saId),
+      });
+      aviso(r.mensaje ?? "Activado correctamente");
+      btn.closest("li")?.remove();
+      const ul = document.getElementById("saPendLista");
+      if (ul && !ul.querySelector("li")) {
+        ul.innerHTML = `<li class="fn-vacio" style="padding:18px 12px"><i class="bi bi-check2-circle" aria-hidden="true"></i>No hay inmobiliarias ni constructoras pendientes por aprobar.</li>`;
+      }
+    } catch (e) {
+      aviso((e as Error).message, "error");
+      btn.disabled = false;
+    }
+  });
+
+  document.getElementById("saExportActCsv")?.addEventListener("click", () => {
+    const rows = [...document.querySelectorAll<HTMLTableRowElement>("#saActTabla tbody tr")].map((tr) =>
+      [...tr.querySelectorAll("td")].map((td) => td.innerText.replace(/\n/g, " · ").trim()),
+    );
+    exportarCsv("actividad-reciente-superadmin.csv", ["Usuario", "Rol", "Estado", "Registro"], rows);
+  });
 </script>

@@ -12,7 +12,7 @@ import NotifModalPanel from "../../components/funciones/NotifModalPanel.astro";
           <span class="co-hero-tag"><i class="bi bi-people-fill" aria-hidden="true"></i> Equipo técnico</span>
         </div>
         <h1>Trabajadores</h1>
-        <p>Crea las cuentas de tu equipo. Cada trabajador entra con su correo y ve solo sus tareas.</p>
+        <p>Crea las cuentas de tu equipo, revisa su carga de tareas y administra su estado.</p>
       </div>
       <div class="co-hero-acc">
         <button class="co-hero-btn" id="btnNuevoTrab" type="button"><i class="bi bi-person-plus" aria-hidden="true"></i> Nuevo trabajador</button>
@@ -46,8 +46,19 @@ import NotifModalPanel from "../../components/funciones/NotifModalPanel.astro";
           <div class="co-card-ico"><i class="bi bi-person-lines-fill" aria-hidden="true"></i></div>
           <div>
             <h2>Directorio de trabajadores</h2>
-            <small>Administra las cuentas activas y revisa la carga de tareas abiertas.</small>
+            <small>Filtra tu equipo y consulta el nivel de carga antes de asignar un nuevo servicio.</small>
           </div>
+        </div>
+        <div class="trab-toolbar">
+          <input type="search" id="trabBuscar" placeholder="Buscar por nombre o correo…" aria-label="Buscar trabajadores" />
+          <select id="trabFiltroEstado" aria-label="Filtrar por estado">
+            <option value="">Todos los estados</option>
+            <option value="Activa">Activa</option>
+            <option value="Inactiva">Inactiva</option>
+          </select>
+          <button type="button" class="fn-btn fn-btn--sec fn-btn--mini" id="trabExportCsv">
+            <i class="bi bi-download" aria-hidden="true"></i> Exportar CSV
+          </button>
         </div>
       </div>
       <div id="trabLista"></div>
@@ -74,34 +85,95 @@ import NotifModalPanel from "../../components/funciones/NotifModalPanel.astro";
   </dialog>
 </Layout>
 
+<style is:global>
+  .trab-toolbar { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+  .trab-toolbar input, .trab-toolbar select {
+    height:36px; border:1px solid var(--co-linea, #e2ddd0); border-radius:8px;
+    padding:0 10px; font:inherit; font-size:.84rem; background:#f8f6f0; color:var(--co-ink, #253229);
+  }
+  .trab-toolbar input { min-width:210px; }
+  .trab-carga { display:grid; gap:4px; min-width:130px; }
+  .trab-carga-top { display:flex; justify-content:space-between; align-items:center; gap:6px; font-size:.78rem; font-weight:600; }
+  .trab-carga-bar { height:7px; border-radius:99px; background:#ece7da; overflow:hidden; }
+  .trab-carga-bar > span { display:block; height:100%; border-radius:99px; }
+</style>
+
 <script>
-  import { api, esc, aviso } from "../../components/funciones/comun";
+  import { api, esc, aviso, exportarCsv } from "../../components/funciones/comun";
   const lista = document.getElementById("trabLista")!;
   const dlg = document.getElementById("dlgTrab") as HTMLDialogElement;
+  const inputBuscar = document.getElementById("trabBuscar") as HTMLInputElement;
+  const selEstado = document.getElementById("trabFiltroEstado") as HTMLSelectElement;
+
+  let todos: any[] = [];
+  let visibles: any[] = [];
+
+  function indicadorCarga(n: number): string {
+    const pct = Math.min(100, n * 25);
+    const nivel = n === 0 ? ["Libre", "#1b6e3c", "fn-chip--ok"]
+      : n <= 2 ? ["Normal", "#c8ad72", "fn-chip--pend"]
+      : ["Alta", "#b3261e", "fn-chip--mal"];
+    return `<div class="trab-carga">
+      <div class="trab-carga-top"><span>${n} ${n === 1 ? "tarea" : "tareas"}</span><span class="fn-chip ${nivel[2]}">${nivel[0]}</span></div>
+      <div class="trab-carga-bar"><span style="width:${pct}%;background:${nivel[1]}"></span></div>
+    </div>`;
+  }
+
+  function renderTabla() {
+    const q = inputBuscar.value.trim().toLowerCase();
+    const est = selEstado.value;
+    visibles = todos.filter((t) => {
+      if (est && t.estadoCuenta !== est) return false;
+      if (!q) return true;
+      return `${t.nombre ?? ""} ${t.correo ?? ""} ${t.telefono ?? ""}`.toLowerCase().includes(q);
+    });
+
+    if (!visibles.length) {
+      lista.innerHTML = `<div class="fn-vacio"><i class="bi bi-people"></i>${
+        todos.length ? "Ningún trabajador coincide con los filtros." : "Aún no has creado trabajadores. Crea el primero para poder asignarle tareas."
+      }</div>`;
+      return;
+    }
+
+    lista.innerHTML = `<div class="fn-tabla-wrap"><table class="fn-tabla"><thead><tr>
+      <th>Nombre</th><th>Correo</th><th>Teléfono</th><th>Carga de trabajo</th><th>Estado</th><th></th></tr></thead><tbody>` +
+      visibles.map((t: any) => {
+        const activa = t.estadoCuenta === "Activa";
+        return `<tr>
+          <td><strong>${esc(t.nombre)}</strong></td>
+          <td>${esc(t.correo)}</td>
+          <td>${esc(t.telefono ?? "—")}</td>
+          <td>${indicadorCarga(Number(t.tareasAbiertas ?? 0))}</td>
+          <td><span class="fn-chip ${activa ? "fn-chip--ok" : "fn-chip--mal"}">${esc(t.estadoCuenta)}</span></td>
+          <td><button class="fn-btn fn-btn--sec fn-btn--mini" data-id="${Number(t.usuarioID)}" data-nuevo="${activa ? "Inactiva" : "Activa"}" type="button">${activa ? "Desactivar" : "Activar"}</button></td>
+        </tr>`;
+      }).join("") + "</tbody></table></div>";
+  }
 
   async function cargar() {
     try {
       const { trabajadores } = await api("/organizacion/trabajadores");
-      const activos = trabajadores.filter((t: any) => t.estadoCuenta === "Activa").length;
-      const tareas = trabajadores.reduce((acc: number, t: any) => acc + Number(t.tareasAbiertas ?? 0), 0);
-      document.getElementById("trabStatTotal")!.textContent = String(trabajadores.length);
+      todos = trabajadores ?? [];
+      const activos = todos.filter((t: any) => t.estadoCuenta === "Activa").length;
+      const tareas = todos.reduce((acc: number, t: any) => acc + Number(t.tareasAbiertas ?? 0), 0);
+      document.getElementById("trabStatTotal")!.textContent = String(todos.length);
       document.getElementById("trabStatActivos")!.textContent = String(activos);
-      document.getElementById("trabStatInactivos")!.textContent = String(trabajadores.length - activos);
+      document.getElementById("trabStatInactivos")!.textContent = String(todos.length - activos);
       document.getElementById("trabStatTareas")!.textContent = String(tareas);
-
-      if (!trabajadores.length) {
-        lista.innerHTML = `<div class="fn-vacio"><i class="bi bi-people"></i>Aún no has creado trabajadores. Crea el primero para poder asignarle tareas.</div>`;
-        return;
-      }
-      lista.innerHTML = `<div class="fn-tabla-wrap"><table class="fn-tabla"><thead><tr><th>Nombre</th><th>Correo</th><th>Teléfono</th><th>Tareas abiertas</th><th>Estado</th><th></th></tr></thead><tbody>` +
-        trabajadores.map((t: any) => {
-          const activa = t.estadoCuenta === "Activa";
-          return `<tr><td><strong>${esc(t.nombre)}</strong></td><td>${esc(t.correo)}</td><td>${esc(t.telefono ?? "—")}</td><td>${Number(t.tareasAbiertas)}</td>
-            <td><span class="fn-chip ${activa ? "fn-chip--ok" : "fn-chip--mal"}">${esc(t.estadoCuenta)}</span></td>
-            <td><button class="fn-btn fn-btn--sec fn-btn--mini" data-id="${Number(t.usuarioID)}" data-nuevo="${activa ? "Inactiva" : "Activa"}" type="button">${activa ? "Desactivar" : "Activar"}</button></td></tr>`;
-        }).join("") + "</tbody></table></div>";
+      renderTabla();
     } catch (e) { lista.innerHTML = `<div class="fn-vacio">${esc((e as Error).message)}</div>`; }
   }
+
+  inputBuscar.addEventListener("input", renderTabla);
+  selEstado.addEventListener("change", renderTabla);
+  document.getElementById("trabExportCsv")!.addEventListener("click", () => {
+    exportarCsv(
+      "trabajadores-constructora.csv",
+      ["Nombre", "Correo", "Teléfono", "Tareas abiertas", "Estado"],
+      visibles.map((t) => [t.nombre, t.correo, t.telefono ?? "", Number(t.tareasAbiertas ?? 0), t.estadoCuenta]),
+    );
+  });
+
   lista.addEventListener("click", async (ev) => {
     const b = (ev.target as HTMLElement).closest<HTMLElement>("[data-nuevo]");
     if (!b) return;

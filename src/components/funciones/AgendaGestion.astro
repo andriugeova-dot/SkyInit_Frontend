@@ -31,7 +31,25 @@ const { mostrarCabecera = true } = Astro.props;
     <div class="cal-wrap"><div class="cal" id="cal" role="grid" aria-label="Calendario semanal"></div></div>
   </div>
 
-  <h2 style="font-size:1.1rem;font-weight:700;margin:0 0 10px">Todas las citas</h2>
+  <div class="ag-lista-head">
+    <h2 style="font-size:1.1rem;font-weight:700;margin:0">Todas las citas</h2>
+    <div class="ag-lista-filtros">
+      <input type="search" id="agBuscar" placeholder="Buscar cliente, propiedad o notas…" aria-label="Buscar citas" />
+      <select id="agFiltroEstado" aria-label="Filtrar por estado">
+        <option value="">Todos los estados</option>
+        <option value="Pendiente">Pendiente</option>
+        <option value="Confirmada">Confirmada</option>
+        <option value="Finalizada">Finalizada</option>
+        <option value="Cancelada">Cancelada</option>
+      </select>
+      <select id="agFiltroProp" aria-label="Filtrar por propiedad">
+        <option value="">Todas las propiedades</option>
+      </select>
+      <button type="button" class="fn-btn fn-btn--sec fn-btn--mini" id="agExportCsv">
+        <i class="bi bi-download" aria-hidden="true"></i> Exportar CSV
+      </button>
+    </div>
+  </div>
   <div id="agLista"></div>
 
   <dialog class="fn-modal" id="dlgCita">
@@ -77,14 +95,22 @@ const { mostrarCabecera = true } = Astro.props;
   .cal-color { width:12px; height:12px; border-radius:3px; display:inline-block; }
   .cal-color--pend { background:#c08a12; } .cal-color--conf { background:#1f5fa8; } .cal-color--fin { background:#1b6e3c; } .cal-color--cancel { background:#b3261e; }
   .cal-cita--cancel { border-left-color:#b3261e; background:#fbe9e7; text-decoration:line-through; opacity:.75; }
+  .ag-lista-head { display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:12px; }
+  .ag-lista-filtros { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+  .ag-lista-filtros input, .ag-lista-filtros select {
+    height:34px; border:1px solid var(--fn-line); border-radius:8px; padding:0 10px;
+    font:inherit; font-size:.84rem; background:#fff; color:var(--fn-ink);
+  }
+  .ag-lista-filtros input { min-width:210px; }
 </style>
 
 <script>
-  import { api, esc, fechaHora, aviso, claseEstado } from "./comun";
+  import { api, esc, fechaHora, aviso, claseEstado, exportarCsv } from "./comun";
   const dlg = document.getElementById("dlgCita") as HTMLDialogElement;
   const cal = document.getElementById("cal")!;
   const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
   let visitas: any[] = [];
+  let visitasVisibles: any[] = [];
   let editando: any = null;
   let lunes = inicioSemana(new Date());
   const HORAS = Array.from({ length: 13 }, (_, i) => i + 7); // 7:00 a 19:00
@@ -112,15 +138,39 @@ const { mostrarCabecera = true } = Astro.props;
     cal.innerHTML = html;
   }
 
+  function poblarFiltroPropiedades() {
+    const sel = $<HTMLSelectElement>("agFiltroProp");
+    const actual = sel.value;
+    const props = [...new Set(visitas.map((v) => v.propiedad).filter(Boolean))].sort();
+    sel.innerHTML = `<option value="">Todas las propiedades</option>` + props.map((p) => `<option value="${esc(p)}">${esc(p)}</option>`).join("");
+    if (props.includes(actual)) sel.value = actual;
+  }
+
   function pintarLista() {
     const cuenta = (e: string) => visitas.filter((v) => v.estado === e).length;
     const proximas = visitas.filter((v) => (v.estado === "Pendiente" || v.estado === "Confirmada") && new Date(v.fechaVisita) > new Date()).length;
     $("agStats").innerHTML = `<div class="fn-stat"><b>${proximas}</b><span>Próximas</span></div>` +
       ["Pendiente", "Confirmada", "Finalizada", "Cancelada"].map((e) => `<div class="fn-stat ${e === "Pendiente" && cuenta(e) ? "fn-stat--alerta" : ""}"><b>${cuenta(e)}</b><span>${e}s</span></div>`).join("");
+
+    const q = $<HTMLInputElement>("agBuscar").value.trim().toLowerCase();
+    const est = $<HTMLSelectElement>("agFiltroEstado").value;
+    const prop = $<HTMLSelectElement>("agFiltroProp").value;
+    visitasVisibles = visitas.filter((v) => {
+      if (est && v.estado !== est) return false;
+      if (prop && v.propiedad !== prop) return false;
+      if (!q) return true;
+      return `${v.solicitante ?? ""} ${v.propiedad ?? ""} ${v.direccion ?? ""} ${v.notas ?? ""} ${v.correo ?? ""} ${v.telefono ?? ""}`.toLowerCase().includes(q);
+    });
+
     const lista = $("agLista");
-    if (!visitas.length) { lista.innerHTML = `<div class="fn-vacio"><i class="bi bi-calendar-week" aria-hidden="true"></i>Aún no hay citas. Crea la primera con “Nueva cita” o haz clic en una hora del calendario.</div>`; return; }
+    if (!visitasVisibles.length) {
+      lista.innerHTML = `<div class="fn-vacio"><i class="bi bi-calendar-week" aria-hidden="true"></i>${
+        visitas.length ? "Ninguna cita coincide con los filtros seleccionados." : "Aún no hay citas. Crea la primera con “Nueva cita” o haz clic en una hora del calendario."
+      }</div>`;
+      return;
+    }
     lista.innerHTML = `<div class="fn-tabla-wrap"><table class="fn-tabla"><thead><tr><th>Fecha</th><th>Propiedad</th><th>Cliente</th><th>Notas</th><th>Estado</th><th></th></tr></thead><tbody>` +
-      visitas.map((v) => {
+      visitasVisibles.map((v) => {
         const id = Number(v.agendaID), activa = v.estado === "Pendiente" || v.estado === "Confirmada";
         return `<tr><td>${esc(fechaHora(v.fechaVisita))}</td><td><strong>${esc(v.propiedad)}</strong><br><small class="fn-muted">${esc(v.direccion)}</small></td>
           <td>${esc(v.solicitante)}<br><small class="fn-muted">${esc(v.telefono ?? v.correo ?? "")}</small></td><td>${esc(v.notas ?? "—")}</td>
@@ -134,7 +184,7 @@ const { mostrarCabecera = true } = Astro.props;
   }
 
   async function cargar() {
-    try { visitas = (await api("/agenda/gestion")).visitas; pintarCalendario(); pintarLista(); }
+    try { visitas = (await api("/agenda/gestion")).visitas; poblarFiltroPropiedades(); pintarCalendario(); pintarLista(); }
     catch (e) { $("agLista").innerHTML = `<div class="fn-vacio">${esc((e as Error).message)}</div>`; pintarCalendario(); }
   }
 
@@ -204,6 +254,18 @@ const { mostrarCabecera = true } = Astro.props;
       }
       dlg.close(); cargar();
     } catch (e) { aviso((e as Error).message, "error"); }
+  });
+  $("agBuscar").addEventListener("input", pintarLista);
+  $("agFiltroEstado").addEventListener("change", pintarLista);
+  $("agFiltroProp").addEventListener("change", pintarLista);
+  $("agExportCsv").addEventListener("click", () => {
+    exportarCsv(
+      "agenda-citas.csv",
+      ["Fecha", "Propiedad", "Dirección", "Cliente", "Teléfono", "Correo", "Notas", "Estado"],
+      visitasVisibles.map((v) => [
+        fechaHora(v.fechaVisita), v.propiedad, v.direccion, v.solicitante, v.telefono ?? "", v.correo ?? "", v.notas ?? "", v.estado,
+      ]),
+    );
   });
   cargar();
 </script>

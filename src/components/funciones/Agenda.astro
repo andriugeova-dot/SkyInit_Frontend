@@ -49,7 +49,36 @@ const { modo, mostrarCabecera = true } = Astro.props;
       </div>
     </form>
   </dialog>
+
+  <dialog class="fn-modal" id="dlgReprogramar">
+    <form class="fn-modal-cuerpo fn-form" id="formReprogramar">
+      <h2>Reprogramar visita</h2>
+      <p class="fn-muted" id="reprogPropiedad" style="margin:0"></p>
+      <input type="hidden" id="reprogId" />
+      <label>Nueva fecha y hora
+        <input type="datetime-local" id="reprogFecha" required />
+      </label>
+      <label>Notas (opcional)
+        <textarea id="reprogNotas" rows="2" maxlength="300"></textarea>
+      </label>
+      <div class="fn-modal-pie">
+        <button class="fn-btn fn-btn--sec" type="button" id="btnCerrarReprog">Cancelar</button>
+        <button class="fn-btn" type="submit">Guardar nueva fecha</button>
+      </div>
+    </form>
+  </dialog>
 </section>
+
+<style is:global>
+  .ag-prop-link {
+    border: 0; background: none; padding: 0; font: inherit; font-weight: 700;
+    color: var(--pl-ink, var(--fn-ink)); text-align: left; cursor: pointer;
+    text-decoration: underline; text-decoration-color: rgba(20, 83, 45, 0.35); text-underline-offset: 2px;
+  }
+  .ag-prop-link:hover { color: var(--pl-acc-osc, var(--fn-acc)); }
+  .ag-prop-ext { margin-left: 6px; color: var(--fn-muted); font-size: 0.78rem; }
+  .ag-prop-ext:hover { color: var(--pl-acc-osc, var(--fn-acc)); }
+</style>
 
 <script>
   import { api, esc, fechaHora, aviso, claseEstado } from "./comun";
@@ -58,12 +87,15 @@ const { modo, mostrarCabecera = true } = Astro.props;
   const lista = document.getElementById("agendaLista")!;
   const stats = document.getElementById("agendaStats")!;
   const dlg = document.getElementById("dlgVisita") as HTMLDialogElement;
+  const dlgReprog = document.getElementById("dlgReprogramar") as HTMLDialogElement;
 
   const unificado = root.dataset.unificado === "1";
+  let visitasCache: any[] = [];
 
   async function cargar() {
     try {
       const { visitas } = await api(modo === "usuario" ? "/agenda/mias" : "/agenda/gestion");
+      visitasCache = visitas ?? [];
       const cuenta = (e: string) => visitas.filter((v: any) => v.estado === e).length;
       if (unificado) {
         const pend = cuenta("Pendiente");
@@ -92,10 +124,15 @@ const { modo, mostrarCabecera = true } = Astro.props;
           const acciones: string[] = [];
           if (v.estado !== "Cancelada" && v.estado !== "Finalizada") {
             if (modo === "gestion" && v.estado === "Pendiente") acciones.push(`<button class="fn-btn fn-btn--mini" data-estado="2" data-id="${id}" type="button">Confirmar</button>`);
+            if (modo === "usuario" && v.estado === "Pendiente") acciones.push(`<button class="fn-btn fn-btn--sec fn-btn--mini" data-reprogramar="${id}" type="button"><i class="bi bi-calendar2-event" aria-hidden="true"></i> Reprogramar</button>`);
             acciones.push(`<button class="fn-btn fn-btn--mal fn-btn--mini" data-estado="3" data-id="${id}" type="button">Cancelar</button>`);
           }
           return `<tr><td>${esc(fechaHora(v.fechaVisita))}</td>
-            <td><strong>${esc(v.propiedad)}</strong><br><small class="fn-muted">${esc(v.direccion)}${v.ciudad ? ", " + esc(v.ciudad) : ""}</small></td>
+            <td>
+              <button type="button" class="ag-prop-link" data-detalle="propiedad:${Number(v.propiedadID)}" title="Ver detalle de la propiedad">${esc(v.propiedad)}</button>
+              <a class="ag-prop-ext" href="/propiedades?query=${encodeURIComponent(v.propiedad ?? "")}" title="Ver en catálogo"><i class="bi bi-box-arrow-up-right" aria-hidden="true"></i></a>
+              <br><small class="fn-muted">${esc(v.direccion)}${v.ciudad ? ", " + esc(v.ciudad) : ""}</small>
+            </td>
             ${modo === "gestion" ? `<td>${esc(v.solicitante)}<br><small class="fn-muted">${esc(v.telefono ?? v.correo)}</small></td>` : ""}
             <td>${esc(v.notas ?? "—")}</td>
             <td><span class="fn-chip ${claseEstado(v.estado)}">${esc(v.estado)}</span></td>
@@ -105,6 +142,25 @@ const { modo, mostrarCabecera = true } = Astro.props;
   }
 
   lista.addEventListener("click", async (ev) => {
+    const btnReprog = (ev.target as HTMLElement).closest<HTMLButtonElement>("[data-reprogramar]");
+    if (btnReprog) {
+      const id = Number(btnReprog.dataset.reprogramar);
+      const v = visitasCache.find((x) => Number(x.agendaID) === id);
+      if (!v) return;
+      (document.getElementById("reprogId") as HTMLInputElement).value = String(id);
+      document.getElementById("reprogPropiedad")!.textContent = v.propiedad ?? "";
+      const min = new Date(Date.now() + 2 * 3600 * 1000); min.setMinutes(min.getMinutes() - min.getTimezoneOffset());
+      const fechaIn = document.getElementById("reprogFecha") as HTMLInputElement;
+      fechaIn.min = min.toISOString().slice(0, 16);
+      const actual = new Date(v.fechaVisita);
+      if (!Number.isNaN(actual.getTime())) {
+        actual.setMinutes(actual.getMinutes() - actual.getTimezoneOffset());
+        fechaIn.value = actual.toISOString().slice(0, 16);
+      }
+      (document.getElementById("reprogNotas") as HTMLTextAreaElement).value = v.notas ?? "";
+      dlgReprog.showModal();
+      return;
+    }
     const btn = (ev.target as HTMLElement).closest<HTMLButtonElement>("[data-estado]");
     if (!btn) return;
     btn.disabled = true;
@@ -112,6 +168,21 @@ const { modo, mostrarCabecera = true } = Astro.props;
       const r = await api(`/agenda/${btn.dataset.id}/estado`, "PATCH", { estadoAgendaID: Number(btn.dataset.estado) });
       aviso(r.mensaje); cargar();
     } catch (e) { aviso((e as Error).message, "error"); btn.disabled = false; }
+  });
+
+  document.getElementById("btnCerrarReprog")?.addEventListener("click", () => dlgReprog.close());
+  document.getElementById("formReprogramar")?.addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    const id = (document.getElementById("reprogId") as HTMLInputElement).value;
+    const fechaVal = (document.getElementById("reprogFecha") as HTMLInputElement).value;
+    const notasVal = (document.getElementById("reprogNotas") as HTMLTextAreaElement).value.trim();
+    try {
+      const r = await api(`/agenda/${id}/reprogramar`, "PATCH", {
+        fechaVisita: new Date(fechaVal).toISOString(),
+        notas: notasVal || null,
+      });
+      dlgReprog.close(); aviso(r.mensaje); cargar();
+    } catch (e) { aviso((e as Error).message, "error"); }
   });
 
   if (modo === "usuario") {

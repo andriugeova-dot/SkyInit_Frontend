@@ -42,17 +42,42 @@ import "../funciones/panelUnificado.css";
   </div>
 
   <div class="filter-bar mb-4">
-    <div class="input-group">
-      <span class="input-group-text bg-white border-end-0">
-        <i class="bi bi-search text-muted"></i>
-      </span>
-      <input
-        type="search"
-        id="inputBuscar"
-        class="form-control border-start-0"
-        placeholder="Buscar por usuario, servicio, estado o ID..."
-        autocomplete="off"
-      />
+    <div class="row g-2 align-items-center">
+      <div class="col-md-5">
+        <div class="input-group">
+          <span class="input-group-text bg-white border-end-0">
+            <i class="bi bi-search text-muted"></i>
+          </span>
+          <input
+            type="search"
+            id="inputBuscar"
+            class="form-control border-start-0"
+            placeholder="Buscar por usuario, servicio, estado o ID..."
+            autocomplete="off"
+          />
+        </div>
+      </div>
+      <div class="col-md-3">
+        <select id="filtroEstadoSol" class="form-select" aria-label="Filtrar por estado">
+          <option value="">Todos los estados</option>
+          <option value="aun no aceptada">Aun no aceptada</option>
+          <option value="aceptada">Aceptada</option>
+          <option value="en proceso">En proceso</option>
+          <option value="finalizada">Finalizada</option>
+          <option value="cancelada">Cancelada</option>
+        </select>
+      </div>
+      <div class="col-md-2">
+        <select id="ordenFechaSol" class="form-select" aria-label="Ordenar por fecha">
+          <option value="desc">Más recientes</option>
+          <option value="asc">Más antiguas</option>
+        </select>
+      </div>
+      <div class="col-md-2 d-grid">
+        <button type="button" id="btnExportCsvSol" class="fn-btn fn-btn--sec fn-btn--mini" style="justify-content:center;height:38px">
+          <i class="bi bi-download" aria-hidden="true"></i> Exportar CSV
+        </button>
+      </div>
     </div>
   </div>
 
@@ -337,7 +362,26 @@ import "../funciones/panelUnificado.css";
 
   function aplicarBusqueda(): void {
     const q = inputBuscar.value.trim().toLowerCase();
-    const visibles = listado.filter((item) => coincideBusqueda(item, q));
+    const estFiltro = (document.getElementById("filtroEstadoSol") as HTMLSelectElement | null)?.value.trim().toLowerCase() ?? "";
+    const orden = (document.getElementById("ordenFechaSol") as HTMLSelectElement | null)?.value ?? "desc";
+
+    const visibles = listado
+      .filter((item) => {
+        if (!coincideBusqueda(item, q)) return false;
+        if (!estFiltro) return true;
+        const estItem = (item.Estado ?? "").toLowerCase();
+        if (estFiltro === "finalizada") return estItem.includes("finaliz") || estItem.includes("resuel") || estItem.includes("complet");
+        if (estFiltro === "aun no aceptada") return estItem.includes("no acept") || estItem.includes("pendiente");
+        if (estFiltro === "aceptada") return estItem.includes("acept") && !estItem.includes("no");
+        return estItem.includes(estFiltro);
+      })
+      .sort((a, b) => {
+        const ta = new Date(a.FechaSolicitud ?? 0).getTime();
+        const tb = new Date(b.FechaSolicitud ?? 0).getTime();
+        return orden === "asc" ? ta - tb : tb - ta;
+      });
+
+    (window as any).__solVisibles = visibles;
     statPagina.textContent = String(visibles.length);
     if (visibles.length === 0) {
       tableBody.replaceChildren();
@@ -517,6 +561,26 @@ import "../funciones/panelUnificado.css";
     void eliminarSolicitud();
   });
   inputBuscar.addEventListener("input", aplicarBusqueda);
+  document.getElementById("filtroEstadoSol")?.addEventListener("change", aplicarBusqueda);
+  document.getElementById("ordenFechaSol")?.addEventListener("change", aplicarBusqueda);
+  document.getElementById("btnExportCsvSol")?.addEventListener("click", () => {
+    const rows: SolicitudItem[] = (window as any).__solVisibles ?? listado;
+    const celda = (v: unknown) => {
+      const s = String(v ?? "").replace(/\r?\n/g, " ").trim();
+      return /[",;\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+    };
+    const lineas = [
+      ["ID", "Usuario", "Servicio", "Estado", "Fecha solicitud", "Fecha finalización", "Notas"].map(celda).join(","),
+      ...rows.map((r) => [r.SolicitudID, r.Usuario, r.Servicio, r.Estado ?? "", r.FechaSolicitud ?? "", r.FechaFinalizacion ?? "", r.Notas ?? ""].map(celda).join(",")),
+    ];
+    const blob = new Blob(["\uFEFF" + lineas.join("\r\n")], { type: "text/csv;charset=utf-8;" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "solicitudes-servicios.csv";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  });
   document.getElementById("btnCerrarModalSolicitud")?.addEventListener("click", cerrarModalSolicitud);
   document.getElementById("btnCancelarModalSolicitud")?.addEventListener("click", cerrarModalSolicitud);
   modalEl.addEventListener("click", (ev) => {
