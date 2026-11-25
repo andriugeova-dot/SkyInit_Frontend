@@ -1,7 +1,29 @@
 ---
 import Layout from "../../layouts/LayoutVistas.astro";
 import Mantenimiento from "../../components/funciones/Mantenimiento.astro";
+import NotifModalPanel from "../../components/funciones/NotifModalPanel.astro";
+import "../../components/funciones/funciones.css";
+import "../../components/funciones/panelUnificado.css";
 ---
 <Layout>
-  <Mantenimiento modo="admin" />
+  <div class="pl-page pl-theme-admin">
+    <header class="pl-hero">
+      <div class="pl-hero-info">
+        <div class="pl-hero-tags">
+          <span class="pl-hero-tag"><i class="bi bi-wrench-adjustable" aria-hidden="true"></i> Control técnico</span>
+        </div>
+        <h1>Mantenimiento</h1>
+        <p>Supervisa solicitudes de mantenimiento, asigna constructoras y revisa avances.</p>
+      </div>
+      <div class="pl-hero-acc">
+        <a class="pl-hero-btn" href="/admin/solicitudes"><i class="bi bi-envelope-fill" aria-hidden="true"></i> Solicitudes</a>
+        <a class="pl-hero-btn pl-hero-btn--sec" href="/admin"><i class="bi bi-arrow-left" aria-hidden="true"></i> Volver al panel</a>
+        <NotifModalPanel />
+      </div>
+    </header>
+
+    <section class="pl-card pl-mant-wrap">
+      <Mantenimiento modo="admin" titulo={false} />
+    </section>
+  </div>
 </Layout>

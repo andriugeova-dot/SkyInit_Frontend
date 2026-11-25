@@ -1,4 +1,7 @@
 ---
+import NotifModalPanel from "../funciones/NotifModalPanel.astro";
+import "../funciones/funciones.css";
+import "../funciones/panelUnificado.css";
 import "./usuarios.css";
 ---
 
@@ -58,34 +61,55 @@ import "./usuarios.css";
   .tag-otra { color:#ef4444; font-size:0.68rem; margin-left:0.25rem; }
 </style>
 
-<div class="page" id="page-inmobiliarias">
-    <header class="page-header">
-        <div>
+<div class="page pl-page pl-theme-superadmin" id="page-inmobiliarias" style="max-width:1240px">
+    <header class="pl-hero">
+        <div class="pl-hero-info">
+            <div class="pl-hero-tags">
+                <span class="pl-hero-tag"><i class="bi bi-shop" aria-hidden="true"></i> Red de inmobiliarias</span>
+            </div>
             <h1>Inmobiliarias</h1>
             <p>Gestiona las inmobiliarias registradas y sus usuarios asignados</p>
         </div>
-        <button type="button" class="btn-nueva" id="btn-nueva-inm">+ Nueva inmobiliaria</button>
+        <div class="pl-hero-acc">
+            <button type="button" class="pl-hero-btn" id="btn-nueva-inm"><i class="bi bi-plus-lg" aria-hidden="true"></i> Nueva inmobiliaria</button>
+            <a class="pl-hero-btn pl-hero-btn--sec" href="/superadmin"><i class="bi bi-arrow-left" aria-hidden="true"></i> Volver al panel</a>
+            <NotifModalPanel />
+        </div>
     </header>
 
-    <div class="stats">
-        <div class="stat-card"><span class="stat-label">Total</span><span class="stat-value" id="si-total">—</span></div>
-        <div class="stat-card"><span class="stat-label">Activas</span><span class="stat-value" id="si-activas">—</span></div>
-        <div class="stat-card"><span class="stat-label">Pendientes</span><span class="stat-value" id="si-pendientes">—</span></div>
-        <div class="stat-card"><span class="stat-label">Inactivas</span><span class="stat-value" id="si-inactivas">—</span></div>
+    <div class="pl-kpis">
+        <div class="pl-kpi pl-kpi--destacado">
+            <div class="pl-kpi-top"><span class="pl-kpi-lbl">Total</span><span class="pl-kpi-ico"><i class="bi bi-shop" aria-hidden="true"></i></span></div>
+            <span class="pl-kpi-val" id="si-total">—</span>
+        </div>
+        <div class="pl-kpi pl-kpi--ok">
+            <div class="pl-kpi-top"><span class="pl-kpi-lbl">Activas</span><span class="pl-kpi-ico"><i class="bi bi-check-circle-fill" aria-hidden="true"></i></span></div>
+            <span class="pl-kpi-val" id="si-activas">—</span>
+        </div>
+        <div class="pl-kpi pl-kpi--alerta">
+            <div class="pl-kpi-top"><span class="pl-kpi-lbl">Pendientes</span><span class="pl-kpi-ico"><i class="bi bi-hourglass-split" aria-hidden="true"></i></span></div>
+            <span class="pl-kpi-val" id="si-pendientes">—</span>
+        </div>
+        <div class="pl-kpi">
+            <div class="pl-kpi-top"><span class="pl-kpi-lbl">Inactivas</span><span class="pl-kpi-ico"><i class="bi bi-pause-circle-fill" aria-hidden="true"></i></span></div>
+            <span class="pl-kpi-val" id="si-inactivas">—</span>
+        </div>
     </div>
 
-    <div class="table-wrap">
-        <table class="tabla">
-            <thead>
-                <tr>
-                    <th>ID</th><th>Nombre</th><th>Ciudad</th><th>Contacto</th>
-                    <th>Estado</th><th>Usuarios asignados</th><th>Acciones</th>
-                </tr>
-            </thead>
-            <tbody id="si-tbody">
-                <tr><td colspan="7" class="loading">Cargando…</td></tr>
-            </tbody>
-        </table>
+    <div class="pl-card">
+        <div class="table-wrap">
+            <table class="tabla">
+                <thead>
+                    <tr>
+                        <th>ID</th><th>Nombre</th><th>Ciudad</th><th>Contacto</th>
+                        <th>Estado</th><th>Usuarios asignados</th><th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="si-tbody">
+                    <tr><td colspan="7" class="loading">Cargando…</td></tr>
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
 

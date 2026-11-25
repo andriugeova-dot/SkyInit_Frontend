@@ -1,83 +1,118 @@
 ---
-import "./perfil.css"
+import "../funciones/funciones.css";
+import "./perfil.css";
+import "./constructora.css";
+import CambiarPassword from "../funciones/CambiarPassword.astro";
 ---
 
-<div class="perfil-page">
-    <h1>Perfil Constructora</h1>
-
-
-    <div id="alerta" class="alerta d-none" role="alert"></div>
-
-    <div class="perfil-grid">
-        <!-- LOGO -->
-        <section class="card logo-card">
-        <h2>Logo</h2>
-        <div class="logo-preview">
-            <img id="logoImg" src="" alt="Logo" class="d-none" />
-            <div id="logoPlaceholder" class="logo-placeholder">Sin logo</div>
-        </div>
-        <label class="btn-file">
-            Elegir imagen
-            <input type="file" id="inputLogo" accept="image/jpeg,image/png,image/webp" hidden />
-        </label>
-        <button type="button" class="btn btn-primary" id="btnSubirLogo" disabled>
-            Subir logo
-        </button>
-        <p class="hint">JPG, PNG o WebP · máx. 5 MB</p>
-        </section>
-
-        <!-- DATOS -->
-        <section class="card">
-            <h2>Datos</h2>
-            <form id="formPerfil">
-                <div class="campo">
-                <label for="nombre">Nombre *</label>
-                <input type="text" id="nombre" name="nombre" required />
-                </div>
-
-                <div class="campo">
-                <label for="descripcion">Descripción *</label>
-                <textarea id="descripcion" name="descripcion" rows="3" required></textarea>
-                </div>
-
-                <div class="fila">
-                <div class="campo">
-                    <label for="contacto">Contacto</label>
-                    <input type="text" id="contacto" name="contacto" />
-                </div>
-                <div class="campo">
-                    <label for="telefono">Teléfono</label>
-                    <input
-                        type="text"
-                        id="telefono"
-                        name="tel_constructora_sky"
-                        autocomplete="off"
-                        data-lpignore="true"
-                    />
-                </div>
-                </div>
-
-                <div class="fila">
-                    <div class="campo">
-                        <label for="correo">Correo</label>
-                        <input type="email" id="correo" name="correo" disabled readonly autocomplete="off" />
-                    </div>
-                    <div class="campo">
-                        <label for="ciudad">Ciudad</label>
-                        <input type="text" id="ciudad" name="ciudad" disabled readonly />
-                    </div>
-                </div>
-
-                <div class="campo inmo-section">
-                    <label>Inmobiliarias asociadas</label>
-                    <div id="lista-inmobiliarias" class="inmo-list"></div>
-                </div>
-                <button type="submit" class="btn btn-primary" id="btnGuardar">
-                Guardar cambios
-                </button>
-            </form>
-            </section>
+<div class="co-page co-perfil-page">
+  <header class="co-hero">
+    <div class="co-hero-info">
+      <div class="co-hero-tags">
+        <span class="co-hero-tag"><i class="bi bi-building" aria-hidden="true"></i> Perfil empresarial</span>
+      </div>
+      <h1>Perfil de la constructora</h1>
+      <p>Administra el logo, datos de contacto, inmobiliarias asociadas y contraseña.</p>
     </div>
+    <div class="co-hero-acc">
+      <a class="co-hero-btn co-hero-btn--sec" href="/constructora"><i class="bi bi-arrow-left" aria-hidden="true"></i> Volver al panel</a>
+    </div>
+  </header>
+
+  <div id="alerta" class="alerta d-none" role="alert"></div>
+
+  <div class="co-perfil-grid">
+    <!-- Tarjeta lateral de identidad / LOGO -->
+    <aside class="co-card logo-card">
+      <div class="co-card-head" style="width:100%">
+        <div class="co-card-titulo">
+          <div class="co-card-ico co-card-ico--oro"><i class="bi bi-image-fill" aria-hidden="true"></i></div>
+          <div>
+            <h2>Logo</h2>
+            <small>Imagen visible en el catálogo.</small>
+          </div>
+        </div>
+      </div>
+      <div class="logo-preview">
+        <img id="logoImg" src="" alt="Logo" class="d-none" />
+        <div id="logoPlaceholder" class="logo-placeholder">Sin logo</div>
+      </div>
+      <label class="btn-file">
+        <i class="bi bi-upload" aria-hidden="true"></i> Elegir imagen
+        <input type="file" id="inputLogo" accept="image/jpeg,image/png,image/webp" hidden />
+      </label>
+      <button type="button" class="btn btn-primary" id="btnSubirLogo" disabled>
+        Subir logo
+      </button>
+      <p class="hint">JPG, PNG o WebP · máx. 5 MB</p>
+    </aside>
+
+    <!-- Formularios de datos y contraseña -->
+    <div class="co-stack">
+      <article class="co-card">
+        <div class="co-card-head">
+          <div class="co-card-titulo">
+            <div class="co-card-ico"><i class="bi bi-person-lines-fill" aria-hidden="true"></i></div>
+            <div>
+              <h2>Datos de la constructora</h2>
+              <small>Actualiza la información pública y de contacto.</small>
+            </div>
+          </div>
+        </div>
+        <form id="formPerfil">
+          <div class="campo">
+            <label for="nombre">Nombre *</label>
+            <input type="text" id="nombre" name="nombre" required />
+          </div>
+
+          <div class="campo">
+            <label for="descripcion">Descripción *</label>
+            <textarea id="descripcion" name="descripcion" rows="3" required></textarea>
+          </div>
+
+          <div class="fila">
+            <div class="campo">
+              <label for="contacto">Contacto</label>
+              <input type="text" id="contacto" name="contacto" />
+            </div>
+            <div class="campo">
+              <label for="telefono">Teléfono</label>
+              <input
+                type="text"
+                id="telefono"
+                name="tel_constructora_sky"
+                autocomplete="off"
+                data-lpignore="true"
+              />
+            </div>
+          </div>
+
+          <div class="fila">
+            <div class="campo">
+              <label for="correo">Correo</label>
+              <input type="email" id="correo" name="correo" disabled readonly autocomplete="off" />
+            </div>
+            <div class="campo">
+              <label for="ciudad">Ciudad</label>
+              <input type="text" id="ciudad" name="ciudad" disabled readonly />
+            </div>
+          </div>
+
+          <div class="campo inmo-section">
+            <label>Inmobiliarias asociadas</label>
+            <div id="lista-inmobiliarias" class="inmo-list"></div>
+          </div>
+          <button type="submit" class="btn btn-primary" id="btnGuardar">
+            Guardar cambios
+          </button>
+        </form>
+      </article>
+
+      <div class="co-perfil-pw">
+        <CambiarPassword />
+      </div>
+    </div>
+  </div>
 </div>
 
 <script>

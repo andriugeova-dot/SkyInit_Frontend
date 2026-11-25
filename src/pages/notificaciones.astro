@@ -1,24 +1,43 @@
 ---
 import Layout from "../layouts/LayoutVistas.astro";
 import "../components/funciones/funciones.css";
+import "../components/funciones/panelUnificado.css";
 ---
 <Layout>
-  <section class="fn">
-    <div class="fn-head">
-      <div><h1>Notificaciones</h1><p id="notifResumen">Cargando…</p></div>
-      <div class="fn-acciones">
-        <button class="fn-btn fn-btn--sec" id="btnPermiso" type="button" hidden><i class="bi bi-bell" aria-hidden="true"></i> Activar avisos del navegador</button>
-        <button class="fn-btn fn-btn--sec" id="btnLeerTodas" type="button"><i class="bi bi-check2-all" aria-hidden="true"></i> Marcar todas como leídas</button>
+  <section class="fn pl-page" style="max-width:1240px">
+    <header class="pl-hero">
+      <div class="pl-hero-info">
+        <div class="pl-hero-tags">
+          <span class="pl-hero-tag"><i class="bi bi-bell-fill" aria-hidden="true"></i> Centro de avisos</span>
+        </div>
+        <h1>Notificaciones</h1>
+        <p id="notifResumen">Cargando…</p>
       </div>
-    </div>
-    <div id="notifLista" class="fn-linea"></div>
+      <div class="pl-hero-acc">
+        <button class="pl-hero-btn pl-hero-btn--sec" id="btnPermiso" type="button" hidden><i class="bi bi-bell" aria-hidden="true"></i> Activar avisos del navegador</button>
+        <button class="pl-hero-btn" id="btnLeerTodas" type="button"><i class="bi bi-check2-all" aria-hidden="true"></i> Marcar todas como leídas</button>
+      </div>
+    </header>
+
+    <section class="pl-card">
+      <div class="pl-card-head">
+        <div class="pl-card-titulo">
+          <div class="pl-card-ico pl-card-ico--acc"><i class="bi bi-inbox-fill" aria-hidden="true"></i></div>
+          <div>
+            <h2>Bandeja de notificaciones</h2>
+            <small>Historial completo de avisos y alertas de tu cuenta.</small>
+          </div>
+        </div>
+      </div>
+      <div id="notifLista" class="fn-linea"></div>
+    </section>
   </section>
 </Layout>
 
 <style is:global>
-  .notif { background:#fff; border:1px solid #e2ddd0; border-radius:12px; padding:14px 16px; display:flex; gap:12px; align-items:flex-start; }
-  .notif--nueva { border-left:4px solid #c8ad72; background:#fffdf6; }
-  .notif i { font-size:1.2rem; color:#2f5d46; margin-top:2px; }
+  .notif { background:#fff; border:1px solid var(--pl-linea, #e2ddd0); border-radius:12px; padding:14px 16px; display:flex; gap:12px; align-items:flex-start; }
+  .notif--nueva { border-left:4px solid var(--pl-acc-osc, #c8ad72); background:var(--pl-acc-suave, #fffdf6); }
+  .notif i { font-size:1.2rem; color:var(--pl-acc-osc, #2f5d46); margin-top:2px; }
   .notif div { flex:1; min-width:0; }
   .notif p { margin:2px 0; overflow-wrap:anywhere; }
 </style>

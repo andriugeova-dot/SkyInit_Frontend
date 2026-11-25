@@ -1,0 +1,80 @@
+---
+/** Tarjeta reutilizable de "Últimas 5 notificaciones" para los dashboards de los paneles. */
+---
+<article class="pl-card">
+  <div class="pl-card-head">
+    <div class="pl-card-titulo">
+      <div class="pl-card-ico pl-card-ico--acc"><i class="bi bi-bell-fill" aria-hidden="true"></i></div>
+      <div>
+        <h2>Últimas 5 notificaciones</h2>
+        <small id="plDashNotifSub">Cargando…</small>
+      </div>
+    </div>
+    <a class="fn-btn fn-btn--sec fn-btn--mini" href="/notificaciones">Ver todas</a>
+  </div>
+  <ul class="pl-notif-lista" id="plDashNotifLista" aria-live="polite">
+    <li class="fn-muted">Cargando notificaciones…</li>
+  </ul>
+</article>
+
+<script>
+  import { api, esc, fechaHora, aviso } from "./comun";
+
+  const notifLista = document.getElementById("plDashNotifLista");
+  const notifSub = document.getElementById("plDashNotifSub");
+  const kpiSinLeer = document.getElementById("plKpiSinLeer");
+  const kpiSinLeerCard = document.getElementById("plKpiSinLeerCard");
+
+  async function cargarNotificaciones() {
+    if (!notifLista || !notifSub) return;
+    try {
+      const d = await api("/notificaciones");
+      const todas: any[] = d.notificaciones ?? [];
+      const noLeidas = Number(d.noLeidas ?? 0);
+
+      if (kpiSinLeer) kpiSinLeer.textContent = String(noLeidas);
+      if (kpiSinLeerCard) kpiSinLeerCard.classList.toggle("pl-kpi--alerta", noLeidas > 0);
+      notifSub.textContent = noLeidas ? `${noLeidas} sin leer` : "Estás al día";
+
+      const ultimas = todas.slice(0, 5);
+      if (!ultimas.length) {
+        notifLista.innerHTML = `<li class="fn-vacio" style="padding:20px 12px"><i class="bi bi-bell" aria-hidden="true"></i>No tienes notificaciones recientes.</li>`;
+        return;
+      }
+
+      notifLista.innerHTML = ultimas.map((n) => `
+        <li class="pl-notif-item ${n.leida ? "" : "pl-notif-item--nueva"}">
+          <div class="pl-notif-cuerpo">
+            <strong>${esc(n.titulo)}${n.leida ? "" : ' <span class="fn-chip fn-chip--pend">Nueva</span>'}</strong>
+            <p>${esc(n.mensaje)}</p>
+            <small><i class="bi bi-clock" aria-hidden="true"></i> ${esc(fechaHora(n.fechaCreacion))}</small>
+          </div>
+          ${n.leida ? "" : `<button class="fn-btn fn-btn--sec fn-btn--mini" type="button" data-pl-leer="${Number(n.notificacionID)}">Leída</button>`}
+        </li>
+      `).join("");
+    } catch {
+      notifSub.textContent = "Sin conexión";
+      notifLista.innerHTML = `<li class="fn-muted">No se pudieron cargar las notificaciones.</li>`;
+    }
+  }
+
+  if (notifLista) {
+    notifLista.addEventListener("click", async (ev) => {
+      const btn = (ev.target as HTMLElement).closest<HTMLButtonElement>("[data-pl-leer]");
+      if (!btn) return;
+      btn.disabled = true;
+      try {
+        await api(`/notificaciones/${btn.dataset.plLeer}/leida`, "PATCH");
+        aviso("Notificación marcada como leída");
+        cargarNotificaciones();
+        document.dispatchEvent(new CustomEvent("avisos:actualizados"));
+      } catch (e) {
+        aviso((e as Error).message, "error");
+        btn.disabled = false;
+      }
+    });
+
+    document.addEventListener("avisos:actualizados", () => cargarNotificaciones());
+    cargarNotificaciones();
+  }
+</script>

@@ -1,16 +1,41 @@
 ---
 import Layout from "../../layouts/LayoutVistas.astro";
+import NotifModalPanel from "../../components/funciones/NotifModalPanel.astro";
 import "../../components/funciones/funciones.css";
+import "../../components/funciones/panelUnificado.css";
 ---
 <Layout>
-  <section class="fn">
-    <div class="fn-head">
-      <div><h1>Agentes</h1><p>Cuentas de agente de tu inmobiliaria. Solo tú las puedes crear, editar o desactivar.</p></div>
-      <button class="fn-btn" id="btnNuevoAgente" type="button"><i class="bi bi-person-plus" aria-hidden="true"></i> Nuevo agente</button>
-    </div>
-    <div class="fn-stats" id="agtStats"></div>
-    <div id="agtLista"></div>
-  </section>
+  <div class="pl-page pl-theme-admin">
+    <header class="pl-hero">
+      <div class="pl-hero-info">
+        <div class="pl-hero-tags">
+          <span class="pl-hero-tag"><i class="bi bi-person-badge-fill" aria-hidden="true"></i> Equipo comercial</span>
+        </div>
+        <h1>Agentes</h1>
+        <p>Cuentas de agente de tu inmobiliaria. Solo tú las puedes crear, editar o desactivar.</p>
+      </div>
+      <div class="pl-hero-acc">
+        <button class="pl-hero-btn" id="btnNuevoAgente" type="button"><i class="bi bi-person-plus" aria-hidden="true"></i> Nuevo agente</button>
+        <a class="pl-hero-btn pl-hero-btn--sec" href="/admin"><i class="bi bi-arrow-left" aria-hidden="true"></i> Volver al panel</a>
+        <NotifModalPanel />
+      </div>
+    </header>
+
+    <div class="pl-kpis" id="agtStats" aria-label="Resumen de agentes"></div>
+
+    <section class="pl-card">
+      <div class="pl-card-head">
+        <div class="pl-card-titulo">
+          <div class="pl-card-ico"><i class="bi bi-people-fill" aria-hidden="true"></i></div>
+          <div>
+            <h2>Directorio de agentes</h2>
+            <small>Administra las cuentas activas, propiedades asignadas y citas por confirmar.</small>
+          </div>
+        </div>
+      </div>
+      <div id="agtLista"></div>
+    </section>
+  </div>
   <dialog class="fn-modal" id="dlgAgente">
     <form class="fn-modal-cuerpo fn-form" id="formAgente" autocomplete="off">
       <h2 id="agtTitulo">Nuevo agente</h2>
@@ -44,10 +69,10 @@ import "../../components/funciones/funciones.css";
       agentes = (await api("/admin/agentes")).agentes;
       const activos = agentes.filter((a) => a.estadoCuenta === "Activa").length;
       document.getElementById("agtStats")!.innerHTML = `
-        <div class="fn-stat"><b>${agentes.length}</b><span>Agentes</span></div>
-        <div class="fn-stat"><b>${activos}</b><span>Activos</span></div>
-        <div class="fn-stat"><b>${agentes.reduce((n, a) => n + a.propiedades, 0)}</b><span>Propiedades asignadas</span></div>
-        <div class="fn-stat"><b>${agentes.reduce((n, a) => n + a.citasPendientes, 0)}</b><span>Citas por confirmar</span></div>`;
+        <div class="pl-kpi pl-kpi--destacado"><div class="pl-kpi-top"><span class="pl-kpi-lbl">Agentes</span><span class="pl-kpi-ico"><i class="bi bi-people-fill" aria-hidden="true"></i></span></div><b class="pl-kpi-val">${agentes.length}</b></div>
+        <div class="pl-kpi pl-kpi--ok"><div class="pl-kpi-top"><span class="pl-kpi-lbl">Activos</span><span class="pl-kpi-ico"><i class="bi bi-person-check-fill" aria-hidden="true"></i></span></div><b class="pl-kpi-val">${activos}</b></div>
+        <div class="pl-kpi pl-kpi--prog"><div class="pl-kpi-top"><span class="pl-kpi-lbl">Propiedades asignadas</span><span class="pl-kpi-ico"><i class="bi bi-houses" aria-hidden="true"></i></span></div><b class="pl-kpi-val">${agentes.reduce((n, a) => n + a.propiedades, 0)}</b></div>
+        <div class="pl-kpi pl-kpi--alerta"><div class="pl-kpi-top"><span class="pl-kpi-lbl">Citas por confirmar</span><span class="pl-kpi-ico"><i class="bi bi-calendar-event" aria-hidden="true"></i></span></div><b class="pl-kpi-val">${agentes.reduce((n, a) => n + a.citasPendientes, 0)}</b></div>`;
       if (!agentes.length) { lista.innerHTML = `<div class="fn-vacio"><i class="bi bi-people" aria-hidden="true"></i>Tu inmobiliaria aún no tiene agentes. Crea el primero con “Nuevo agente”.</div>`; return; }
       lista.innerHTML = `<div class="fn-tabla-wrap"><table class="fn-tabla"><thead><tr><th>Nombre</th><th>Correo</th><th>Teléfono</th><th>Propiedades</th><th>Alta</th><th>Estado</th><th></th></tr></thead><tbody>` +
         agentes.map((a) => {

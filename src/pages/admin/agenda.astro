@@ -1,7 +1,27 @@
 ---
 import Layout from "../../layouts/LayoutVistas.astro";
 import AgendaGestion from "../../components/funciones/AgendaGestion.astro";
+import NotifModalPanel from "../../components/funciones/NotifModalPanel.astro";
+import "../../components/funciones/funciones.css";
+import "../../components/funciones/panelUnificado.css";
 ---
 <Layout>
-  <AgendaGestion />
+  <div class="pl-page pl-theme-admin">
+    <header class="pl-hero">
+      <div class="pl-hero-info">
+        <div class="pl-hero-tags">
+          <span class="pl-hero-tag"><i class="bi bi-calendar-check-fill" aria-hidden="true"></i> Programación de visitas</span>
+        </div>
+        <h1>Agenda de citas</h1>
+        <p>Crea, edita y cancela citas con clientes. Los recordatorios se envían solos cuando la cita está próxima.</p>
+      </div>
+      <div class="pl-hero-acc">
+        <button class="pl-hero-btn" id="btnNuevaCita" type="button"><i class="bi bi-calendar-plus" aria-hidden="true"></i> Nueva cita</button>
+        <a class="pl-hero-btn pl-hero-btn--sec" href="/admin"><i class="bi bi-arrow-left" aria-hidden="true"></i> Volver al panel</a>
+        <NotifModalPanel />
+      </div>
+    </header>
+
+    <AgendaGestion mostrarCabecera={false} />
+  </div>
 </Layout>

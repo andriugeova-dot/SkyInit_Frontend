@@ -1,4 +1,6 @@
 ---
+import "../funciones/funciones.css";
+import "../funciones/panelUnificado.css";
 import { BACKEND_URL } from "../../utils/config";
 import { COOKIE_NAME, getTokenSSR } from "../../utils/auth";
 
@@ -55,13 +57,21 @@ const fechaFormateada = usuario.fechaRegistro
     : "";
 ---
 
-<div class="perfil-page">
-    <div class="page-header">
-        <h1 class="page-titulo"><i class="bi bi-person-circle"></i> Mi Perfil</h1>
-        <p class="page-desc">Gestiona tu información personal y configuración de cuenta.</p>
-    </div>
+<div class="perfil-page pl-page pl-perfil-page pl-theme-superadmin">
+    <header class="pl-hero">
+        <div class="pl-hero-info">
+            <div class="pl-hero-tags">
+                <span class="pl-hero-tag"><i class="bi bi-shield-lock-fill" aria-hidden="true"></i> {usuario.rol}</span>
+            </div>
+            <h1>Mi Perfil</h1>
+            <p>Gestiona tu información personal, foto y configuración de seguridad.</p>
+        </div>
+        <div class="pl-hero-acc">
+            <a class="pl-hero-btn pl-hero-btn--sec" href="/superadmin"><i class="bi bi-arrow-left" aria-hidden="true"></i> Volver al panel</a>
+        </div>
+    </header>
 
-    <div class="perfil-layout">
+    <div class="pl-perfil-grid">
         <div class="avatar-card">
             <div class="avatar-grande" id="avatarPreview">
                 {fotoSrc

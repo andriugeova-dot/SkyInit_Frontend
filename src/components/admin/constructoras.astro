@@ -1,29 +1,38 @@
 ---
+import NotifModalPanel from "../funciones/NotifModalPanel.astro";
+import "../funciones/funciones.css";
+import "../funciones/panelUnificado.css";
 import "./constructoras.css";
 import "./propiedades.css"
 ---
 
-<div class="page" id="page-constructoras">
-  <header class="page-header">
-    <div>
+<div class="page pl-page pl-theme-admin" id="page-constructoras" style="max-width:1240px">
+  <header class="pl-hero">
+    <div class="pl-hero-info">
+      <div class="pl-hero-tags">
+        <span class="pl-hero-tag"><i class="bi bi-hammer" aria-hidden="true"></i> Red de constructoras</span>
+      </div>
       <h1>Constructoras</h1>
       <p>Constructoras vinculadas a tu inmobiliaria</p>
     </div>
-    
+    <div class="pl-hero-acc">
+      <a class="pl-hero-btn pl-hero-btn--sec" href="/admin"><i class="bi bi-arrow-left" aria-hidden="true"></i> Volver al panel</a>
+      <NotifModalPanel />
+    </div>
   </header>
 
-  <div class="stats">
-    <div class="stat-card">
-      <span class="stat-label">Total</span>
-      <span class="stat-value" id="stat-total">—</span>
+  <div class="pl-kpis">
+    <div class="pl-kpi pl-kpi--destacado">
+      <div class="pl-kpi-top"><span class="pl-kpi-lbl">Total</span><span class="pl-kpi-ico"><i class="bi bi-hammer" aria-hidden="true"></i></span></div>
+      <span class="pl-kpi-val" id="stat-total">—</span>
     </div>
-    <div class="stat-card">
-      <span class="stat-label">Activas</span>
-      <span class="stat-value" id="stat-activas">—</span>
+    <div class="pl-kpi pl-kpi--ok">
+      <div class="pl-kpi-top"><span class="pl-kpi-lbl">Activas</span><span class="pl-kpi-ico"><i class="bi bi-check-circle-fill" aria-hidden="true"></i></span></div>
+      <span class="pl-kpi-val" id="stat-activas">—</span>
     </div>
-    <div class="stat-card">
-      <span class="stat-label">Pendientes</span>
-      <span class="stat-value" id="stat-pendientes">—</span>
+    <div class="pl-kpi pl-kpi--alerta">
+      <div class="pl-kpi-top"><span class="pl-kpi-lbl">Pendientes</span><span class="pl-kpi-ico"><i class="bi bi-hourglass-split" aria-hidden="true"></i></span></div>
+      <span class="pl-kpi-val" id="stat-pendientes">—</span>
     </div>
   </div>
 

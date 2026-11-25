@@ -1,18 +1,35 @@
 ---
 import "./funciones.css";
-interface Props { modo: "usuario" | "gestion" }
-const { modo } = Astro.props;
+interface Props { modo: "usuario" | "gestion"; mostrarCabecera?: boolean }
+const { modo, mostrarCabecera = true } = Astro.props;
 ---
-<section class="fn" id="agendaRoot" data-modo={modo}>
-  <div class="fn-head">
-    <div>
-      <h1>{modo === "usuario" ? "Mis visitas" : "Agenda de visitas"}</h1>
-      <p>{modo === "usuario" ? "Agenda una visita a una propiedad y sigue su estado." : "Confirma o cancela las visitas solicitadas a tus propiedades."}</p>
+<section class="fn" id="agendaRoot" data-modo={modo} data-unificado={mostrarCabecera ? "0" : "1"} style={mostrarCabecera ? undefined : "max-width:none;margin-top:0"}>
+  {mostrarCabecera && (
+    <div class="fn-head">
+      <div>
+        <h1>{modo === "usuario" ? "Mis visitas" : "Agenda de visitas"}</h1>
+        <p>{modo === "usuario" ? "Agenda una visita a una propiedad y sigue su estado." : "Confirma o cancela las visitas solicitadas a tus propiedades."}</p>
+      </div>
+      {modo === "usuario" && <button class="fn-btn" id="btnNuevaVisita" type="button"><i class="bi bi-calendar-plus"></i> Agendar visita</button>}
     </div>
-    {modo === "usuario" && <button class="fn-btn" id="btnNuevaVisita" type="button"><i class="bi bi-calendar-plus"></i> Agendar visita</button>}
-  </div>
-  <div class="fn-stats" id="agendaStats"></div>
-  <div id="agendaLista"></div>
+  )}
+  <div class={mostrarCabecera ? "fn-stats" : "pl-kpis"} id="agendaStats"></div>
+  {mostrarCabecera ? (
+    <div id="agendaLista"></div>
+  ) : (
+    <section class="pl-card">
+      <div class="pl-card-head">
+        <div class="pl-card-titulo">
+          <div class="pl-card-ico"><i class="bi bi-calendar-check-fill" aria-hidden="true"></i></div>
+          <div>
+            <h2>Historial de visitas</h2>
+            <small>Consulta la fecha, propiedad, estado y acciones de tus citas.</small>
+          </div>
+        </div>
+      </div>
+      <div id="agendaLista"></div>
+    </section>
+  )}
 
   <dialog class="fn-modal" id="dlgVisita">
     <form class="fn-modal-cuerpo fn-form" id="formVisita">
@@ -42,12 +59,26 @@ const { modo } = Astro.props;
   const stats = document.getElementById("agendaStats")!;
   const dlg = document.getElementById("dlgVisita") as HTMLDialogElement;
 
+  const unificado = root.dataset.unificado === "1";
+
   async function cargar() {
     try {
       const { visitas } = await api(modo === "usuario" ? "/agenda/mias" : "/agenda/gestion");
       const cuenta = (e: string) => visitas.filter((v: any) => v.estado === e).length;
-      stats.innerHTML = ["Pendiente", "Confirmada", "Finalizada", "Cancelada"].map((e) =>
-        `<div class="fn-stat"><b>${cuenta(e)}</b><span>${e}s</span></div>`).join("");
+      if (unificado) {
+        const pend = cuenta("Pendiente");
+        const conf = cuenta("Confirmada");
+        const fin  = cuenta("Finalizada");
+        const canc = cuenta("Cancelada");
+        stats.innerHTML = `
+          <div class="pl-kpi ${pend ? "pl-kpi--alerta" : ""}"><div class="pl-kpi-top"><span class="pl-kpi-lbl">Pendientes</span><span class="pl-kpi-ico"><i class="bi bi-hourglass-split" aria-hidden="true"></i></span></div><b class="pl-kpi-val">${pend}</b></div>
+          <div class="pl-kpi pl-kpi--prog"><div class="pl-kpi-top"><span class="pl-kpi-lbl">Confirmadas</span><span class="pl-kpi-ico"><i class="bi bi-calendar-check" aria-hidden="true"></i></span></div><b class="pl-kpi-val">${conf}</b></div>
+          <div class="pl-kpi pl-kpi--ok"><div class="pl-kpi-top"><span class="pl-kpi-lbl">Finalizadas</span><span class="pl-kpi-ico"><i class="bi bi-check-circle-fill" aria-hidden="true"></i></span></div><b class="pl-kpi-val">${fin}</b></div>
+          <div class="pl-kpi"><div class="pl-kpi-top"><span class="pl-kpi-lbl">Canceladas</span><span class="pl-kpi-ico"><i class="bi bi-x-circle" aria-hidden="true"></i></span></div><b class="pl-kpi-val">${canc}</b></div>`;
+      } else {
+        stats.innerHTML = ["Pendiente", "Confirmada", "Finalizada", "Cancelada"].map((e) =>
+          `<div class="fn-stat"><b>${cuenta(e)}</b><span>${e}s</span></div>`).join("");
+      }
       if (!visitas.length) {
         lista.innerHTML = `<div class="fn-vacio"><i class="bi bi-calendar-week"></i>${modo === "usuario"
           ? "Todavía no has agendado visitas. Usa “Agendar visita” para elegir una propiedad."

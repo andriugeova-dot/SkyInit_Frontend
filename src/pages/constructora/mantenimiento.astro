@@ -1,7 +1,28 @@
 ---
 import Layout from "../../layouts/LayoutVistas.astro";
 import Mantenimiento from "../../components/funciones/Mantenimiento.astro";
+import NotifModalPanel from "../../components/funciones/NotifModalPanel.astro";
+import "../../components/constructora/constructora.css";
 ---
 <Layout>
-  <Mantenimiento modo="constructora" />
+  <div class="co-page">
+    <header class="co-hero">
+      <div class="co-hero-info">
+        <div class="co-hero-tags">
+          <span class="co-hero-tag"><i class="bi bi-wrench-adjustable" aria-hidden="true"></i> Servicios y soporte</span>
+        </div>
+        <h1>Mantenimiento</h1>
+        <p>Gestiona las solicitudes asignadas a tu constructora y coordina a tu equipo de trabajadores.</p>
+      </div>
+      <div class="co-hero-acc">
+        <a class="co-hero-btn" href="/constructora/trabajadores"><i class="bi bi-people-fill" aria-hidden="true"></i> Ver trabajadores</a>
+        <a class="co-hero-btn co-hero-btn--sec" href="/constructora"><i class="bi bi-arrow-left" aria-hidden="true"></i> Volver al panel</a>
+        <NotifModalPanel />
+      </div>
+    </header>
+
+    <section class="co-card co-mant-wrap">
+      <Mantenimiento modo="constructora" titulo={false} />
+    </section>
+  </div>
 </Layout>

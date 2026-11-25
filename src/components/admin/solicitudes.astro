@@ -1,39 +1,43 @@
 ---
 // Solicitudes de la inmobiliaria del administrador: listar, editar estado y eliminar.
+import NotifModalPanel from "../funciones/NotifModalPanel.astro";
+import "../funciones/funciones.css";
+import "../funciones/panelUnificado.css";
 ---
 
-<div class="admin-solicitudes">
-  <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
-    <div>
-      <h1 class="page-title">Solicitudes de servicios</h1>
-      <p class="page-subtitle">Solicitudes recibidas para los servicios de tu inmobiliaria.</p>
+<div class="admin-solicitudes pl-page pl-theme-admin">
+  <header class="pl-hero">
+    <div class="pl-hero-info">
+      <div class="pl-hero-tags">
+        <span class="pl-hero-tag"><i class="bi bi-envelope-fill" aria-hidden="true"></i> Gestión de solicitudes</span>
+      </div>
+      <h1>Solicitudes de servicios</h1>
+      <p>Solicitudes recibidas para los servicios de tu inmobiliaria.</p>
     </div>
-    <button id="btnRefresh" class="btn btn-sky-primary d-flex align-items-center gap-2" type="button">
-      <i class="bi bi-arrow-clockwise"></i>
-      <span>Refrescar</span>
-    </button>
-  </div>
+    <div class="pl-hero-acc">
+      <button id="btnRefresh" class="pl-hero-btn" type="button">
+        <i class="bi bi-arrow-clockwise" aria-hidden="true"></i>
+        <span>Refrescar</span>
+      </button>
+      <a class="pl-hero-btn pl-hero-btn--sec" href="/admin"><i class="bi bi-arrow-left" aria-hidden="true"></i> Volver al panel</a>
+      <NotifModalPanel />
+    </div>
+  </header>
 
-  <div id="toastMsg" class="alert d-none mb-3" role="status"></div>
+  <div id="toastMsg" class="alert d-none mb-0" role="status"></div>
 
-  <div class="row g-3 mb-4">
-    <div class="col-md-4">
-      <div class="stat-card">
-        <div class="stat-title">Total</div>
-        <div class="stat-value" id="statTotal">0</div>
-      </div>
+  <div class="pl-kpis">
+    <div class="pl-kpi pl-kpi--destacado">
+      <div class="pl-kpi-top"><span class="pl-kpi-lbl">Total</span><span class="pl-kpi-ico"><i class="bi bi-inbox-fill" aria-hidden="true"></i></span></div>
+      <div class="pl-kpi-val" id="statTotal">0</div>
     </div>
-    <div class="col-md-4">
-      <div class="stat-card stat-pendientes">
-        <div class="stat-title">En esta página</div>
-        <div class="stat-value" id="statPagina">0</div>
-      </div>
+    <div class="pl-kpi pl-kpi--alerta">
+      <div class="pl-kpi-top"><span class="pl-kpi-lbl">En esta página</span><span class="pl-kpi-ico"><i class="bi bi-list-check" aria-hidden="true"></i></span></div>
+      <div class="pl-kpi-val" id="statPagina">0</div>
     </div>
-    <div class="col-md-4">
-      <div class="stat-card stat-pagina">
-        <div class="stat-title">Página</div>
-        <div class="stat-value" id="statPaginaNum">1</div>
-      </div>
+    <div class="pl-kpi pl-kpi--prog">
+      <div class="pl-kpi-top"><span class="pl-kpi-lbl">Página</span><span class="pl-kpi-ico"><i class="bi bi-file-earmark-text" aria-hidden="true"></i></span></div>
+      <div class="pl-kpi-val" id="statPaginaNum">1</div>
     </div>
   </div>
 

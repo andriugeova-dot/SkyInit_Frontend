@@ -1,13 +1,43 @@
-<div class="solicitudes-page">
-    <div class="page-header">
-        <div>
-            <h1 class="page-titulo"><i class="bi bi-file-earmark-text-fill"></i> Mis Solicitudes</h1>
-            <p class="page-desc">Solicitudes de mantenimiento e interacciones con propiedades.</p>
+---
+import "../funciones/funciones.css";
+import "../funciones/panelUnificado.css";
+import NotifModalPanel from "../funciones/NotifModalPanel.astro";
+---
+
+<div class="solicitudes-page pl-page pl-theme-usuario">
+    <header class="pl-hero">
+        <div class="pl-hero-info">
+            <div class="pl-hero-tags">
+                <span class="pl-hero-tag"><i class="bi bi-tools" aria-hidden="true"></i> Servicios y mantenimiento</span>
+            </div>
+            <h1>Mis Solicitudes</h1>
+            <p>Solicitudes de mantenimiento e interacciones con propiedades.</p>
         </div>
-        <a href="/servicios" class="btn-nueva-solicitud">
-            <i class="bi bi-plus-circle-fill"></i> Nueva solicitud
-        </a>
-    </div>
+        <div class="pl-hero-acc">
+            <a href="/servicios" class="pl-hero-btn"><i class="bi bi-plus-circle-fill" aria-hidden="true"></i> Nueva solicitud</a>
+            <a href="/usuario" class="pl-hero-btn pl-hero-btn--sec"><i class="bi bi-arrow-left" aria-hidden="true"></i> Volver al inicio</a>
+            <NotifModalPanel />
+        </div>
+    </header>
+
+    <section class="pl-kpis" aria-label="Resumen de solicitudes">
+        <div class="pl-kpi pl-kpi--destacado">
+            <div class="pl-kpi-top"><span class="pl-kpi-lbl">Total solicitudes</span><span class="pl-kpi-ico"><i class="bi bi-file-earmark-text-fill" aria-hidden="true"></i></span></div>
+            <b class="pl-kpi-val" id="solStatTotal">—</b>
+        </div>
+        <div class="pl-kpi pl-kpi--alerta">
+            <div class="pl-kpi-top"><span class="pl-kpi-lbl">Pendientes</span><span class="pl-kpi-ico"><i class="bi bi-hourglass-split" aria-hidden="true"></i></span></div>
+            <b class="pl-kpi-val" id="solStatPend">—</b>
+        </div>
+        <div class="pl-kpi pl-kpi--prog">
+            <div class="pl-kpi-top"><span class="pl-kpi-lbl">En proceso</span><span class="pl-kpi-ico"><i class="bi bi-gear-fill" aria-hidden="true"></i></span></div>
+            <b class="pl-kpi-val" id="solStatProc">—</b>
+        </div>
+        <div class="pl-kpi pl-kpi--ok">
+            <div class="pl-kpi-top"><span class="pl-kpi-lbl">Finalizadas</span><span class="pl-kpi-ico"><i class="bi bi-check-circle-fill" aria-hidden="true"></i></span></div>
+            <b class="pl-kpi-val" id="solStatFin">—</b>
+        </div>
+    </section>
 
     <div id="estadoCarga" class="estado-carga">
         <div class="spinner"></div>
@@ -287,6 +317,18 @@ async function cargarSolicitudes() {
 }
 
 function renderSolicitudes(lista: any[]) {
+    const pend = lista.filter((s) => estadoClass(s.estadoReparacion ?? s.estado ?? "Pendiente") === "estado-pendiente").length;
+    const proc = lista.filter((s) => estadoClass(s.estadoReparacion ?? s.estado ?? "Pendiente") === "estado-en-proceso").length;
+    const fin  = lista.filter((s) => estadoClass(s.estadoReparacion ?? s.estado ?? "Pendiente") === "estado-completado").length;
+    const elTotal = document.getElementById("solStatTotal");
+    const elPend  = document.getElementById("solStatPend");
+    const elProc  = document.getElementById("solStatProc");
+    const elFin   = document.getElementById("solStatFin");
+    if (elTotal) elTotal.textContent = String(lista.length);
+    if (elPend)  elPend.textContent  = String(pend);
+    if (elProc)  elProc.textContent  = String(proc);
+    if (elFin)   elFin.textContent   = String(fin);
+
     if (!lista.length) {
         document.getElementById("sinSolicitudes")!.style.display = "block";
         return;

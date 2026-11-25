@@ -3,6 +3,9 @@ import { BACKEND_URL } from "../../utils/config";
 import Layout from "../../layouts/LayoutVistas.astro";
 import ServicioCard from "../../components/inmobiliaria/servicioCard.astro";
 import ServicioModal from "../../components/inmobiliaria/serviciomodal.astro";
+import NotifModalPanel from "../../components/funciones/NotifModalPanel.astro";
+import "../../components/funciones/funciones.css";
+import "../../components/funciones/panelUnificado.css";
 
 interface ServicioInmobiliaria {
   ServicioID: number;
@@ -38,36 +41,37 @@ const inactivosCount = serviciosIniciales.filter((s) => s.Estado === "Inactivo")
 ---
 
 <Layout>
-  <div class="admin-servicios">
-    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
-      <div>
-        <h1 class="page-title">Servicios de mantenimiento</h1>
-        <p class="page-subtitle">Gestiona el catálogo de servicios de tu inmobiliaria.</p>
+  <div class="admin-servicios pl-page pl-theme-admin">
+    <header class="pl-hero">
+      <div class="pl-hero-info">
+        <div class="pl-hero-tags">
+          <span class="pl-hero-tag"><i class="bi bi-tools" aria-hidden="true"></i> Catálogo de servicios</span>
+        </div>
+        <h1>Servicios de mantenimiento</h1>
+        <p>Gestiona el catálogo de servicios de tu inmobiliaria.</p>
       </div>
-      <button class="btn btn-sky-primary d-flex align-items-center gap-2" id="btnNuevoServicio" type="button">
-        <i class="bi bi-plus-lg"></i>
-        <span>Nuevo servicio</span>
-      </button>
-    </div>
+      <div class="pl-hero-acc">
+        <button class="pl-hero-btn" id="btnNuevoServicio" type="button">
+          <i class="bi bi-plus-lg" aria-hidden="true"></i>
+          <span>Nuevo servicio</span>
+        </button>
+        <a class="pl-hero-btn pl-hero-btn--sec" href="/admin"><i class="bi bi-arrow-left" aria-hidden="true"></i> Volver al panel</a>
+        <NotifModalPanel />
+      </div>
+    </header>
 
-    <div class="row g-3 mb-4">
-      <div class="col-md-4">
-        <div class="stat-card">
-          <div class="stat-title">Total servicios</div>
-          <div class="stat-value" id="statTotal">{totalCount}</div>
-        </div>
+    <div class="pl-kpis">
+      <div class="pl-kpi pl-kpi--destacado">
+        <div class="pl-kpi-top"><span class="pl-kpi-lbl">Total servicios</span><span class="pl-kpi-ico"><i class="bi bi-briefcase-fill" aria-hidden="true"></i></span></div>
+        <div class="pl-kpi-val" id="statTotal">{totalCount}</div>
       </div>
-      <div class="col-md-4">
-        <div class="stat-card stat-activos">
-          <div class="stat-title">Activos</div>
-          <div class="stat-value" id="statActivos">{activosCount}</div>
-        </div>
+      <div class="pl-kpi pl-kpi--ok">
+        <div class="pl-kpi-top"><span class="pl-kpi-lbl">Activos</span><span class="pl-kpi-ico"><i class="bi bi-check-circle-fill" aria-hidden="true"></i></span></div>
+        <div class="pl-kpi-val" id="statActivos">{activosCount}</div>
       </div>
-      <div class="col-md-4">
-        <div class="stat-card stat-inactivos">
-          <div class="stat-title">Inactivos</div>
-          <div class="stat-value" id="statInactivos">{inactivosCount}</div>
-        </div>
+      <div class="pl-kpi">
+        <div class="pl-kpi-top"><span class="pl-kpi-lbl">Inactivos</span><span class="pl-kpi-ico"><i class="bi bi-pause-circle-fill" aria-hidden="true"></i></span></div>
+        <div class="pl-kpi-val" id="statInactivos">{inactivosCount}</div>
       </div>
     </div>
 

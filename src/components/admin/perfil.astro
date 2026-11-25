@@ -1,55 +1,86 @@
 ---
+import "../funciones/funciones.css";
+import "../funciones/panelUnificado.css";
 import "./perfil.css";
+import CambiarPassword from "../funciones/CambiarPassword.astro";
 ---
 
-<div class="perfil-page">
-    <header class="page-header">
-        <div>
-        <h1>Mi perfil</h1>
-        <p>Datos de tu cuenta de administrador</p>
+<div class="perfil-page pl-page pl-perfil-page pl-theme-admin" style="max-width:1040px">
+    <header class="pl-hero">
+        <div class="pl-hero-info">
+            <div class="pl-hero-tags">
+                <span class="pl-hero-tag"><i class="bi bi-person-badge" aria-hidden="true"></i> Administrador</span>
+            </div>
+            <h1>Mi perfil</h1>
+            <p>Datos de tu cuenta de administrador y seguridad de acceso.</p>
+        </div>
+        <div class="pl-hero-acc">
+            <a class="pl-hero-btn pl-hero-btn--sec" href="/admin"><i class="bi bi-arrow-left" aria-hidden="true"></i> Volver al panel</a>
         </div>
     </header>
 
-    <div class="perfil-grid">
-        <section class="card logo-card">
-        <h2>Foto</h2>
-        <div class="logo-preview" id="foto-preview">
-            <span class="logo-placeholder" id="foto-placeholder">Sin foto</span>
-            <img id="foto-img" alt="Foto de perfil" hidden />
+    <div class="pl-perfil-grid">
+        <aside class="pl-card logo-card">
+            <div class="pl-card-head" style="width:100%">
+                <div class="pl-card-titulo">
+                    <div class="pl-card-ico pl-card-ico--acc"><i class="bi bi-image-fill" aria-hidden="true"></i></div>
+                    <div>
+                        <h2>Foto</h2>
+                        <small>Imagen de perfil.</small>
+                    </div>
+                </div>
+            </div>
+            <div class="logo-preview" id="foto-preview">
+                <span class="logo-placeholder" id="foto-placeholder">Sin foto</span>
+                <img id="foto-img" alt="Foto de perfil" hidden />
+            </div>
+            <label class="btn-file">
+                Elegir imagen
+                <input type="file" id="input-foto" accept="image/jpeg,image/png,image/webp" hidden />
+            </label>
+            <button type="button" class="btn btn-muted" id="btn-subir-foto" disabled>Subir foto</button>
+            <p class="hint">JPG, PNG o WebP · máx. 5 MB</p>
+        </aside>
+
+        <div class="pl-stack">
+            <section class="pl-card">
+                <div class="pl-card-head">
+                    <div class="pl-card-titulo">
+                        <div class="pl-card-ico"><i class="bi bi-person-lines-fill" aria-hidden="true"></i></div>
+                        <div>
+                            <h2>Datos personales</h2>
+                            <small>Actualiza tu nombre visible y teléfono.</small>
+                        </div>
+                    </div>
+                </div>
+                <form id="form-perfil">
+                    <label>Nombre *</label>
+                    <input type="text" id="f-nombre" required />
+
+                    <label>Correo</label>
+                    <input type="email" id="f-correo" disabled />
+
+                    <div class="row-2">
+                        <div>
+                            <label>Teléfono</label>
+                            <input type="text" id="f-telefono" />
+                        </div>
+                        <div>
+                            <label>Rol</label>
+                            <input type="text" id="f-rol" disabled />
+                        </div>
+                    </div>
+
+                    <p id="form-msg" class="form-msg" hidden></p>
+
+                    <button type="submit" class="btn btn-primary" id="btn-guardar">Guardar cambios</button>
+                </form>
+            </section>
+
+            <div class="pl-perfil-pw">
+                <CambiarPassword />
+            </div>
         </div>
-        <label class="btn-file">
-            Elegir imagen
-            <input type="file" id="input-foto" accept="image/jpeg,image/png,image/webp" hidden />
-        </label>
-        <button type="button" class="btn btn-muted" id="btn-subir-foto" disabled>Subir foto</button>
-        <p class="hint">JPG, PNG o WebP · máx. 5 MB</p>
-        </section>
-
-        <section class="card">
-        <h2>Datos</h2>
-        <form id="form-perfil">
-            <label>Nombre *</label>
-            <input type="text" id="f-nombre" required />
-
-            <label>Correo</label>
-            <input type="email" id="f-correo" disabled />
-
-            <div class="row-2">
-            <div>
-                <label>Teléfono</label>
-                <input type="text" id="f-telefono" />
-            </div>
-            <div>
-                <label>Rol</label>
-                <input type="text" id="f-rol" disabled />
-            </div>
-            </div>
-
-            <p id="form-msg" class="form-msg" hidden></p>
-
-            <button type="submit" class="btn btn-primary" id="btn-guardar">Guardar cambios</button>
-        </form>
-        </section>
     </div>
 </div>
 
