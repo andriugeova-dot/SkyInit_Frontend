@@ -1,6 +1,7 @@
 ---
 /** Botón de campana y modal de notificaciones para las vistas del trabajador (excepto notificaciones y perfil). */
 ---
+
 <button
   type="button"
   class="tr-notif-btn"
@@ -10,25 +11,50 @@
   title="Notificaciones"
 >
   <i class="bi bi-bell" aria-hidden="true"></i>
-  <span class="tr-notif-badge" id="trNotifBadge" hidden>0</span>
+  <span class="tr-notif-badge" id="trNotifBadge" hidden>
+    0
+  </span>
 </button>
 
-<dialog class="tr-notif-modal" id="trNotifModal" aria-labelledby="trNotifModalTitulo">
+<dialog
+  class="tr-notif-modal"
+  id="trNotifModal"
+  aria-labelledby="trNotifModalTitulo"
+>
   <div class="tr-notif-head">
     <h2 id="trNotifModalTitulo">Notificaciones</h2>
     <div class="tr-notif-head-acc">
-      <button type="button" class="tr-notif-markall" id="trNotifMarkAll">Marcar todas como leídas</button>
-      <button type="button" class="tr-notif-close" id="trNotifClose" aria-label="Cerrar notificaciones">
+      <button type="button" class="tr-notif-markall" id="trNotifMarkAll">
+        Marcar todas como leídas
+      </button>
+      <button
+        type="button"
+        class="tr-notif-close"
+        id="trNotifClose"
+        aria-label="Cerrar notificaciones"
+      >
         <i class="bi bi-x-lg" aria-hidden="true"></i>
       </button>
     </div>
   </div>
 
   <div class="tr-notif-tabs" role="tablist" aria-label="Filtrar notificaciones">
-    <button type="button" class="tr-notif-tab is-active" role="tab" aria-selected="true" data-tab="todas">
+    <button
+      type="button"
+      class="tr-notif-tab is-active"
+      role="tab"
+      aria-selected="true"
+      data-tab="todas"
+    >
       Todas
     </button>
-    <button type="button" class="tr-notif-tab" role="tab" aria-selected="false" data-tab="noleidas">
+    <button
+      type="button"
+      class="tr-notif-tab"
+      role="tab"
+      aria-selected="false"
+      data-tab="noleidas"
+    >
       Sin leer <span id="trNotifTabCount">(0)</span>
     </button>
   </div>
@@ -37,8 +63,10 @@
     <div class="tr-notif-empty">Cargando notificaciones…</div>
   </div>
 
-  <div class="tr-notif-foot">
-    <a href="/notificaciones">Ver todas las notificaciones</a>
+  <div class="tr-notif-foot" id="trNotifFoot" hidden>
+    <button type="button" class="tr-notif-permiso" id="trNotifPermiso">
+      <i class="bi bi-bell" aria-hidden="true"></i> Activar avisos del navegador
+    </button>
   </div>
 </dialog>
 
@@ -47,70 +75,90 @@
     position: relative;
     width: 40px;
     height: 40px;
-    border-radius: 10px;
-    border: 1px solid rgba(255, 255, 255, 0.22);
-    background: rgba(255, 255, 255, 0.1);
-    color: #f8fafc;
+    border-radius: 8px;
+    border: 1px solid var(--tr-linea-strong, #c5d2dd);
+    background: var(--tr-surface, #fcfefd);
+    color: var(--tr-ink, #0e1726);
     display: inline-grid;
     place-items: center;
-    font-size: 1.1rem;
+    font-size: 1.05rem;
     cursor: pointer;
-    transition: background 0.18s, border-color 0.18s, transform 0.18s;
+    touch-action: manipulation;
+    transition:
+      background 0.16s ease,
+      border-color 0.16s ease,
+      transform 0.12s cubic-bezier(0.22, 1, 0.36, 1);
     flex-shrink: 0;
   }
   .tr-notif-btn:hover {
-    background: rgba(255, 255, 255, 0.18);
-    border-color: rgba(255, 255, 255, 0.35);
-    transform: translateY(-1px);
+    background: var(--tr-surface-subtle, #edf3f6);
+    border-color: var(--tr-ink-2, #324358);
+  }
+  .tr-notif-btn:active {
+    transform: scale(0.96);
+  }
+  .tr-notif-btn:focus-visible {
+    outline: 2px solid var(--tr-oro, #0f766e);
+    outline-offset: 2px;
   }
   .tr-notif-badge {
     position: absolute;
-    top: -5px;
-    right: -5px;
-    min-width: 18px;
-    height: 18px;
+    top: -6px;
+    right: -6px;
+    min-width: 19px;
+    height: 19px;
     padding: 0 5px;
     border-radius: 99px;
-    background: var(--tr-oro, #0d9488);
+    background: var(--tr-danger, #b91c1c);
     color: #fff;
-    border: 2px solid var(--tr-ink, #0f172a);
+    border: 2px solid var(--tr-bg, #f6f9fb);
     font-size: 0.68rem;
-    font-weight: 800;
-    line-height: 14px;
+    font-weight: 700;
+    line-height: 15px;
     text-align: center;
     font-variant-numeric: tabular-nums;
   }
 
-  /* Modal estilo tarjeta moderna */
+  /* Slide-over sheet lateral con física suave */
   .tr-notif-modal {
     position: fixed;
-    top: 76px;
-    right: 28px;
+    top: 0;
+    right: 0;
     left: auto;
-    bottom: auto;
+    bottom: 0;
     margin: 0;
-    width: min(440px, calc(100vw - 24px));
-    max-height: min(600px, calc(100vh - 100px));
-    border: 1px solid var(--tr-linea, #e2e8f0);
-    border-radius: 16px;
+    width: min(440px, 100vw);
+    height: 100dvh;
+    max-height: 100dvh;
+    border: 0;
+    border-left: 1px solid var(--tr-linea-strong, #c5d2dd);
+    border-radius: 0;
     padding: 0;
-    background: #fff;
-    color: var(--tr-ink, #0f172a);
-    box-shadow: 0 24px 60px rgba(15, 23, 42, 0.22), 0 4px 16px rgba(15, 23, 42, 0.08);
+    background: var(--tr-surface, #fcfefd);
+    color: var(--tr-ink, #0e1726);
+    box-shadow: -12px 0 36px rgba(14, 23, 38, 0.14);
     overflow: hidden;
+    overscroll-behavior: contain;
     display: none;
     flex-direction: column;
   }
   .tr-notif-modal[open] {
     display: flex;
-    animation: trNotifIn 0.18s cubic-bezier(0.2, 0.8, 0.2, 1);
+    animation: trNotifSheetIn 0.24s cubic-bezier(0.22, 1, 0.36, 1);
   }
   .tr-notif-modal::backdrop {
-    background: transparent;
+    background: rgba(14, 23, 38, 0.44);
+    backdrop-filter: blur(2px);
   }
-  @keyframes trNotifIn {
-    from { opacity: 0; transform: translateY(-8px) scale(0.98); }
-    to { opacity: 1; transform: none; }
+  @keyframes trNotifSheetIn {
+    from {
+      opacity: 0.4;
+      transform: translateX(32px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
   }
 
   .tr-notif-head {
@@ -118,32 +166,34 @@
     align-items: center;
     justify-content: space-between;
     gap: 12px;
-    padding: 18px 20px 12px;
+    padding: 20px 20px 14px;
   }
   .tr-notif-head h2 {
     margin: 0;
-    font-size: 1.2rem;
+    font-size: 1.12rem;
     font-weight: 700;
-    color: var(--tr-ink, #0f172a);
+    letter-spacing: -0.02em;
+    color: var(--tr-ink, #0e1726);
   }
   .tr-notif-head-acc {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
   }
   .tr-notif-markall {
     border: 0;
     background: none;
-    padding: 4px 6px;
+    padding: 5px 8px;
     font: inherit;
     font-size: 0.82rem;
     font-weight: 600;
-    color: var(--tr-oro-osc, #0f766e);
+    color: var(--tr-oro, #0f766e);
     cursor: pointer;
+    touch-action: manipulation;
     border-radius: 6px;
   }
   .tr-notif-markall:hover {
-    background: var(--tr-acento-suave, #f0fdfa);
+    background: var(--tr-acento-suave, #eefbf9);
     text-decoration: underline;
   }
   .tr-notif-markall:disabled {
@@ -151,20 +201,28 @@
     cursor: not-allowed;
   }
   .tr-notif-close {
-    width: 28px;
-    height: 28px;
+    width: 32px;
+    height: 32px;
     border-radius: 8px;
-    border: 0;
-    background: transparent;
-    color: var(--tr-muted, #64748b);
+    border: 1px solid var(--tr-linea, #dce5ec);
+    background: var(--tr-surface, #fcfefd);
+    color: var(--tr-muted, #586c84);
     display: grid;
     place-items: center;
     cursor: pointer;
-    font-size: 0.9rem;
+    touch-action: manipulation;
+    font-size: 0.88rem;
   }
   .tr-notif-close:hover {
-    background: #f1f5f9;
-    color: var(--tr-ink, #0f172a);
+    background: var(--tr-surface-subtle, #edf3f6);
+    color: var(--tr-ink, #0e1726);
+  }
+  .tr-notif-close:focus-visible,
+  .tr-notif-markall:focus-visible,
+  .tr-notif-tab:focus-visible,
+  .tr-notif-read-one:focus-visible {
+    outline: 2px solid var(--tr-oro, #0f766e);
+    outline-offset: 2px;
   }
 
   .tr-notif-tabs {
@@ -172,25 +230,24 @@
     align-items: center;
     gap: 18px;
     padding: 0 20px;
-    border-bottom: 1px solid var(--tr-linea, #e2e8f0);
+    border-bottom: 1px solid var(--tr-linea, #dce5ec);
   }
   .tr-notif-tab {
     border: 0;
     background: none;
     padding: 10px 2px;
     font: inherit;
-    font-size: 0.88rem;
+    font-size: 0.86rem;
     font-weight: 600;
-    color: var(--tr-muted, #64748b);
+    color: var(--tr-muted, #586c84);
     cursor: pointer;
+    touch-action: manipulation;
     position: relative;
-    transition: color 0.15s;
+    transition: color 0.15s ease;
   }
-  .tr-notif-tab:hover {
-    color: var(--tr-ink, #0f172a);
-  }
+  .tr-notif-tab:hover,
   .tr-notif-tab.is-active {
-    color: var(--tr-ink, #0f172a);
+    color: var(--tr-ink, #0e1726);
   }
   .tr-notif-tab.is-active::after {
     content: "";
@@ -199,50 +256,56 @@
     right: 0;
     bottom: -1px;
     height: 2px;
-    background: var(--tr-ink, #0f172a);
+    background: var(--tr-oro, #0f766e);
     border-radius: 2px;
   }
 
   .tr-notif-list {
     overflow-y: auto;
+    overscroll-behavior: contain;
     flex: 1;
     min-height: 160px;
   }
   .tr-notif-item {
     width: 100%;
     border: 0;
-    border-bottom: 1px solid #f1f5f9;
-    background: #fff;
-    padding: 13px 20px;
+    border-bottom: 1px solid var(--tr-linea, #dce5ec);
+    background: var(--tr-surface, #fcfefd);
+    padding: 14px 20px;
     display: flex;
     align-items: flex-start;
     gap: 12px;
     text-align: left;
     cursor: pointer;
+    touch-action: manipulation;
     font: inherit;
     color: inherit;
-    transition: background 0.14s;
+    transition: background 0.14s ease;
   }
   .tr-notif-item:last-child {
     border-bottom: 0;
   }
   .tr-notif-item:hover {
-    background: var(--tr-crema, #f8fafc);
+    background: var(--tr-bg, #f6f9fb);
   }
   .tr-notif-item--unread {
-    background: #fcfefd;
+    background: var(--tr-acento-suave, #eefbf9);
   }
   .tr-notif-ico {
-    width: 38px;
-    height: 38px;
-    border-radius: 50%;
-    background: var(--tr-acento-suave, #f0fdfa);
-    color: var(--tr-oro-osc, #0f766e);
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: var(--tr-surface-subtle, #edf3f6);
+    color: var(--tr-oro, #0f766e);
     display: grid;
     place-items: center;
-    font-size: 1rem;
+    font-size: 0.96rem;
     flex-shrink: 0;
     margin-top: 2px;
+  }
+  .tr-notif-item--unread .tr-notif-ico {
+    background: var(--tr-surface, #fcfefd);
+    border: 1px solid var(--tr-acento-borde, #99e2d8);
   }
   .tr-notif-body {
     flex: 1;
@@ -252,15 +315,15 @@
   }
   .tr-notif-body strong {
     font-size: 0.88rem;
-    font-weight: 700;
-    color: var(--tr-ink, #0f172a);
+    font-weight: 600;
+    color: var(--tr-ink, #0e1726);
     line-height: 1.3;
   }
   .tr-notif-body p {
     margin: 0;
     font-size: 0.82rem;
-    color: var(--tr-muted, #64748b);
-    line-height: 1.35;
+    color: var(--tr-muted, #586c84);
+    line-height: 1.4;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
@@ -278,7 +341,7 @@
     width: 8px;
     height: 8px;
     border-radius: 50%;
-    background: var(--tr-oro, #0d9488);
+    background: var(--tr-oro, #0f766e);
   }
   .tr-notif-meta-top {
     display: flex;
@@ -286,55 +349,81 @@
     gap: 6px;
   }
   .tr-notif-read-one {
-    width: 24px;
-    height: 24px;
+    width: 26px;
+    height: 26px;
     border-radius: 6px;
-    border: 1px solid var(--tr-linea, #e2e8f0);
-    background: #fff;
-    color: var(--tr-oro-osc, #0f766e);
+    border: 1px solid var(--tr-linea-strong, #c5d2dd);
+    background: var(--tr-surface, #fcfefd);
+    color: var(--tr-oro, #0f766e);
     display: inline-grid;
     place-items: center;
     cursor: pointer;
-    font-size: 0.78rem;
+    touch-action: manipulation;
+    font-size: 0.8rem;
     padding: 0;
   }
   .tr-notif-read-one:hover {
-    background: var(--tr-acento-suave, #f0fdfa);
-    border-color: var(--tr-oro, #0d9488);
+    background: var(--tr-acento-suave, #eefbf9);
+    border-color: var(--tr-oro, #0f766e);
   }
   .tr-notif-time {
-    font-size: 0.75rem;
-    color: var(--tr-muted, #64748b);
+    font-size: 0.74rem;
+    color: var(--tr-muted, #586c84);
     white-space: nowrap;
+    font-variant-numeric: tabular-nums;
   }
   .tr-notif-empty {
-    padding: 36px 20px;
+    padding: 40px 20px;
     text-align: center;
-    color: var(--tr-muted, #64748b);
+    color: var(--tr-muted, #586c84);
     font-size: 0.88rem;
   }
   .tr-notif-foot {
-    border-top: 1px solid var(--tr-linea, #e2e8f0);
-    padding: 11px 20px;
+    border-top: 1px solid var(--tr-linea, #dce5ec);
+    padding: 14px 20px;
     text-align: center;
-    background: var(--tr-crema, #f8fafc);
+    background: var(--tr-bg, #f6f9fb);
   }
-  .tr-notif-foot a {
+  .tr-notif-foot[hidden] {
+    display: none;
+  }
+  .tr-notif-permiso {
+    border: 1px solid var(--tr-linea-strong, #c5d2dd);
+    background: var(--tr-surface, #fcfefd);
+    color: var(--tr-ink, #0e1726);
+    border-radius: 8px;
+    height: 36px;
+    padding: 0 14px;
+    font: inherit;
     font-size: 0.84rem;
     font-weight: 600;
-    color: var(--tr-oro-osc, #0f766e);
-    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    touch-action: manipulation;
   }
-  .tr-notif-foot a:hover {
-    text-decoration: underline;
+  .tr-notif-permiso:hover {
+    background: var(--tr-surface-subtle, #edf3f6);
+    border-color: var(--tr-ink-2, #324358);
+  }
+  .tr-notif-permiso:focus-visible {
+    outline: 2px solid var(--tr-oro, #0f766e);
+    outline-offset: 2px;
   }
 
-  @media (max-width: 600px) {
-    .tr-notif-modal {
-      inset: 0;
-      margin: auto;
-      width: calc(100vw - 24px);
-      max-height: calc(100dvh - 32px);
+  @media (prefers-reduced-motion: reduce) {
+    .tr-notif-btn,
+    .tr-notif-modal[open] {
+      animation: none;
+      transition: none;
+    }
+  }
+
+  @media (prefers-reduced-transparency: reduce) {
+    .tr-notif-modal::backdrop {
+      background: rgba(14, 23, 38, 0.65);
+      backdrop-filter: none;
     }
   }
 </style>
@@ -345,21 +434,41 @@
 
   const btn = document.getElementById("trNotifBtn") as HTMLButtonElement | null;
   const badge = document.getElementById("trNotifBadge") as HTMLElement | null;
-  const modal = document.getElementById("trNotifModal") as HTMLDialogElement | null;
+  const modal = document.getElementById(
+    "trNotifModal",
+  ) as HTMLDialogElement | null;
   const list = document.getElementById("trNotifList") as HTMLElement | null;
-  const tabCount = document.getElementById("trNotifTabCount") as HTMLElement | null;
-  const btnMarkAll = document.getElementById("trNotifMarkAll") as HTMLButtonElement | null;
-  const btnClose = document.getElementById("trNotifClose") as HTMLButtonElement | null;
+  const tabCount = document.getElementById(
+    "trNotifTabCount",
+  ) as HTMLElement | null;
+  const btnMarkAll = document.getElementById(
+    "trNotifMarkAll",
+  ) as HTMLButtonElement | null;
+  const btnClose = document.getElementById(
+    "trNotifClose",
+  ) as HTMLButtonElement | null;
+  const footPerm = document.getElementById("trNotifFoot") as HTMLElement | null;
+  const btnPermiso = document.getElementById(
+    "trNotifPermiso",
+  ) as HTMLButtonElement | null;
 
   if (btn && badge && modal && list && tabCount && btnMarkAll && btnClose) {
     let tabActual: "todas" | "noleidas" = "todas";
     let notificaciones: any[] = [];
     let noLeidas = 0;
 
+    function abrirModal() {
+      cargarNotificaciones();
+      if (!modal!.open) modal!.showModal();
+    }
+
     function tiempoRelativo(iso: string): string {
       const f = new Date(iso);
       if (Number.isNaN(f.getTime())) return "";
-      const diffSeg = Math.max(0, Math.floor((Date.now() - f.getTime()) / 1000));
+      const diffSeg = Math.max(
+        0,
+        Math.floor((Date.now() - f.getTime()) / 1000),
+      );
       if (diffSeg < 60) return "Ahora";
       const mins = Math.floor(diffSeg / 60);
       if (mins < 60) return `Hace ${mins} min`;
@@ -377,12 +486,18 @@
       badge.textContent = cantidad > 99 ? "99+" : String(cantidad);
       tabCount.textContent = `(${cantidad})`;
       btnMarkAll.disabled = cantidad <= 0;
+      const navBadge = document.getElementById("navNotifBadge");
+      if (navBadge) {
+        navBadge.hidden = cantidad <= 0;
+        navBadge.textContent = cantidad > 99 ? "99+" : String(cantidad);
+      }
     }
 
     function renderLista() {
-      const visibles = tabActual === "noleidas"
-        ? notificaciones.filter((n) => !n.leida)
-        : notificaciones;
+      const visibles =
+        tabActual === "noleidas"
+          ? notificaciones.filter((n) => !n.leida)
+          : notificaciones;
 
       if (!visibles.length) {
         list.innerHTML = `<div class="tr-notif-empty">${
@@ -393,7 +508,9 @@
         return;
       }
 
-      list.innerHTML = visibles.map((n) => `
+      list.innerHTML = visibles
+        .map(
+          (n) => `
         <div class="tr-notif-item ${n.leida ? "" : "tr-notif-item--unread"}" role="button" tabindex="0" data-id="${Number(n.notificacionID)}" data-tipo="${esc(n.tipoNotificacion)}" data-leida="${n.leida ? "1" : "0"}">
           <span class="tr-notif-ico"><i class="bi ${iconoNotificacion(n.tipoNotificacion)}" aria-hidden="true"></i></span>
           <span class="tr-notif-body">
@@ -407,7 +524,9 @@
             <span class="tr-notif-time">${esc(tiempoRelativo(n.fechaCreacion))}</span>
           </span>
         </div>
-      `).join("");
+      `,
+        )
+        .join("");
     }
 
     async function cargarNotificaciones() {
@@ -421,9 +540,17 @@
       }
     }
 
-    btn.addEventListener("click", () => {
-      cargarNotificaciones();
-      modal.showModal();
+    btn.addEventListener("click", abrirModal);
+
+    document.addEventListener("click", (ev) => {
+      const link = (ev.target as HTMLElement).closest<HTMLAnchorElement>(
+        'a[href="/notificaciones"], a[href="/notificaciones/"]',
+      );
+      if (!link) return;
+      const rol = document.querySelector<HTMLElement>(".sidebar")?.dataset.rol;
+      if (rol !== "Trabajador") return;
+      ev.preventDefault();
+      abrirModal();
     });
 
     btnClose.addEventListener("click", () => modal.close());
@@ -432,17 +559,21 @@
       if (ev.target === modal) modal.close();
     });
 
-    modal.querySelectorAll<HTMLButtonElement>("[data-tab]").forEach((tabBtn) => {
-      tabBtn.addEventListener("click", () => {
-        tabActual = tabBtn.dataset.tab === "noleidas" ? "noleidas" : "todas";
-        modal.querySelectorAll<HTMLButtonElement>("[data-tab]").forEach((t) => {
-          const activo = t === tabBtn;
-          t.classList.toggle("is-active", activo);
-          t.setAttribute("aria-selected", activo ? "true" : "false");
+    modal
+      .querySelectorAll<HTMLButtonElement>("[data-tab]")
+      .forEach((tabBtn) => {
+        tabBtn.addEventListener("click", () => {
+          tabActual = tabBtn.dataset.tab === "noleidas" ? "noleidas" : "todas";
+          modal
+            .querySelectorAll<HTMLButtonElement>("[data-tab]")
+            .forEach((t) => {
+              const activo = t === tabBtn;
+              t.classList.toggle("is-active", activo);
+              t.setAttribute("aria-selected", activo ? "true" : "false");
+            });
+          renderLista();
         });
-        renderLista();
       });
-    });
 
     btnMarkAll.addEventListener("click", async () => {
       try {
@@ -457,17 +588,23 @@
     });
 
     list.addEventListener("click", async (ev) => {
-      const btnRead = (ev.target as HTMLElement).closest<HTMLButtonElement>("[data-mark-read]");
+      const btnRead = (ev.target as HTMLElement).closest<HTMLButtonElement>(
+        "[data-mark-read]",
+      );
       if (btnRead) {
         ev.stopPropagation();
         const id = Number(btnRead.dataset.markRead);
         btnRead.disabled = true;
         try {
           await api(`/notificaciones/${id}/leida`, "PATCH");
-          notificaciones = notificaciones.map((n) => (Number(n.notificacionID) === id ? { ...n, leida: true } : n));
+          notificaciones = notificaciones.map((n) =>
+            Number(n.notificacionID) === id ? { ...n, leida: true } : n,
+          );
           actualizarBadge(Math.max(0, noLeidas - 1));
           renderLista();
-          document.dispatchEvent(new CustomEvent("avisos:actualizados", { detail: { noLeidas } }));
+          document.dispatchEvent(
+            new CustomEvent("avisos:actualizados", { detail: { noLeidas } }),
+          );
         } catch (e) {
           aviso((e as Error).message, "error");
           btnRead.disabled = false;
@@ -480,12 +617,14 @@
       const tipo = item.dataset.tipo ?? "";
       if (item.dataset.leida === "0") {
         api(`/notificaciones/${id}/leida`, "PATCH").catch(() => {});
-        notificaciones = notificaciones.map((n) => (Number(n.notificacionID) === id ? { ...n, leida: true } : n));
+        notificaciones = notificaciones.map((n) =>
+          Number(n.notificacionID) === id ? { ...n, leida: true } : n,
+        );
         actualizarBadge(Math.max(0, noLeidas - 1));
         renderLista();
       }
       const destino = enlaceNotificacion(tipo, "Trabajador");
-      if (destino && destino !== location.pathname) {
+      if (destino && destino !== "/notificaciones" && destino !== location.pathname) {
         modal.close();
         location.href = destino;
       }
@@ -498,6 +637,28 @@
       }
       if (modal.open) cargarNotificaciones();
     });
+
+    if (footPerm && btnPermiso && "Notification" in window && Notification.permission === "default") {
+      footPerm.hidden = false;
+      btnPermiso.addEventListener("click", async () => {
+        const r = await Notification.requestPermission();
+        footPerm.hidden = true;
+        aviso(
+          r === "granted"
+            ? "Avisos del navegador activados"
+            : "No se activaron los avisos del navegador",
+          r === "granted" ? "ok" : "error",
+        );
+      });
+    }
+
+    if (new URLSearchParams(location.search).get("notificaciones") === "1") {
+      const params = new URLSearchParams(location.search);
+      params.delete("notificaciones");
+      const query = params.toString();
+      history.replaceState(null, "", location.pathname + (query ? `?${query}` : "") + location.hash);
+      abrirModal();
+    }
 
     // Carga inicial del contador
     api("/notificaciones?soloNoLeidas=1")

@@ -10,7 +10,7 @@ const CLAVE = "skyinit_ultima_notif";
 
 export function enlaceNotificacion(tipo: string, rol: string): string {
   const porRol: Record<string, Record<string, string>> = {
-    agenda: { Usuario: "/usuario/agenda", Administrador: "/admin/agenda", Agente: "/agente/agenda" },
+    agenda: { Usuario: "/usuario/agenda", Administrador: "/admin/agenda", Agente: "/agente/agenda", Trabajador: "/trabajador/agenda" },
     mantenimiento: { Usuario: "/usuario/solicitudes", Administrador: "/admin/mantenimiento", Constructora: "/constructora/mantenimiento", Trabajador: "/trabajador" },
     calificacion: { Administrador: "/admin/propiedades", Agente: "/agente/propiedades" },
     comentario: { Administrador: "/admin/propiedades", Agente: "/agente/propiedades" },

@@ -39,22 +39,27 @@ const { mostrarCabecera = true } = Astro.props;
     </div>
   </div>
 
-  <div class="cal-lista-head">
-    <h2 style="font-size:1.1rem;font-weight:700;margin:0">Todas las citas</h2>
-    <div class="cal-lista-filtros">
-      <input type="search" id="calBuscar" placeholder="Buscar cliente, servicio o dirección…" aria-label="Buscar citas" />
-      <select id="calFiltroEstado" aria-label="Filtrar por estado">
-        <option value="">Todos los estados</option>
-        <option value="pend">Pendiente</option>
-        <option value="prog">En proceso</option>
-        <option value="ok">Finalizada</option>
-      </select>
-      <button type="button" class="fn-btn fn-btn--sec fn-btn--mini" id="calExportCsv">
-        <i class="bi bi-download" aria-hidden="true"></i> Exportar CSV
-      </button>
+  <section class="tr-panel-section" aria-label="Todas las citas">
+    <div class="tr-section-toolbar cal-lista-head" style="margin-bottom:0">
+      <div class="tr-section-heading">
+        <h2>Todas las citas</h2>
+        <p>Filtra por estado, busca por cliente o exporta a CSV.</p>
+      </div>
+      <div class="cal-lista-filtros">
+        <input type="search" id="calBuscar" placeholder="Buscar cliente, servicio o dirección…" aria-label="Buscar citas" />
+        <select id="calFiltroEstado" aria-label="Filtrar por estado">
+          <option value="">Todos los estados</option>
+          <option value="pend">Pendiente</option>
+          <option value="prog">En proceso</option>
+          <option value="ok">Finalizada</option>
+        </select>
+        <button type="button" class="fn-btn fn-btn--sec fn-btn--mini" id="calExportCsv">
+          <i class="bi bi-download" aria-hidden="true"></i> Exportar CSV
+        </button>
+      </div>
     </div>
-  </div>
-  <div id="agLista"></div>
+    <div id="agLista"></div>
+  </section>
 
   <dialog class="fn-modal" id="calDetalleModal" aria-labelledby="calModalTitulo">
     <div class="fn-modal-cuerpo">

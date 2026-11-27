@@ -1,0 +1,1810 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Prototipo visual orquestado para el panel operativo de trabajador de SkyInit." />
+  <title>Panel de Trabajador: Propuesta Orquestada, SkyInit</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+  <style>
+/* Hallmark · v2.0.0 · shape: app screen · theme: slate-emerald (pinned) · signature: live-next-visit-rail */
+/* critique: strict 4px rhythm, WCAG AA >= 5.4:1 teal contrast, hairline surfaces, spring sheets */
+    :root {
+      --font-sans: "Plus Jakarta Sans", "Segoe UI", system-ui, -apple-system, sans-serif;
+
+      /* Paleta del Panel de Trabajador afinada en contraste y tintes */
+      --bg: #f6f9fb;
+      --surface: #fcfefd;
+      --surface-subtle: #edf3f6;
+      --sidebar-bg: #0e1726;
+      --sidebar-hover: #1b283c;
+      --sidebar-border: #1e2d42;
+      --sidebar-ink: #e4edf3;
+      --sidebar-muted: #93a6bc;
+
+      --ink: #0e1726;
+      --ink-secondary: #324358;
+      --muted: #586c84;
+      --line: #dce5ec;
+      --line-strong: #c5d2dd;
+
+      --accent: #0f766e;
+      --accent-hover: #115e59;
+      --accent-soft: #eefbf9;
+      --accent-soft-border: #99e2d8;
+      --accent-on-dark: #5eead4;
+      --accent-on-dark-bg: rgba(15, 118, 110, 0.24);
+      --accent-on-dark-border: rgba(94, 234, 212, 0.3);
+
+      --pend-bg: #fff6ed;
+      --pend-fg: #b43c0a;
+      --pend-border: #fcd5b0;
+      --prog-bg: #eef5ff;
+      --prog-fg: #1d4ed8;
+      --prog-border: #bdd6fc;
+      --ok-bg: #ebf9f2;
+      --ok-fg: #046c4e;
+      --ok-border: #a5e6c7;
+      --alert-bg: #b91c1c;
+      --on-accent: #f8fcfb;
+
+      --overlay: rgba(14, 23, 38, 0.46);
+      --shadow-sm: 0 1px 2px rgba(14, 23, 38, 0.05);
+      --shadow-md: 0 10px 28px rgba(14, 23, 38, 0.1);
+
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --radius-pill: 999px;
+
+      --ease-spring: cubic-bezier(0.22, 1, 0.36, 1);
+      --dur-fast: 120ms;
+      --dur-mid: 240ms;
+      --dur-sheet: 320ms;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      overflow-x: clip;
+      font-family: var(--font-sans);
+      background-color: var(--bg);
+      color: var(--ink);
+      -webkit-font-smoothing: antialiased;
+      line-height: 1.5;
+    }
+
+    .skip-link {
+      position: fixed;
+      top: -48px;
+      left: 16px;
+      z-index: 2000;
+      padding: 8px 16px;
+      border-radius: var(--radius-sm);
+      background-color: var(--sidebar-bg);
+      color: var(--on-accent);
+      font-weight: 600;
+      font-size: 0.875rem;
+      text-decoration: none;
+      transition: transform var(--dur-fast) ease-out;
+    }
+
+    .skip-link:focus-visible {
+      top: 12px;
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+
+    :is(a, button, input, select, textarea, [tabindex]):focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+
+    :is(button, input, select, textarea):disabled,
+    [aria-disabled="true"] {
+      opacity: 0.5;
+      cursor: not-allowed;
+      pointer-events: none;
+    }
+
+    .app-shell {
+      display: grid;
+      grid-template-columns: 256px minmax(0, 1fr);
+      min-height: 100dvh;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      position: sticky;
+      top: 0;
+      height: 100dvh;
+      background-color: var(--sidebar-bg);
+      color: var(--sidebar-ink);
+      border-right: 1px solid var(--sidebar-border);
+      padding: 20px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 4px 8px;
+      text-decoration: none;
+      color: var(--sidebar-ink);
+    }
+
+    .brand-mark {
+      width: 36px;
+      height: 36px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--accent-on-dark-border);
+      background-color: var(--accent-on-dark-bg);
+      color: var(--accent-on-dark);
+      display: grid;
+      place-items: center;
+      font-weight: 700;
+      font-size: 0.875rem;
+      flex-shrink: 0;
+    }
+
+    .brand-text {
+      display: grid;
+      min-width: 0;
+    }
+
+    .brand-name {
+      font-weight: 700;
+      font-size: 0.98rem;
+      line-height: 1.2;
+      color: var(--sidebar-ink);
+    }
+
+    .brand-role {
+      font-size: 0.78rem;
+      color: var(--sidebar-muted);
+    }
+
+    .nav-list {
+      display: grid;
+      gap: 4px;
+    }
+
+    .nav-btn {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 8px 12px;
+      border-radius: var(--radius-sm);
+      border: 1px solid transparent;
+      background-color: transparent;
+      color: var(--sidebar-muted);
+      font-family: var(--font-sans);
+      font-size: 0.9rem;
+      font-weight: 500;
+      text-align: left;
+      cursor: pointer;
+      transition: background-color var(--dur-fast) ease-out, color var(--dur-fast) ease-out, transform 100ms ease-out;
+    }
+
+    .nav-btn i {
+      font-size: 1rem;
+      width: 18px;
+      text-align: center;
+      flex-shrink: 0;
+    }
+
+    .nav-btn:hover {
+      background-color: var(--sidebar-hover);
+      color: var(--sidebar-ink);
+    }
+
+    .nav-btn:active {
+      transform: scale(0.98);
+    }
+
+    .nav-btn[aria-current="page"] {
+      background-color: var(--accent-on-dark-bg);
+      border-color: var(--accent-on-dark-border);
+      color: var(--accent-on-dark);
+      font-weight: 600;
+    }
+
+    .nav-badge {
+      margin-left: auto;
+      min-width: 20px;
+      height: 20px;
+      padding: 0 8px;
+      border-radius: var(--radius-pill);
+      background-color: var(--alert-bg);
+      color: var(--on-accent);
+      font-size: 0.72rem;
+      font-weight: 700;
+      display: inline-grid;
+      place-items: center;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .nav-divider {
+      height: 1px;
+      background-color: var(--sidebar-border);
+      margin: 8px;
+    }
+
+    .sidebar-profile {
+      margin-top: auto;
+      padding: 12px;
+      border-radius: var(--radius-md);
+      background-color: var(--sidebar-hover);
+      border: 1px solid var(--sidebar-border);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: var(--radius-pill);
+      background-color: var(--accent);
+      color: var(--on-accent);
+      display: grid;
+      place-items: center;
+      font-weight: 700;
+      font-size: 0.82rem;
+      flex-shrink: 0;
+    }
+
+    .sidebar-profile-meta {
+      min-width: 0;
+      display: grid;
+    }
+
+    .sidebar-profile-meta strong {
+      font-size: 0.86rem;
+      color: var(--sidebar-ink);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .sidebar-profile-meta span {
+      font-size: 0.76rem;
+      color: var(--sidebar-muted);
+    }
+
+    /* Main */
+    .main-wrap {
+      min-width: 0;
+      padding: 24px 32px 64px;
+    }
+
+    .container {
+      max-width: 1180px;
+      margin: 0 auto;
+      display: grid;
+      gap: 24px;
+    }
+
+    .page-header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 16px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .page-title-group {
+      min-width: 0;
+      display: grid;
+      gap: 4px;
+    }
+
+    .page-date {
+      font-size: 0.84rem;
+      color: var(--muted);
+      font-weight: 500;
+    }
+
+    .page-title {
+      margin: 0;
+      font-size: clamp(1.45rem, 2.2vw, 1.85rem);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+      text-wrap: balance;
+      overflow-wrap: break-word;
+      min-width: 0;
+    }
+
+    .page-subtitle {
+      margin: 0;
+      font-size: 0.92rem;
+      color: var(--muted);
+    }
+
+    .header-actions {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      height: 40px;
+      padding: 0 16px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--line-strong);
+      background-color: transparent;
+      color: var(--ink);
+      font-family: var(--font-sans);
+      font-size: 0.875rem;
+      font-weight: 600;
+      text-decoration: none;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background-color var(--dur-fast) ease-out, border-color var(--dur-fast) ease-out, transform 100ms ease-out;
+    }
+
+    .btn:hover {
+      background-color: var(--surface-subtle);
+      border-color: var(--muted);
+    }
+
+    .btn:active {
+      transform: scale(0.97);
+    }
+
+    .btn-primary {
+      background-color: var(--accent);
+      border-color: var(--accent);
+      color: var(--on-accent);
+    }
+
+    .btn-primary:hover {
+      background-color: var(--accent-hover);
+      border-color: var(--accent-hover);
+      color: var(--on-accent);
+    }
+
+    .btn-icon {
+      position: relative;
+      width: 40px;
+      padding: 0;
+    }
+
+    .btn-sm {
+      height: 36px;
+      padding: 0 12px;
+      font-size: 0.82rem;
+    }
+
+    .notif-counter {
+      position: absolute;
+      top: -4px;
+      right: -4px;
+      min-width: 20px;
+      height: 20px;
+      padding: 0 4px;
+      border-radius: var(--radius-pill);
+      background-color: var(--alert-bg);
+      color: var(--on-accent);
+      font-size: 0.7rem;
+      font-weight: 700;
+      display: grid;
+      place-items: center;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* Métricas */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .kpi-card {
+      background-color: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-md);
+      padding: 20px;
+      display: grid;
+      gap: 8px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .kpi-card--featured {
+      background-color: var(--sidebar-bg);
+      border-color: var(--sidebar-bg);
+      color: var(--sidebar-ink);
+    }
+
+    .kpi-label {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.84rem;
+      font-weight: 500;
+      color: var(--muted);
+    }
+
+    .kpi-card--featured .kpi-label {
+      color: var(--sidebar-muted);
+    }
+
+    .kpi-card--featured .kpi-label i {
+      color: var(--accent-on-dark);
+    }
+
+    .kpi-value {
+      font-size: 1.9rem;
+      font-weight: 700;
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .kpi-note {
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+
+    .kpi-card--featured .kpi-note {
+      color: var(--accent-on-dark);
+    }
+
+    /* Próxima visita prioritaria */
+    .next-visit {
+      background-color: var(--accent-soft);
+      border: 1px solid var(--accent-soft-border);
+      border-radius: var(--radius-lg);
+      padding: 20px 24px;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 20px;
+      align-items: center;
+    }
+
+    .next-visit-meta {
+      display: grid;
+      gap: 8px;
+      min-width: 0;
+    }
+
+    .next-visit-top {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .next-visit-time {
+      font-size: 0.84rem;
+      font-weight: 700;
+      color: var(--accent-hover);
+      background-color: var(--surface);
+      border: 1px solid var(--accent-soft-border);
+      padding: 4px 12px;
+      border-radius: var(--radius-pill);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .next-visit h2 {
+      margin: 0;
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--ink);
+      text-wrap: balance;
+      overflow-wrap: break-word;
+      min-width: 0;
+    }
+
+    .next-visit-details {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      font-size: 0.88rem;
+      color: var(--ink-secondary);
+    }
+
+    .next-visit-details span {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .next-visit-details i {
+      color: var(--accent);
+    }
+
+    .next-visit-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    /* Sección de tabla */
+    .panel-section {
+      background-color: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+    }
+
+    .section-toolbar {
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .section-heading {
+      display: grid;
+      gap: 4px;
+    }
+
+    .section-heading h2 {
+      margin: 0;
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--ink);
+      text-wrap: balance;
+    }
+
+    .section-heading p {
+      margin: 0;
+      font-size: 0.84rem;
+      color: var(--muted);
+    }
+
+    .filter-controls {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .segmented {
+      display: inline-flex;
+      padding: 4px;
+      border-radius: var(--radius-sm);
+      background-color: var(--surface-subtle);
+      border: 1px solid var(--line);
+      gap: 4px;
+    }
+
+    .seg-btn {
+      border: 0;
+      background-color: transparent;
+      color: var(--muted);
+      font-family: var(--font-sans);
+      font-size: 0.82rem;
+      font-weight: 600;
+      padding: 4px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background-color var(--dur-fast) ease-out, color var(--dur-fast) ease-out, transform 100ms ease-out;
+    }
+
+    .seg-btn:active {
+      transform: scale(0.97);
+    }
+
+    .seg-btn[aria-pressed="true"] {
+      background-color: var(--surface);
+      color: var(--ink);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .search-box {
+      position: relative;
+      width: 260px;
+      max-width: 100%;
+    }
+
+    .search-box i {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--muted);
+      font-size: 0.88rem;
+      pointer-events: none;
+    }
+
+    .search-box input {
+      width: 100%;
+      height: 36px;
+      padding: 0 12px 0 36px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--line-strong);
+      background-color: var(--surface);
+      color: var(--ink);
+      font-family: var(--font-sans);
+      font-size: 0.86rem;
+    }
+
+    .table-scroll {
+      overflow-x: auto;
+    }
+
+    .task-table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 760px;
+    }
+
+    .task-table th {
+      text-align: left;
+      padding: 12px 20px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--muted);
+      background-color: var(--bg);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .task-table td {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--line);
+      font-size: 0.88rem;
+      vertical-align: middle;
+    }
+
+    .task-table tbody tr:last-child td {
+      border-bottom: 0;
+    }
+
+    .task-table tbody tr {
+      transition: background-color var(--dur-fast) ease-out;
+    }
+
+    .task-table tbody tr:hover {
+      background-color: var(--bg);
+    }
+
+    .cell-main {
+      display: grid;
+      gap: 4px;
+      min-width: 0;
+    }
+
+    .cell-main strong {
+      color: var(--ink);
+      font-weight: 600;
+    }
+
+    .cell-main span {
+      color: var(--muted);
+      font-size: 0.82rem;
+    }
+
+    .cell-time {
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+      color: var(--ink-secondary);
+      font-weight: 500;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 12px;
+      border-radius: var(--radius-pill);
+      font-size: 0.78rem;
+      font-weight: 600;
+      border: 1px solid transparent;
+      white-space: nowrap;
+    }
+
+    .status-pill--pendiente {
+      background-color: var(--pend-bg);
+      color: var(--pend-fg);
+      border-color: var(--pend-border);
+    }
+
+    .status-pill--proceso {
+      background-color: var(--prog-bg);
+      color: var(--prog-fg);
+      border-color: var(--prog-border);
+    }
+
+    .status-pill--finalizada {
+      background-color: var(--ok-bg);
+      color: var(--ok-fg);
+      border-color: var(--ok-border);
+    }
+
+    .row-actions {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    /* Agenda semanal */
+    .week-grid {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      border-top: 1px solid var(--line);
+    }
+
+    .day-col {
+      border-right: 1px solid var(--line);
+      min-height: 290px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .day-col:last-child {
+      border-right: 0;
+    }
+
+    .day-head {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--line);
+      background-color: var(--bg);
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+    }
+
+    .day-head strong {
+      font-size: 0.86rem;
+      color: var(--ink);
+    }
+
+    .day-head span {
+      font-size: 0.82rem;
+      color: var(--muted);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .day-col--today .day-head {
+      background-color: var(--accent-soft);
+    }
+
+    .day-col--today .day-head strong,
+    .day-col--today .day-head span {
+      color: var(--accent-hover);
+    }
+
+    .day-slots {
+      padding: 12px;
+      display: grid;
+      gap: 8px;
+      align-content: start;
+    }
+
+    .slot-btn {
+      width: 100%;
+      text-align: left;
+      padding: 12px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--line);
+      background-color: var(--surface);
+      font-family: var(--font-sans);
+      cursor: pointer;
+      display: grid;
+      gap: 4px;
+      transition: border-color var(--dur-fast) ease-out, background-color var(--dur-fast) ease-out, transform 100ms ease-out;
+    }
+
+    .slot-btn:hover {
+      background-color: var(--accent-soft);
+      border-color: var(--accent-soft-border);
+    }
+
+    .slot-btn:active {
+      transform: scale(0.98);
+    }
+
+    .slot-btn--pendiente { border-color: var(--pend-border); background-color: var(--pend-bg); }
+    .slot-btn--proceso { border-color: var(--prog-border); background-color: var(--prog-bg); }
+    .slot-btn--finalizada { border-color: var(--ok-border); background-color: var(--ok-bg); }
+
+    .slot-time {
+      font-size: 0.76rem;
+      font-weight: 700;
+      color: var(--muted);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .slot-title {
+      font-size: 0.84rem;
+      font-weight: 600;
+      color: var(--ink);
+      line-height: 1.3;
+    }
+
+    .slot-place {
+      font-size: 0.76rem;
+      color: var(--muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .day-empty {
+      font-size: 0.8rem;
+      color: var(--muted);
+      padding: 12px 4px;
+    }
+
+    /* Perfil */
+    .profile-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+      gap: 20px;
+      padding: 24px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .field {
+      display: grid;
+      gap: 8px;
+    }
+
+    .field--full {
+      grid-column: 1 / -1;
+    }
+
+    .field label {
+      font-size: 0.84rem;
+      font-weight: 600;
+      color: var(--ink-secondary);
+    }
+
+    .field input {
+      height: 40px;
+      padding: 0 12px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--line-strong);
+      background-color: var(--surface);
+      color: var(--ink);
+      font-family: var(--font-sans);
+      font-size: 0.9rem;
+    }
+
+    .profile-summary {
+      padding: 20px;
+      border-radius: var(--radius-md);
+      background-color: var(--bg);
+      border: 1px solid var(--line);
+      display: grid;
+      gap: 16px;
+      align-content: start;
+    }
+
+    .profile-summary-head {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .profile-summary-head .avatar {
+      width: 48px;
+      height: 48px;
+      font-size: 1rem;
+    }
+
+    .spec-list {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      display: grid;
+      gap: 12px;
+      font-size: 0.86rem;
+      color: var(--ink-secondary);
+    }
+
+    .spec-list li {
+      display: flex;
+      justify-content: space-between;
+      padding-top: 12px;
+      border-top: 1px solid var(--line);
+    }
+
+    /* Slide-over Sheet (Apple spring + borde definido limpio) */
+    .sheet-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 1200;
+      background-color: var(--overlay);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity var(--dur-mid) var(--ease-spring);
+    }
+
+    .sheet-backdrop[data-open="true"] {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .sheet {
+      position: fixed;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 1210;
+      width: min(440px, 100%);
+      background-color: var(--surface);
+      border-left: 1px solid var(--line-strong);
+      display: flex;
+      flex-direction: column;
+      transform: translateX(100%);
+      transition: transform var(--dur-sheet) var(--ease-spring);
+    }
+
+    .sheet[data-open="true"] {
+      transform: translateX(0);
+    }
+
+    .sheet-head {
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .sheet-head h2 {
+      margin: 0;
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--ink);
+      text-wrap: balance;
+    }
+
+    .sheet-body {
+      padding: 20px 24px;
+      overflow-y: auto;
+      display: grid;
+      gap: 16px;
+      align-content: start;
+      flex: 1;
+    }
+
+    .sheet-foot {
+      padding: 16px 24px;
+      border-top: 1px solid var(--line);
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      background-color: var(--bg);
+    }
+
+    .notif-item {
+      padding: 16px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--line);
+      background-color: var(--surface);
+      display: grid;
+      gap: 8px;
+    }
+
+    .notif-item--unread {
+      border-color: var(--accent-soft-border);
+      background-color: var(--accent-soft);
+    }
+
+    .notif-item-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.86rem;
+    }
+
+    .notif-item p {
+      margin: 0;
+      font-size: 0.84rem;
+      color: var(--ink-secondary);
+    }
+
+    .detail-list {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      display: grid;
+      gap: 12px;
+    }
+
+    .detail-list li {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px;
+      border-radius: var(--radius-sm);
+      background-color: var(--bg);
+      border: 1px solid var(--line);
+      font-size: 0.86rem;
+    }
+
+    .detail-list span {
+      color: var(--muted);
+    }
+
+    .detail-list strong {
+      color: var(--ink);
+      text-align: right;
+    }
+
+    .note-field textarea {
+      width: 100%;
+      padding: 12px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--line-strong);
+      background-color: var(--surface);
+      color: var(--ink);
+      font-family: var(--font-sans);
+      font-size: 0.88rem;
+      resize: vertical;
+    }
+
+    .toast {
+      position: fixed;
+      right: 24px;
+      bottom: 24px;
+      z-index: 1500;
+      padding: 12px 16px;
+      border-radius: var(--radius-md);
+      background-color: var(--sidebar-bg);
+      color: var(--sidebar-ink);
+      font-size: 0.86rem;
+      font-weight: 600;
+      box-shadow: var(--shadow-md);
+      opacity: 0;
+      transform: translateY(10px);
+      pointer-events: none;
+      transition: opacity var(--dur-mid) var(--ease-spring), transform var(--dur-mid) var(--ease-spring);
+    }
+
+    .toast[data-visible="true"] {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .view-panel[hidden] {
+      display: none;
+    }
+
+    .empty-row {
+      text-align: center;
+      padding: 36px 20px;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .preview-pill {
+      position: fixed;
+      left: 16px;
+      bottom: 16px;
+      z-index: 900;
+      padding: 8px 12px;
+      border-radius: var(--radius-pill);
+      background-color: var(--sidebar-hover);
+      border: 1px solid var(--accent-on-dark-border);
+      color: var(--accent-on-dark);
+      font-size: 0.76rem;
+      font-weight: 600;
+    }
+
+    @media (max-width: 1080px) {
+      .kpi-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .week-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+      .profile-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 820px) {
+      .app-shell {
+        grid-template-columns: 1fr;
+      }
+      .sidebar {
+        position: static;
+        height: auto;
+        flex-direction: row;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .nav-list {
+        display: flex;
+        flex-wrap: wrap;
+      }
+      .nav-btn {
+        width: auto;
+      }
+      .sidebar-profile,
+      .nav-divider,
+      .preview-pill {
+        display: none;
+      }
+      .main-wrap {
+        padding: 20px 16px 48px;
+      }
+      .next-visit {
+        grid-template-columns: 1fr;
+      }
+      .week-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        transition-duration: 0.01ms !important;
+        animation-duration: 0.01ms !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <a href="#contenido-principal" class="skip-link">Saltar al contenido principal</a>
+
+  <div class="app-shell">
+    <aside class="sidebar" aria-label="Navegación del panel de trabajador">
+      <a href="#inicio" class="brand" data-view-link="inicio">
+        <span class="brand-mark" aria-hidden="true">SI</span>
+        <span class="brand-text">
+          <span class="brand-name">SkyInit</span>
+          <span class="brand-role">Panel de trabajador</span>
+        </span>
+      </a>
+
+      <nav class="nav-list" aria-label="Secciones">
+        <button type="button" class="nav-btn" data-view="inicio" aria-current="page">
+          <i class="bi bi-grid-1x2" aria-hidden="true"></i>
+          <span>Inicio</span>
+        </button>
+        <button type="button" class="nav-btn" data-view="agenda">
+          <i class="bi bi-calendar-week" aria-hidden="true"></i>
+          <span>Agenda semanal</span>
+        </button>
+        <button type="button" class="nav-btn" id="btnNavNotif">
+          <i class="bi bi-bell" aria-hidden="true"></i>
+          <span>Notificaciones</span>
+          <span class="nav-badge" id="sidebarBadge">2</span>
+        </button>
+        <button type="button" class="nav-btn" data-view="perfil">
+          <i class="bi bi-person" aria-hidden="true"></i>
+          <span>Mi perfil</span>
+        </button>
+      </nav>
+
+      <div class="nav-divider" role="separator"></div>
+
+      <div class="sidebar-profile">
+        <span class="avatar" aria-hidden="true">CR</span>
+        <div class="sidebar-profile-meta">
+          <strong>Carlos Ramírez</strong>
+          <span>Técnico de mantenimiento</span>
+        </div>
+      </div>
+    </aside>
+
+    <main id="contenido-principal" class="main-wrap">
+      <div class="container">
+        <header class="page-header">
+          <div class="page-title-group">
+            <span class="page-date">Miércoles, 25 de noviembre</span>
+            <h1 class="page-title" id="pageTitle">Jornada de mantenimiento</h1>
+            <p class="page-subtitle" id="pageSubtitle">Gestiona citas asignadas, registra avances y abre rutas rápidas.</p>
+          </div>
+          <div class="header-actions">
+            <button type="button" class="btn" data-view="agenda">
+              <i class="bi bi-calendar3" aria-hidden="true"></i>
+              <span>Ver semana</span>
+            </button>
+            <button type="button" class="btn btn-icon" id="btnOpenNotif" aria-label="Abrir notificaciones">
+              <i class="bi bi-bell" aria-hidden="true"></i>
+              <span class="notif-counter" id="headerBadge">2</span>
+            </button>
+            <button type="button" class="btn btn-primary" id="btnQuickNext">
+              <i class="bi bi-play-fill" aria-hidden="true"></i>
+              <span>Siguiente cita</span>
+            </button>
+          </div>
+        </header>
+
+        <div class="view-panel" id="view-inicio">
+          <div class="container">
+            <section class="kpi-grid" aria-label="Resumen de jornada">
+              <article class="kpi-card kpi-card--featured">
+                <div class="kpi-label">
+                  <span>Citas de hoy</span>
+                  <i class="bi bi-clock-history" aria-hidden="true"></i>
+                </div>
+                <strong class="kpi-value" id="kpiHoy">3</strong>
+                <span class="kpi-note">Próxima a las 10:30</span>
+              </article>
+              <article class="kpi-card">
+                <div class="kpi-label">
+                  <span>Pendientes</span>
+                  <i class="bi bi-hourglass-split" aria-hidden="true"></i>
+                </div>
+                <strong class="kpi-value" id="kpiPendientes">2</strong>
+                <span class="kpi-note">Por iniciar en campo</span>
+              </article>
+              <article class="kpi-card">
+                <div class="kpi-label">
+                  <span>En proceso</span>
+                  <i class="bi bi-tools" aria-hidden="true"></i>
+                </div>
+                <strong class="kpi-value" id="kpiProceso">1</strong>
+                <span class="kpi-note">Con avance activo</span>
+              </article>
+              <article class="kpi-card">
+                <div class="kpi-label">
+                  <span>Finalizadas</span>
+                  <i class="bi bi-check2-circle" aria-hidden="true"></i>
+                </div>
+                <strong class="kpi-value" id="kpiFinalizadas">2</strong>
+                <span class="kpi-note">Completadas esta semana</span>
+              </article>
+            </section>
+
+            <section class="next-visit" aria-label="Próxima visita prioritaria" id="nextVisitCard"></section>
+
+            <section class="panel-section" aria-label="Listado de mantenimientos asignados">
+              <div class="section-toolbar">
+                <div class="section-heading">
+                  <h2>Mantenimientos asignados</h2>
+                  <p>Filtra por estado o busca por cliente y dirección.</p>
+                </div>
+                <div class="filter-controls">
+                  <div class="segmented" role="group" aria-label="Filtrar por estado">
+                    <button type="button" class="seg-btn" data-filter="todas" aria-pressed="true">Todas</button>
+                    <button type="button" class="seg-btn" data-filter="Pendiente" aria-pressed="false">Pendiente</button>
+                    <button type="button" class="seg-btn" data-filter="En proceso" aria-pressed="false">En proceso</button>
+                    <button type="button" class="seg-btn" data-filter="Finalizada" aria-pressed="false">Finalizada</button>
+                  </div>
+                  <div class="search-box">
+                    <i class="bi bi-search" aria-hidden="true"></i>
+                    <input
+                      type="search"
+                      id="searchInput"
+                      placeholder="Buscar cliente o dirección…"
+                      aria-label="Buscar por cliente o dirección"
+                      autocomplete="off"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div class="table-scroll">
+                <table class="task-table">
+                  <thead>
+                    <tr>
+                      <th scope="col">Servicio e inmueble</th>
+                      <th scope="col">Cliente</th>
+                      <th scope="col">Fecha y hora</th>
+                      <th scope="col">Estado</th>
+                      <th scope="col" style="text-align: right;">Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody id="taskTableBody"></tbody>
+                </table>
+              </div>
+            </section>
+          </div>
+        </div>
+
+        <div class="view-panel" id="view-agenda" hidden>
+          <section class="panel-section" aria-label="Calendario semanal de citas">
+            <div class="section-toolbar">
+              <div class="section-heading">
+                <h2>Semana del 23 al 28 de noviembre</h2>
+                <p>Selecciona cualquier cita para actualizar su estado o abrir la ruta.</p>
+              </div>
+              <button type="button" class="btn btn-sm" data-view="inicio">
+                <i class="bi bi-arrow-left" aria-hidden="true"></i>
+                <span>Volver al listado</span>
+              </button>
+            </div>
+            <div class="week-grid" id="weekGrid"></div>
+          </section>
+        </div>
+
+        <div class="view-panel" id="view-perfil" hidden>
+          <section class="panel-section" aria-label="Información personal del trabajador">
+            <div class="section-toolbar">
+              <div class="section-heading">
+                <h2>Mi perfil técnico</h2>
+                <p>Datos visibles para tu constructora y los clientes al asignar visitas.</p>
+              </div>
+            </div>
+            <div class="profile-grid">
+              <form class="form-grid" id="profileForm">
+                <div class="field">
+                  <label for="profNombre">Nombre completo</label>
+                  <input id="profNombre" name="nombre" type="text" value="Carlos Ramírez" autocomplete="name" />
+                </div>
+                <div class="field">
+                  <label for="profTel">Teléfono de contacto</label>
+                  <input id="profTel" name="telefono" type="tel" value="+57 314 582 9012" autocomplete="tel" />
+                </div>
+                <div class="field field--full">
+                  <label for="profCorreo">Correo electrónico</label>
+                  <input id="profCorreo" name="correo" type="email" value="carlos.ramirez@skyinit.co" spellcheck="false" autocomplete="email" />
+                </div>
+                <div class="field field--full">
+                  <label for="profEsp">Especialidad principal</label>
+                  <input id="profEsp" name="especialidad" type="text" value="Plomería, redes eléctricas y mantenimiento locativo" autocomplete="off" />
+                </div>
+                <div class="field field--full" style="justify-items: start;">
+                  <button type="submit" class="btn btn-primary">Guardar cambios</button>
+                </div>
+              </form>
+
+              <aside class="profile-summary" aria-label="Resumen operativo">
+                <div class="profile-summary-head">
+                  <span class="avatar" aria-hidden="true">CR</span>
+                  <div>
+                    <strong>Carlos Ramírez</strong>
+                    <div style="font-size: 0.82rem; color: var(--muted);">Constructora Horizonte S.A.S.</div>
+                  </div>
+                </div>
+                <ul class="spec-list">
+                  <li><span>Estado de cuenta</span><strong>Activo</strong></li>
+                  <li><span>Ciudad base</span><strong>Duitama, Boyacá</strong></li>
+                  <li><span>Citas cerradas este mes</span><strong style="font-variant-numeric: tabular-nums;">18</strong></li>
+                </ul>
+              </aside>
+            </div>
+          </section>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <div class="sheet-backdrop" id="sheetBackdrop" data-open="false" aria-hidden="true"></div>
+
+  <section class="sheet" id="notifSheet" data-open="false" role="dialog" aria-modal="true" aria-labelledby="notifTitle" hidden>
+    <div class="sheet-head">
+      <h2 id="notifTitle">Notificaciones</h2>
+      <button type="button" class="btn btn-sm btn-icon" data-close-sheet aria-label="Cerrar notificaciones">
+        <i class="bi bi-x-lg" aria-hidden="true"></i>
+      </button>
+    </div>
+    <div class="sheet-body" id="notifList"></div>
+    <div class="sheet-foot">
+      <button type="button" class="btn btn-sm" id="btnMarkAllRead">Marcar todas leídas</button>
+    </div>
+  </section>
+
+  <section class="sheet" id="taskSheet" data-open="false" role="dialog" aria-modal="true" aria-labelledby="taskSheetTitle" hidden>
+    <div class="sheet-head">
+      <h2 id="taskSheetTitle">Detalle de cita</h2>
+      <button type="button" class="btn btn-sm btn-icon" data-close-sheet aria-label="Cerrar detalle">
+        <i class="bi bi-x-lg" aria-hidden="true"></i>
+      </button>
+    </div>
+    <div class="sheet-body" id="taskSheetBody"></div>
+    <div class="sheet-foot" id="taskSheetFoot"></div>
+  </section>
+
+  <div class="toast" id="toast" role="status" aria-live="polite" data-visible="false"></div>
+  <div class="preview-pill" aria-hidden="true">Prototipo de prueba (sin integrar)</div>
+
+  <script>
+    const tasks = [
+      {
+        id: 1,
+        servicio: "Revisión de filtración en baño principal",
+        direccion: "Calle 18 #14-42, Edificio Robles Apto 402",
+        ciudad: "Duitama",
+        cliente: "Laura Gómez",
+        telefono: "+57 310 442 1890",
+        dia: "Mié 25",
+        hora: "10:30",
+        hoy: true,
+        estado: "En proceso",
+        nota: "Se verificó sello de ducha; pendiente aplicar silicona sanitaria."
+      },
+      {
+        id: 2,
+        servicio: "Cambio de breaker y revisión tablero eléctrico",
+        direccion: "Carrera 15 #22-10, Conjunto Mirador Casa 12",
+        ciudad: "Duitama",
+        cliente: "Andrés Cárdenas",
+        telefono: "+57 315 809 3341",
+        dia: "Mié 25",
+        hora: "14:00",
+        hoy: true,
+        estado: "Pendiente",
+        nota: "Llevar breaker termomagnético de 20A."
+      },
+      {
+        id: 3,
+        servicio: "Ajuste de bisagras y cerradura puerta principal",
+        direccion: "Avenida Las Américas #9-55, Apto 205",
+        ciudad: "Duitama",
+        cliente: "Mónica Herrera",
+        telefono: "+57 312 677 2015",
+        dia: "Mié 25",
+        hora: "16:30",
+        hoy: true,
+        estado: "Pendiente",
+        nota: "Confirmar disponibilidad con portería al llegar."
+      },
+      {
+        id: 4,
+        servicio: "Mantenimiento preventivo de calentador a gas",
+        direccion: "Calle 11 #19-08, Barrio La Floresta",
+        ciudad: "Sogamoso",
+        cliente: "Jorge Pardo",
+        telefono: "+57 318 294 5510",
+        dia: "Jue 26",
+        hora: "09:00",
+        hoy: false,
+        estado: "Finalizada",
+        nota: "Limpieza de quemadores y prueba de presión completadas."
+      },
+      {
+        id: 5,
+        servicio: "Sellado de ventanería y humedad en fachada",
+        direccion: "Carrera 20 #16-30, Torre Verde Apto 601",
+        ciudad: "Duitama",
+        cliente: "Sofía Mejía",
+        telefono: "+57 311 903 4420",
+        dia: "Vie 27",
+        hora: "11:00",
+        hoy: false,
+        estado: "Finalizada",
+        nota: "Trabajo aprobado y firmado por la residente."
+      }
+    ];
+
+    const notifications = [
+      { id: 101, titulo: "Nueva cita asignada", texto: "Cambio de breaker en Conjunto Mirador para hoy a las 14:00.", tiempo: "Hace 18 min", leida: false },
+      { id: 102, titulo: "Nota del cliente", texto: "Mónica Herrera indicó dejar registro en portería antes de subir.", tiempo: "Hace 1 h", leida: false },
+      { id: 103, titulo: "Avance aprobado", texto: "Tu reporte en Torre Verde Apto 601 fue marcado como conforme.", tiempo: "Ayer", leida: true }
+    ];
+
+    const daysOrder = [
+      { key: "Lun 23", label: "Lunes", num: "23" },
+      { key: "Mar 24", label: "Martes", num: "24" },
+      { key: "Mié 25", label: "Miércoles", num: "25", today: true },
+      { key: "Jue 26", label: "Jueves", num: "26" },
+      { key: "Vie 27", label: "Viernes", num: "27" },
+      { key: "Sáb 28", label: "Sábado", num: "28" }
+    ];
+
+    let activeFilter = "todas";
+    let searchTerm = "";
+
+    const statusClass = (estado) =>
+      estado === "Pendiente" ? "pendiente" : estado === "En proceso" ? "proceso" : "finalizada";
+
+    const mapsUrl = (t) =>
+      `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${t.direccion}, ${t.ciudad}`)}`;
+
+    function showToast(msg) {
+      const el = document.getElementById("toast");
+      el.textContent = msg;
+      el.dataset.visible = "true";
+      clearTimeout(showToast._timer);
+      showToast._timer = setTimeout(() => { el.dataset.visible = "false"; }, 2600);
+    }
+
+    function renderKPIs() {
+      const hoy = tasks.filter((t) => t.hoy).length;
+      const pend = tasks.filter((t) => t.estado === "Pendiente").length;
+      const proc = tasks.filter((t) => t.estado === "En proceso").length;
+      const fin = tasks.filter((t) => t.estado === "Finalizada").length;
+      document.getElementById("kpiHoy").textContent = String(hoy);
+      document.getElementById("kpiPendientes").textContent = String(pend);
+      document.getElementById("kpiProceso").textContent = String(proc);
+      document.getElementById("kpiFinalizadas").textContent = String(fin);
+    }
+
+    function renderNextVisit() {
+      const next = tasks.find((t) => t.estado === "En proceso") || tasks.find((t) => t.estado === "Pendiente") || tasks[0];
+      const wrap = document.getElementById("nextVisitCard");
+      const nextAction = next.estado === "Pendiente" ? "Iniciar visita" : next.estado === "En proceso" ? "Registrar avance" : "Ver resumen";
+      wrap.innerHTML = `
+        <div class="next-visit-meta">
+          <div class="next-visit-top">
+            <span class="next-visit-time">${next.dia}, ${next.hora}</span>
+            <span class="status-pill status-pill--${statusClass(next.estado)}">${next.estado}</span>
+          </div>
+          <h2>${next.servicio}</h2>
+          <div class="next-visit-details">
+            <span><i class="bi bi-geo-alt" aria-hidden="true"></i>${next.direccion}, ${next.ciudad}</span>
+            <span><i class="bi bi-person" aria-hidden="true"></i>${next.cliente}</span>
+          </div>
+        </div>
+        <div class="next-visit-actions">
+          <a href="${mapsUrl(next)}" target="_blank" rel="noopener noreferrer" class="btn">
+            <i class="bi bi-sign-turn-right" aria-hidden="true"></i>
+            <span>Cómo llegar</span>
+          </a>
+          <button type="button" class="btn btn-primary" data-open-task="${next.id}">
+            <i class="bi bi-clipboard-check" aria-hidden="true"></i>
+            <span>${nextAction}</span>
+          </button>
+        </div>
+      `;
+    }
+
+    function renderTable() {
+      const tbody = document.getElementById("taskTableBody");
+      const q = searchTerm.trim().toLowerCase();
+      const filtered = tasks.filter((t) => {
+        const matchState = activeFilter === "todas" || t.estado === activeFilter;
+        const matchText = !q || t.servicio.toLowerCase().includes(q) || t.cliente.toLowerCase().includes(q) || t.direccion.toLowerCase().includes(q);
+        return matchState && matchText;
+      });
+
+      if (!filtered.length) {
+        tbody.innerHTML = `<tr><td colspan="5" class="empty-row">No hay mantenimientos que coincidan con este filtro.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = filtered.map((t) => `
+        <tr>
+          <td>
+            <div class="cell-main">
+              <strong>${t.servicio}</strong>
+              <span>${t.direccion}, ${t.ciudad}</span>
+            </div>
+          </td>
+          <td>
+            <div class="cell-main">
+              <strong>${t.cliente}</strong>
+              <span>${t.telefono}</span>
+            </div>
+          </td>
+          <td class="cell-time">${t.dia}, ${t.hora}</td>
+          <td><span class="status-pill status-pill--${statusClass(t.estado)}">${t.estado}</span></td>
+          <td>
+            <div class="row-actions">
+              <a href="${mapsUrl(t)}" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-icon" aria-label="Cómo llegar a ${t.direccion}">
+                <i class="bi bi-geo-alt" aria-hidden="true"></i>
+              </a>
+              <button type="button" class="btn btn-sm" data-open-task="${t.id}">Gestionar</button>
+            </div>
+          </td>
+        </tr>
+      `).join("");
+    }
+
+    function renderWeek() {
+      const grid = document.getElementById("weekGrid");
+      grid.innerHTML = daysOrder.map((d) => {
+        const items = tasks.filter((t) => t.dia === d.key);
+        const slots = items.length
+          ? items.map((t) => `
+              <button type="button" class="slot-btn slot-btn--${statusClass(t.estado)}" data-open-task="${t.id}">
+                <span class="slot-time">${t.hora}</span>
+                <span class="slot-title">${t.servicio}</span>
+                <span class="slot-place">${t.cliente}</span>
+              </button>
+            `).join("")
+          : `<div class="day-empty">Sin citas</div>`;
+        return `
+          <div class="day-col ${d.today ? "day-col--today" : ""}">
+            <div class="day-head">
+              <strong>${d.label}</strong>
+              <span>${d.num}</span>
+            </div>
+            <div class="day-slots">${slots}</div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function renderNotifications() {
+      const unread = notifications.filter((n) => !n.leida).length;
+      const badges = [document.getElementById("sidebarBadge"), document.getElementById("headerBadge")];
+      badges.forEach((b) => {
+        b.textContent = String(unread);
+        b.hidden = unread === 0;
+      });
+
+      const list = document.getElementById("notifList");
+      list.innerHTML = notifications.map((n) => `
+        <article class="notif-item ${n.leida ? "" : "notif-item--unread"}">
+          <div class="notif-item-top">
+            <strong>${n.titulo}</strong>
+            <span style="color: var(--muted); font-size: 0.78rem;">${n.tiempo}</span>
+          </div>
+          <p>${n.texto}</p>
+          ${n.leida ? "" : `<div style="justify-self: end;"><button type="button" class="btn btn-sm" data-read-notif="${n.id}">Marcar leída</button></div>`}
+        </article>
+      `).join("");
+    }
+
+    function openSheet(sheetEl) {
+      closeAllSheets();
+      const backdrop = document.getElementById("sheetBackdrop");
+      sheetEl.hidden = false;
+      backdrop.setAttribute("aria-hidden", "false");
+      requestAnimationFrame(() => {
+        backdrop.dataset.open = "true";
+        sheetEl.dataset.open = "true";
+      });
+    }
+
+    function closeAllSheets() {
+      const backdrop = document.getElementById("sheetBackdrop");
+      backdrop.dataset.open = "false";
+      backdrop.setAttribute("aria-hidden", "true");
+      document.querySelectorAll(".sheet").forEach((s) => {
+        s.dataset.open = "false";
+        setTimeout(() => { if (s.dataset.open === "false") s.hidden = true; }, 320);
+      });
+    }
+
+    function openTaskSheet(id) {
+      const t = tasks.find((x) => x.id === id);
+      if (!t) return;
+      document.getElementById("taskSheetTitle").textContent = t.servicio;
+      document.getElementById("taskSheetBody").innerHTML = `
+        <div><span class="status-pill status-pill--${statusClass(t.estado)}">${t.estado}</span></div>
+        <ul class="detail-list">
+          <li><span>Cliente</span><strong>${t.cliente}</strong></li>
+          <li><span>Teléfono</span><strong>${t.telefono}</strong></li>
+          <li><span>Horario</span><strong>${t.dia}, ${t.hora}</strong></li>
+          <li><span>Dirección</span><strong>${t.direccion}, ${t.ciudad}</strong></li>
+        </ul>
+        <div class="field note-field">
+          <label for="taskNoteInput">Nota de avance técnico</label>
+          <textarea id="taskNoteInput" rows="3" placeholder="Describe el trabajo realizado…">${t.nota}</textarea>
+        </div>
+      `;
+
+      const nextState = t.estado === "Pendiente" ? "En proceso" : t.estado === "En proceso" ? "Finalizada" : null;
+      document.getElementById("taskSheetFoot").innerHTML = `
+        <a href="${mapsUrl(t)}" target="_blank" rel="noopener noreferrer" class="btn btn-sm">
+          <i class="bi bi-sign-turn-right" aria-hidden="true"></i>
+          <span>Cómo llegar</span>
+        </a>
+        ${nextState ? `<button type="button" class="btn btn-sm btn-primary" id="btnAdvanceTask">Pasar a ${nextState}</button>` : `<button type="button" class="btn btn-sm btn-primary" id="btnSaveNote">Guardar nota</button>`}
+      `;
+
+      document.getElementById("btnAdvanceTask")?.addEventListener("click", () => {
+        t.nota = document.getElementById("taskNoteInput").value.trim();
+        t.estado = nextState;
+        renderAll();
+        closeAllSheets();
+        showToast(`Cita actualizada a "${nextState}".`);
+      });
+
+      document.getElementById("btnSaveNote")?.addEventListener("click", () => {
+        t.nota = document.getElementById("taskNoteInput").value.trim();
+        closeAllSheets();
+        showToast("Nota de avance guardada.");
+      });
+
+      openSheet(document.getElementById("taskSheet"));
+    }
+
+    function switchView(name) {
+      const titles = {
+        inicio: ["Jornada de mantenimiento", "Gestiona citas asignadas, registra avances y abre rutas rápidas."],
+        agenda: ["Agenda semanal", "Vista rápida de tus mantenimientos programados por día."],
+        perfil: ["Mi perfil", "Actualiza tus datos de contacto y especialidad técnica."]
+      };
+      document.querySelectorAll(".view-panel").forEach((p) => { p.hidden = p.id !== `view-${name}`; });
+      document.querySelectorAll(".nav-btn[data-view]").forEach((b) => {
+        if (b.dataset.view === name) b.setAttribute("aria-current", "page");
+        else b.removeAttribute("aria-current");
+      });
+      document.getElementById("pageTitle").textContent = titles[name][0];
+      document.getElementById("pageSubtitle").textContent = titles[name][1];
+    }
+
+    function renderAll() {
+      renderKPIs();
+      renderNextVisit();
+      renderTable();
+      renderWeek();
+      renderNotifications();
+    }
+
+    document.addEventListener("click", (e) => {
+      const viewBtn = e.target.closest("[data-view]");
+      if (viewBtn) {
+        switchView(viewBtn.dataset.view);
+        return;
+      }
+      const viewLink = e.target.closest("[data-view-link]");
+      if (viewLink) {
+        e.preventDefault();
+        switchView(viewLink.dataset.viewLink);
+        return;
+      }
+      const taskTrigger = e.target.closest("[data-open-task]");
+      if (taskTrigger) {
+        openTaskSheet(Number(taskTrigger.dataset.openTask));
+        return;
+      }
+      const readBtn = e.target.closest("[data-read-notif]");
+      if (readBtn) {
+        const item = notifications.find((n) => n.id === Number(readBtn.dataset.readNotif));
+        if (item) {
+          item.leida = true;
+          renderNotifications();
+          showToast("Notificación marcada como leída.");
+        }
+        return;
+      }
+      if (e.target.closest("[data-close-sheet]") || e.target.id === "sheetBackdrop") {
+        closeAllSheets();
+      }
+    });
+
+    document.querySelectorAll(".seg-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        activeFilter = btn.dataset.filter;
+        document.querySelectorAll(".seg-btn").forEach((b) => b.setAttribute("aria-pressed", String(b === btn)));
+        renderTable();
+      });
+    });
+
+    document.getElementById("searchInput").addEventListener("input", (e) => {
+      searchTerm = e.target.value;
+      renderTable();
+    });
+
+    document.getElementById("btnOpenNotif").addEventListener("click", () => openSheet(document.getElementById("notifSheet")));
+    document.getElementById("btnNavNotif").addEventListener("click", () => openSheet(document.getElementById("notifSheet")));
+    document.getElementById("btnMarkAllRead").addEventListener("click", () => {
+      notifications.forEach((n) => { n.leida = true; });
+      renderNotifications();
+      showToast("Todas las notificaciones marcadas como leídas.");
+    });
+
+    document.getElementById("btnQuickNext").addEventListener("click", () => {
+      const next = tasks.find((t) => t.estado === "En proceso") || tasks.find((t) => t.estado === "Pendiente") || tasks[0];
+      if (next) openTaskSheet(next.id);
+    });
+
+    document.getElementById("profileForm").addEventListener("submit", (e) => {
+      e.preventDefault();
+      showToast("Cambios de perfil guardados (modo prueba).");
+    });
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") closeAllSheets();
+    });
+
+    renderAll();
+  </script>
+</body>
+</html>

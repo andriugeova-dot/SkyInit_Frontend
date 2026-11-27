@@ -8,88 +8,191 @@ import NotifModalTrabajador from "../../components/trabajador/NotifModalTrabajad
   <div class="tr-page" id="grupoRoot">
     <header class="tr-hero">
       <div class="tr-hero-info">
-        <div class="tr-hero-tags">
-          <span class="tr-hero-tag"><i class="bi bi-people-fill" aria-hidden="true"></i> Cuadrilla de trabajo</span>
-          <span class="tr-hero-tag" id="grupoHeroConstTag" hidden><i class="bi bi-building" aria-hidden="true"></i> <span id="grupoHeroConst"></span></span>
-        </div>
+        <span class="tr-page-date" id="grupoHeroMeta">Cuadrilla de trabajo</span>
         <h1 id="grupoHeroTitulo">Grupo de trabajo</h1>
-        <p>Información de la cuadrilla, integrantes y supervisor asignados por tu constructora.</p>
+        <p>Información de la cuadrilla, integrantes y servicios asignados por tu constructora.</p>
       </div>
       <div class="tr-hero-acc">
-        <a class="tr-hero-btn tr-hero-btn--sec" href="/trabajador"><i class="bi bi-arrow-left" aria-hidden="true"></i> Volver al panel</a>
+        <a class="tr-btn" href="/trabajador"><i class="bi bi-arrow-left" aria-hidden="true"></i> Volver al panel</a>
         <NotifModalTrabajador />
       </div>
     </header>
 
-    <div class="tr-kpis" id="grupoStats" aria-label="Resumen de la cuadrilla"></div>
+    <div class="tr-kpis tr-kpis--3" id="grupoStats" aria-label="Resumen de la cuadrilla"></div>
 
     <div class="grupo-cols" id="grupoInfo"></div>
 
-    <section class="tr-card">
-      <div class="tr-card-head">
-        <div class="tr-card-titulo">
-          <div class="tr-card-ico"><i class="bi bi-person-lines-fill" aria-hidden="true"></i></div>
-          <div>
-            <h2>Integrantes del equipo</h2>
-            <small>Trabajadores activos afiliados a la misma constructora.</small>
+    <section class="tr-panel-section" aria-label="Integrantes del equipo">
+      <div class="tr-section-toolbar">
+        <div class="tr-section-heading">
+          <h2>Integrantes del equipo</h2>
+          <p>Trabajadores activos afiliados a la misma constructora.</p>
+        </div>
+        <div class="tr-filter-controls">
+          <div class="tr-search-box">
+            <i class="bi bi-search" aria-hidden="true"></i>
+            <input
+              id="grupoBuscarInt"
+              type="search"
+              name="buscarIntegrante"
+              autocomplete="off"
+              placeholder="Buscar integrante…"
+              aria-label="Buscar integrante del equipo"
+            />
           </div>
+          <span class="tr-count-pill" id="grupoCountInt">0 activos</span>
         </div>
       </div>
-      <div class="fn-grid" id="grupoIntegrantes"></div>
+      <div class="tr-table-scroll">
+        <table class="tr-task-table">
+          <thead>
+            <tr>
+              <th>Integrante</th>
+              <th>Rol</th>
+              <th>Correo</th>
+              <th>Teléfono</th>
+            </tr>
+          </thead>
+          <tbody id="grupoIntegrantes" aria-live="polite">
+            <tr>
+              <td colspan="4" class="tr-empty-row">Cargando integrantes del equipo…</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </section>
 
-    <section class="tr-card">
-      <div class="tr-card-head">
-        <div class="tr-card-titulo">
-          <div class="tr-card-ico tr-card-ico--oro"><i class="bi bi-tools" aria-hidden="true"></i></div>
-          <div>
-            <h2>Cuadrillas asignadas por servicio</h2>
-            <small>Servicios de mantenimiento donde compartes asignación con otros integrantes.</small>
-          </div>
+    <section class="tr-panel-section" aria-label="Cuadrillas asignadas por servicio">
+      <div class="tr-section-toolbar">
+        <div class="tr-section-heading">
+          <h2>Cuadrillas asignadas por servicio</h2>
+          <p>Servicios de mantenimiento donde compartes asignación con otros integrantes.</p>
+        </div>
+        <div class="tr-filter-controls">
+          <a class="tr-btn tr-btn--sm" href="/trabajador#mantRoot">
+            <i class="bi bi-tools" aria-hidden="true"></i> Ver mantenimientos
+          </a>
         </div>
       </div>
-      <div class="fn-grid" id="grupoAsignaciones" style="grid-template-columns:repeat(auto-fill,minmax(320px,1fr))"></div>
+      <div class="tr-table-scroll">
+        <table class="tr-task-table">
+          <thead>
+            <tr>
+              <th>Servicio y propiedad</th>
+              <th>Fecha de asignación</th>
+              <th>Equipo asignado</th>
+              <th>Estado</th>
+            </tr>
+          </thead>
+          <tbody id="grupoAsignaciones" aria-live="polite">
+            <tr>
+              <td colspan="4" class="tr-empty-row">Cargando asignaciones…</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </section>
   </div>
 </Layout>
 
 <style is:global>
-  .grupo-cols { display:grid; grid-template-columns:repeat(auto-fit, minmax(300px, 1fr)); gap:18px; }
-  .grupo-meta { margin:0; padding:0; list-style:none; display:grid; gap:8px; font-size:.9rem; }
-  .grupo-meta li { display:flex; gap:8px; align-items:baseline; }
-  .grupo-meta i { color:var(--fn-acc); flex-shrink:0; }
-  .grupo-meta a { color:var(--tr-ink, #253229); text-decoration:none; }
-  .grupo-meta a:hover { text-decoration:underline; }
-  .grupo-miembro-card { border-radius:14px; display:grid; gap:10px; align-content:start; background:#fffdf9; }
+  .grupo-cols { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:16px; align-items:stretch; }
+  .grupo-cols > .tr-card { display:grid; align-content:start; }
   .grupo-miembro { display:flex; gap:12px; align-items:center; }
-  .grupo-avatar {
-    width:50px; height:50px; border-radius:50%; background:var(--fn-acc); color:#fff;
-    border:2px solid var(--tr-oro, #c8ad72);
-    display:grid; place-items:center; font-weight:700; font-size:1rem; flex-shrink:0; overflow:hidden;
+  .grupo-avatar--sup {
+    width:42px; height:42px; border-radius:50%; background:var(--tr-acento-suave, #eefbf9);
+    color:var(--tr-oro, #0f766e); border:1.5px solid var(--tr-acento-borde, #99e2d8);
+    display:grid; place-items:center; font-weight:700; font-size:.9rem; flex-shrink:0;
   }
-  .grupo-avatar--sup { background:#f4f0e4; color:#253229; width:44px; height:44px; }
-  .grupo-avatar img { width:100%; height:100%; object-fit:cover; }
-  .grupo-chips { display:flex; flex-wrap:wrap; gap:6px; margin-top:4px; }
+  .grupo-chips { display:flex; flex-wrap:wrap; gap:6px; }
   .grupo-chip-miembro {
-    display:inline-flex; align-items:center; gap:5px; padding:3px 10px; border-radius:99px;
-    background:#f3efe4; color:#253229; font-size:.78rem; font-weight:600;
+    display:inline-flex; align-items:center; gap:5px; padding:3px 10px; border-radius:999px;
+    background:var(--tr-surface-subtle, #edf3f6); color:var(--tr-ink-2, #324358);
+    border:1px solid var(--tr-linea, #dce5ec); font-size:.76rem; font-weight:600;
   }
-  .grupo-chip-miembro--yo { background:#dcefe3; color:#1b6e3c; }
+  .grupo-chip-miembro--yo {
+    background:var(--tr-acento-suave, #eefbf9); color:var(--tr-oro-osc, #115e59);
+    border-color:var(--tr-acento-borde, #99e2d8);
+  }
+  @media (max-width: 820px) {
+    .grupo-cols { grid-template-columns:1fr; }
+  }
 </style>
 
 <script>
-  import { api, esc, fechaHora, urlArchivo, claseEstado } from "../../components/funciones/comun";
+  import { api, esc, fechaHora, urlArchivo } from "../../components/funciones/comun";
 
   const stats = document.getElementById("grupoStats")!;
   const info = document.getElementById("grupoInfo")!;
   const listaInt = document.getElementById("grupoIntegrantes")!;
   const listaAsig = document.getElementById("grupoAsignaciones")!;
   const heroTitulo = document.getElementById("grupoHeroTitulo")!;
-  const heroConstTag = document.getElementById("grupoHeroConstTag")!;
-  const heroConst = document.getElementById("grupoHeroConst")!;
+  const heroMeta = document.getElementById("grupoHeroMeta")!;
+  const buscarInt = document.getElementById("grupoBuscarInt") as HTMLInputElement;
+  const countInt = document.getElementById("grupoCountInt")!;
+
+  let todosIntegrantes: any[] = [];
 
   function iniciales(nombre: string): string {
     return nombre.trim().split(/\s+/).map((p) => p[0]).join("").slice(0, 2).toUpperCase() || "?";
+  }
+
+  function clasePillEstado(estado: string): string {
+    const norm = estado.toLowerCase();
+    if (norm.includes("final") || norm.includes("complet")) return "tr-status-pill--finalizada";
+    if (norm.includes("proce") || norm.includes("progr")) return "tr-status-pill--proceso";
+    return "tr-status-pill--pendiente";
+  }
+
+  function pintarIntegrantes() {
+    const q = buscarInt.value.trim().toLowerCase();
+    const visibles = q
+      ? todosIntegrantes.filter((t) =>
+          [t.nombre, t.rol, t.correo, t.telefono].filter(Boolean).join(" ").toLowerCase().includes(q)
+        )
+      : todosIntegrantes;
+
+    const total = todosIntegrantes.length;
+    countInt.textContent = `${total} ${total === 1 ? "activo" : "activos"}`;
+
+    if (!visibles.length) {
+      listaInt.innerHTML = `
+        <tr>
+          <td colspan="4" class="tr-empty-row">
+            ${total ? "No hay integrantes que coincidan con tu búsqueda." : "No hay integrantes activos registrados en tu cuadrilla."}
+          </td>
+        </tr>`;
+      return;
+    }
+
+    listaInt.innerHTML = visibles.map((t) => {
+      const foto = t.fotoPerfil ? urlArchivo(t.fotoPerfil) : "";
+      return `
+        <tr>
+          <td>
+            <div class="tr-member-cell">
+              <div class="tr-avatar-sm">
+                ${foto ? `<img src="${esc(foto)}" alt="" />` : esc(iniciales(t.nombre ?? ""))}
+              </div>
+              <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-width:0">
+                <strong style="color:var(--tr-ink);font-weight:600">${esc(t.nombre)}</strong>
+                ${t.esYo ? `<span class="tr-status-pill tr-status-pill--finalizada">Tú</span>` : ""}
+              </div>
+            </div>
+          </td>
+          <td style="color:var(--tr-ink-2)">${esc(t.rol ?? "Trabajador")}</td>
+          <td>
+            ${t.correo
+              ? `<a class="tr-link-clean" href="mailto:${esc(t.correo)}"><i class="bi bi-envelope" aria-hidden="true"></i> ${esc(t.correo)}</a>`
+              : `<span class="fn-muted">Sin correo</span>`}
+          </td>
+          <td class="tr-cell-time" style="text-align:right">
+            ${t.telefono
+              ? `<a class="tr-link-clean" href="tel:${esc(t.telefono)}"><i class="bi bi-telephone" aria-hidden="true"></i> ${esc(t.telefono)}</a>`
+              : `<span class="fn-muted">Sin teléfono</span>`}
+          </td>
+        </tr>`;
+    }).join("");
   }
 
   async function cargar() {
@@ -98,28 +201,28 @@ import NotifModalTrabajador from "../../components/trabajador/NotifModalTrabajad
       const eq = d.equipo ?? {};
       const c = eq.constructora;
       const sup = eq.supervisor;
-      const integrantes: any[] = d.integrantes ?? [];
+      todosIntegrantes = d.integrantes ?? [];
       const asignaciones: any[] = d.asignaciones ?? [];
 
       if (eq.nombre) heroTitulo.textContent = eq.nombre;
-      if (c?.nombre) {
-        heroConst.textContent = c.nombre;
-        heroConstTag.hidden = false;
-      }
+      heroMeta.textContent = c?.nombre ? `Cuadrilla de trabajo · ${c.nombre}` : "Cuadrilla de trabajo";
 
       stats.innerHTML = `
-        <div class="tr-kpi tr-kpi--destacado">
-          <div class="tr-kpi-top"><span class="tr-kpi-lbl">Integrantes activos</span><span class="tr-kpi-ico"><i class="bi bi-people-fill" aria-hidden="true"></i></span></div>
-          <b class="tr-kpi-val">${integrantes.length}</b>
-        </div>
-        <div class="tr-kpi">
-          <div class="tr-kpi-top"><span class="tr-kpi-lbl">Servicios asignados</span><span class="tr-kpi-ico"><i class="bi bi-tools" aria-hidden="true"></i></span></div>
+        <article class="tr-kpi tr-kpi--featured">
+          <div class="tr-kpi-top"><span class="tr-kpi-lbl">Integrantes activos</span><i class="bi bi-people tr-kpi-ico-bare" aria-hidden="true"></i></div>
+          <b class="tr-kpi-val">${todosIntegrantes.length}</b>
+          <span class="tr-kpi-note">${esc(c?.nombre ?? "Cuadrilla afiliada")}</span>
+        </article>
+        <article class="tr-kpi">
+          <div class="tr-kpi-top"><span class="tr-kpi-lbl">Servicios asignados</span><i class="bi bi-tools tr-kpi-ico-bare" aria-hidden="true"></i></div>
           <b class="tr-kpi-val">${asignaciones.length}</b>
-        </div>
-        <div class="tr-kpi tr-kpi--ok">
-          <div class="tr-kpi-top"><span class="tr-kpi-lbl">Tu rol</span><span class="tr-kpi-ico"><i class="bi bi-person-badge" aria-hidden="true"></i></span></div>
+          <span class="tr-kpi-note">En cuadrilla compartida</span>
+        </article>
+        <article class="tr-kpi">
+          <div class="tr-kpi-top"><span class="tr-kpi-lbl">Tu rol</span><i class="bi bi-person-badge tr-kpi-ico-bare" aria-hidden="true"></i></div>
           <b class="tr-kpi-val tr-kpi-val--texto">${esc(eq.rol ?? "Trabajador")}</b>
-        </div>
+          <span class="tr-kpi-note">Acceso operativo</span>
+        </article>
       `;
 
       info.innerHTML = `
@@ -133,11 +236,11 @@ import NotifModalTrabajador from "../../components/trabajador/NotifModalTrabajad
               </div>
             </div>
           </div>
-          <ul class="grupo-meta">
-            <li><i class="bi bi-hammer" aria-hidden="true"></i><span><strong>Nombre:</strong> ${esc(c?.nombre ?? "Sin constructora asignada")}</span></li>
-            ${c?.ciudad ? `<li><i class="bi bi-geo-alt" aria-hidden="true"></i><span><strong>Ciudad:</strong> ${esc(c.ciudad)}</span></li>` : ""}
-            ${c?.correo ? `<li><i class="bi bi-envelope" aria-hidden="true"></i><a href="mailto:${esc(c.correo)}">${esc(c.correo)}</a></li>` : ""}
-            ${c?.telefono ? `<li><i class="bi bi-telephone" aria-hidden="true"></i><a href="tel:${esc(c.telefono)}">${esc(c.telefono)}</a></li>` : ""}
+          <ul class="tr-detail-list">
+            <li><span>Nombre</span><strong>${esc(c?.nombre ?? "Sin constructora asignada")}</strong></li>
+            ${c?.ciudad ? `<li><span>Ciudad</span><strong>${esc(c.ciudad)}</strong></li>` : ""}
+            ${c?.correo ? `<li><span>Correo</span><strong><a class="tr-link-clean" href="mailto:${esc(c.correo)}">${esc(c.correo)}</a></strong></li>` : ""}
+            ${c?.telefono ? `<li><span>Teléfono</span><strong style="font-variant-numeric:tabular-nums"><a class="tr-link-clean" href="tel:${esc(c.telefono)}">${esc(c.telefono)}</a></strong></li>` : ""}
           </ul>
         </article>
         <article class="tr-card">
@@ -152,67 +255,47 @@ import NotifModalTrabajador from "../../components/trabajador/NotifModalTrabajad
           </div>
           ${sup ? `
             <div class="grupo-miembro" style="margin-bottom:12px">
-              <div class="grupo-avatar grupo-avatar--sup">${esc(iniciales(sup.nombre ?? ""))}</div>
+              <div class="grupo-avatar--sup">${esc(iniciales(sup.nombre ?? ""))}</div>
               <div>
-                <strong>${esc(sup.nombre)}</strong>
+                <strong style="color:var(--tr-ink);font-weight:600">${esc(sup.nombre)}</strong>
                 <div><small class="fn-muted">Supervisor / Constructora</small></div>
               </div>
             </div>
-            <ul class="grupo-meta">
-              ${sup.correo ? `<li><i class="bi bi-envelope" aria-hidden="true"></i><a href="mailto:${esc(sup.correo)}">${esc(sup.correo)}</a></li>` : ""}
-              ${sup.telefono ? `<li><i class="bi bi-telephone" aria-hidden="true"></i><a href="tel:${esc(sup.telefono)}">${esc(sup.telefono)}</a></li>` : ""}
+            <ul class="tr-detail-list">
+              ${sup.correo ? `<li><span>Correo</span><strong><a class="tr-link-clean" href="mailto:${esc(sup.correo)}">${esc(sup.correo)}</a></strong></li>` : ""}
+              ${sup.telefono ? `<li><span>Teléfono</span><strong style="font-variant-numeric:tabular-nums"><a class="tr-link-clean" href="tel:${esc(sup.telefono)}">${esc(sup.telefono)}</a></strong></li>` : ""}
             </ul>
           ` : `<p class="fn-muted" style="margin:0">No hay un supervisor registrado para esta constructora.</p>`}
         </article>
       `;
 
-      listaInt.innerHTML = integrantes.length
-        ? integrantes.map((t) => {
-            const foto = t.fotoPerfil ? urlArchivo(t.fotoPerfil) : "";
-            return `
-              <article class="fn-card grupo-miembro-card">
-                <div class="grupo-miembro">
-                  <div class="grupo-avatar">
-                    ${foto ? `<img src="${esc(foto)}" alt="" />` : esc(iniciales(t.nombre ?? ""))}
-                  </div>
-                  <div style="min-width:0">
-                    <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
-                      <strong>${esc(t.nombre)}</strong>
-                      ${t.esYo ? `<span class="fn-chip fn-chip--ok">Tú</span>` : ""}
-                    </div>
-                    <small class="fn-muted">${esc(t.rol ?? "Trabajador")}</small>
-                  </div>
-                </div>
-                <ul class="grupo-meta" style="font-size:.84rem">
-                  ${t.correo ? `<li><i class="bi bi-envelope" aria-hidden="true"></i><a href="mailto:${esc(t.correo)}">${esc(t.correo)}</a></li>` : ""}
-                  ${t.telefono ? `<li><i class="bi bi-telephone" aria-hidden="true"></i><a href="tel:${esc(t.telefono)}">${esc(t.telefono)}</a></li>` : ""}
-                </ul>
-              </article>
-            `;
-          }).join("")
-        : `<div class="fn-vacio" style="grid-column:1/-1"><i class="bi bi-people" aria-hidden="true"></i>No hay integrantes activos registrados en tu cuadrilla.</div>`;
+      pintarIntegrantes();
 
       listaAsig.innerHTML = asignaciones.length
         ? asignaciones.map((a) => `
-            <article class="fn-card grupo-miembro-card">
-              <div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start">
-                <strong>${esc(a.servicio)}</strong>
-                <span class="fn-chip ${claseEstado(a.estado ?? "Pendiente")}">${esc(a.estado ?? "Pendiente")}</span>
-              </div>
-              <ul class="grupo-meta" style="font-size:.85rem">
-                ${a.propiedad ? `<li><i class="bi bi-geo-alt" aria-hidden="true"></i><span>${esc(a.propiedad)}${a.ciudad ? ", " + esc(a.ciudad) : ""}</span></li>` : ""}
-                <li><i class="bi bi-calendar3" aria-hidden="true"></i><span>Asignado el ${esc(fechaHora(a.fechaAsignacion ?? a.fechaSolicitud))}</span></li>
-              </ul>
-              <div class="grupo-chips">
-                ${a.integrantes.map((m: any) => `<span class="grupo-chip-miembro ${m.esYo ? "grupo-chip-miembro--yo" : ""}"><i class="bi bi-person" aria-hidden="true"></i>${esc(m.nombre)}${m.esYo ? " (Tú)" : ""}</span>`).join("")}
-              </div>
-            </article>
-          `).join("")
-        : `<div class="fn-vacio" style="grid-column:1/-1"><i class="bi bi-tools" aria-hidden="true"></i>Aún no tienes servicios de mantenimiento asignados.</div>`;
+            <tr>
+              <td>
+                <div class="tr-cell-main">
+                  <strong>${esc(a.servicio)}</strong>
+                  <span>${esc(a.propiedad ? `${a.propiedad}${a.ciudad ? ", " + a.ciudad : ""}` : "Sin propiedad registrada")}</span>
+                </div>
+              </td>
+              <td class="tr-cell-time">${esc(fechaHora(a.fechaAsignacion ?? a.fechaSolicitud))}</td>
+              <td>
+                <div class="grupo-chips">
+                  ${a.integrantes.map((m: any) => `<span class="grupo-chip-miembro ${m.esYo ? "grupo-chip-miembro--yo" : ""}"><i class="bi bi-person" aria-hidden="true"></i>${esc(m.nombre)}${m.esYo ? " (Tú)" : ""}</span>`).join("")}
+                </div>
+              </td>
+              <td style="text-align:right">
+                <span class="tr-status-pill ${clasePillEstado(a.estado ?? "Pendiente")}">${esc(a.estado ?? "Pendiente")}</span>
+              </td>
+            </tr>`).join("")
+        : `<tr><td colspan="4" class="tr-empty-row">Aún no tienes servicios de mantenimiento asignados.</td></tr>`;
     } catch (e) {
       info.innerHTML = `<div class="fn-vacio">${esc((e as Error).message)}</div>`;
     }
   }
 
+  buscarInt.addEventListener("input", pintarIntegrantes);
   cargar();
 </script>

@@ -1,14 +1,10 @@
 ---
 import Layout from "../../layouts/LayoutVistas.astro";
-import Mantenimiento from "../../components/funciones/Mantenimiento.astro";
 import DashboardTrabajador from "../../components/funciones/DashboardTrabajador.astro";
 import "../../components/trabajador/trabajador.css";
 ---
 <Layout>
   <div class="tr-page">
     <DashboardTrabajador />
-    <section class="tr-card tr-mant-wrap">
-      <Mantenimiento modo="trabajador" titulo={false} mostrarStats={false} />
-    </section>
   </div>
 </Layout>

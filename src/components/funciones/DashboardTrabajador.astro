@@ -1,219 +1,795 @@
 ---
-/** Dashboard principal del trabajador: hero, estadísticas unificadas, recordatorio de hoy, acciones rápidas y últimas 5 notificaciones. */
+/** Panel operativo diario del trabajador: cabecera editorial, 4 KPIs, próxima cita prioritaria, tabla filtrable y sheet de gestión. */
 import "./funciones.css";
-import RecordatorioMantenimientoHoy from "./RecordatorioMantenimientoHoy.astro";
 import NotifModalTrabajador from "../trabajador/NotifModalTrabajador.astro";
 ---
 <section id="dashTrabRoot" class="tr-stack">
-  <!-- Hero -->
   <header class="tr-hero">
     <div class="tr-hero-info">
-      <div class="tr-hero-tags">
-        <span class="tr-hero-tag"><i class="bi bi-building" aria-hidden="true"></i> <span id="dtConstructoraTag">Constructora</span></span>
-        <span class="tr-hero-tag"><i class="bi bi-calendar-event" aria-hidden="true"></i> <span id="dtFechaTag"></span></span>
-      </div>
-      <h1 id="dtSaludo">Panel de trabajador</h1>
-      <p>Resumen de tus mantenimientos asignados, agenda del día y avisos recientes.</p>
+      <span class="tr-page-date" id="dtFechaTag"></span>
+      <h1 id="dtSaludo">Jornada de mantenimiento</h1>
+      <p>Gestiona citas asignadas, registra avances y abre rutas rápidas.</p>
     </div>
     <div class="tr-hero-acc">
-      <a class="tr-hero-btn" href="/trabajador/agenda"><i class="bi bi-calendar3" aria-hidden="true"></i> Ver agenda</a>
-      <a class="tr-hero-btn tr-hero-btn--sec" href="/trabajador/grupo"><i class="bi bi-people-fill" aria-hidden="true"></i> Mi equipo</a>
+      <a class="tr-btn" href="/trabajador/agenda">
+        <i class="bi bi-calendar3" aria-hidden="true"></i> Ver semana
+      </a>
       <NotifModalTrabajador />
+      <button type="button" class="tr-btn tr-btn--primary" id="dtBtnSiguiente" disabled>
+        <i class="bi bi-play-fill" aria-hidden="true"></i> Siguiente cita
+      </button>
     </div>
   </header>
 
-  <!-- Estadísticas unificadas -->
-  <div class="tr-kpis" id="dashTrabStats" aria-label="Estadísticas del trabajador">
-    <div class="tr-kpi tr-kpi--destacado"><div class="tr-kpi-top"><span class="tr-kpi-lbl">Trabajos asignados</span><span class="tr-kpi-ico"><i class="bi bi-briefcase-fill"></i></span></div><b class="tr-kpi-val">—</b></div>
-    <div class="tr-kpi"><div class="tr-kpi-top"><span class="tr-kpi-lbl">Pendientes</span><span class="tr-kpi-ico"><i class="bi bi-hourglass-split"></i></span></div><b class="tr-kpi-val">—</b></div>
-    <div class="tr-kpi tr-kpi--prog"><div class="tr-kpi-top"><span class="tr-kpi-lbl">En proceso</span><span class="tr-kpi-ico"><i class="bi bi-tools"></i></span></div><b class="tr-kpi-val">—</b></div>
-    <div class="tr-kpi tr-kpi--ok"><div class="tr-kpi-top"><span class="tr-kpi-lbl">Finalizados</span><span class="tr-kpi-ico"><i class="bi bi-check-circle-fill"></i></span></div><b class="tr-kpi-val">—</b></div>
-    <div class="tr-kpi"><div class="tr-kpi-top"><span class="tr-kpi-lbl">Sin leer</span><span class="tr-kpi-ico"><i class="bi bi-bell-fill"></i></span></div><b class="tr-kpi-val">—</b></div>
-  </div>
+  <section class="tr-kpis" id="dashTrabStats" aria-label="Resumen de jornada">
+    <article class="tr-kpi tr-kpi--featured">
+      <div class="tr-kpi-top">
+        <span class="tr-kpi-lbl">Citas de hoy</span>
+        <i class="bi bi-clock tr-kpi-ico-bare" aria-hidden="true"></i>
+      </div>
+      <b class="tr-kpi-val" id="dtKpiHoy">—</b>
+      <span class="tr-kpi-note" id="dtKpiHoyNota">Cargando…</span>
+    </article>
 
-  <!-- Distribución 2 columnas: Recordatorio + Acciones rápidas | Últimas 5 notificaciones -->
-  <div class="tr-split">
-    <div class="tr-stack">
-      <RecordatorioMantenimientoHoy />
+    <article class="tr-kpi">
+      <div class="tr-kpi-top">
+        <span class="tr-kpi-lbl">Pendientes</span>
+        <i class="bi bi-hourglass-split tr-kpi-ico-bare" aria-hidden="true"></i>
+      </div>
+      <b class="tr-kpi-val" id="dtKpiPend">—</b>
+      <span class="tr-kpi-note">Por iniciar en campo</span>
+    </article>
 
-      <article class="tr-card">
-        <div class="tr-card-head">
-          <div class="tr-card-titulo">
-            <div class="tr-card-ico"><i class="bi bi-lightning-charge-fill" aria-hidden="true"></i></div>
-            <div>
-              <h2>Acciones rápidas</h2>
-              <small>Accesos directos a tus herramientas diarias.</small>
-            </div>
-          </div>
+    <article class="tr-kpi">
+      <div class="tr-kpi-top">
+        <span class="tr-kpi-lbl">En proceso</span>
+        <i class="bi bi-tools tr-kpi-ico-bare" aria-hidden="true"></i>
+      </div>
+      <b class="tr-kpi-val" id="dtKpiProg">—</b>
+      <span class="tr-kpi-note">Con avance activo</span>
+    </article>
+
+    <article class="tr-kpi">
+      <div class="tr-kpi-top">
+        <span class="tr-kpi-lbl">Finalizadas</span>
+        <i class="bi bi-check-circle tr-kpi-ico-bare" aria-hidden="true"></i>
+      </div>
+      <b class="tr-kpi-val" id="dtKpiFin">—</b>
+      <span class="tr-kpi-note">Completadas en historial</span>
+    </article>
+  </section>
+
+  <section class="tr-next-visit" id="dtNextVisit" aria-label="Próxima cita prioritaria" aria-live="polite">
+    <div class="tr-next-visit-meta">
+      <div class="tr-next-visit-top">
+        <span class="tr-next-visit-time">Cargando…</span>
+      </div>
+      <h2>Buscando tu próxima cita asignada…</h2>
+      <div class="tr-next-visit-details">
+        <span><i class="bi bi-clock" aria-hidden="true"></i> Espera un momento mientras consultamos tu agenda</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="tr-panel-section" id="mantRoot" aria-label="Mantenimientos asignados">
+    <div class="tr-section-toolbar">
+      <div class="tr-section-heading">
+        <h2>Mantenimientos asignados</h2>
+        <p>Filtra por estado o busca por cliente y dirección.</p>
+      </div>
+      <div class="tr-filter-controls">
+        <div class="tr-segmented" id="dtFiltros" role="group" aria-label="Filtrar por estado">
+          <button type="button" class="tr-seg-btn" data-filtro="todas" aria-pressed="true">Todas</button>
+          <button type="button" class="tr-seg-btn" data-filtro="pendiente" aria-pressed="false">Pendiente</button>
+          <button type="button" class="tr-seg-btn" data-filtro="proceso" aria-pressed="false">En proceso</button>
+          <button type="button" class="tr-seg-btn" data-filtro="finalizada" aria-pressed="false">Finalizada</button>
         </div>
-        <div class="tr-acciones-grid">
-          <a class="tr-accion tr-accion--destacada" href="/trabajador/agenda">
-            <span class="tr-accion-ico"><i class="bi bi-calendar3" aria-hidden="true"></i></span>
-            <span class="tr-accion-txt"><strong>Agenda de citas</strong><small>Ver fechas y horas</small></span>
-            <i class="bi bi-chevron-right" aria-hidden="true"></i>
-          </a>
-          <a class="tr-accion" href="#mantRoot">
-            <span class="tr-accion-ico"><i class="bi bi-tools" aria-hidden="true"></i></span>
-            <span class="tr-accion-txt"><strong>Mis mantenimientos</strong><small>Registrar avances</small></span>
-            <i class="bi bi-chevron-right" aria-hidden="true"></i>
-          </a>
-          <a class="tr-accion" href="/trabajador/grupo">
-            <span class="tr-accion-ico"><i class="bi bi-people-fill" aria-hidden="true"></i></span>
-            <span class="tr-accion-txt"><strong>Grupo de trabajo</strong><small>Cuadrilla y supervisor</small></span>
-            <i class="bi bi-chevron-right" aria-hidden="true"></i>
-          </a>
-          <a class="tr-accion" href="/notificaciones">
-            <span class="tr-accion-ico"><i class="bi bi-bell-fill" aria-hidden="true"></i></span>
-            <span class="tr-accion-txt"><strong>Notificaciones</strong><small>Historial completo</small></span>
-            <i class="bi bi-chevron-right" aria-hidden="true"></i>
-          </a>
-          <a class="tr-accion" href="/trabajador/perfil">
-            <span class="tr-accion-ico"><i class="bi bi-person-fill" aria-hidden="true"></i></span>
-            <span class="tr-accion-txt"><strong>Mi perfil</strong><small>Datos y contraseña</small></span>
-            <i class="bi bi-chevron-right" aria-hidden="true"></i>
-          </a>
+        <div class="tr-search-box">
+          <i class="bi bi-search" aria-hidden="true"></i>
+          <input
+            id="dtBuscar"
+            type="search"
+            name="buscarMantenimiento"
+            autocomplete="off"
+            placeholder="Buscar cliente o dirección…"
+            aria-label="Buscar mantenimientos asignados"
+          />
         </div>
-      </article>
+      </div>
     </div>
 
-    <article class="tr-card dt-notif-card">
-      <div class="tr-card-head">
-        <div class="tr-card-titulo">
-          <div class="tr-card-ico tr-card-ico--oro"><i class="bi bi-bell-fill" aria-hidden="true"></i></div>
-          <div>
-            <h2>Últimas 5 notificaciones</h2>
-            <small id="dtNotifSub">Cargando…</small>
-          </div>
-        </div>
-        <a class="fn-btn fn-btn--sec fn-btn--mini" href="/notificaciones">Ver todas</a>
+    <div class="tr-table-scroll">
+      <table class="tr-task-table">
+        <thead>
+          <tr>
+            <th>Servicio e inmueble</th>
+            <th>Cliente</th>
+            <th>Fecha y hora</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="dtTablaBody" aria-live="polite">
+          <tr>
+            <td colspan="5" class="tr-empty-row">Cargando mantenimientos asignados…</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <dialog class="tr-sheet" id="dtSheetMant" aria-labelledby="dtSheetTitulo">
+    <div class="tr-sheet-head">
+      <div>
+        <h2 id="dtSheetTitulo">Gestionar mantenimiento</h2>
+        <small id="dtSheetSub"></small>
       </div>
-      <ul class="dt-notif-lista" id="dtNotifLista" aria-live="polite">
-        <li class="fn-muted">Cargando notificaciones…</li>
-      </ul>
-    </article>
-  </div>
+      <button type="button" class="tr-btn tr-btn--icon-sm" id="dtSheetCerrarX" aria-label="Cerrar panel de gestión">
+        <i class="bi bi-x-lg" aria-hidden="true"></i>
+      </button>
+    </div>
+
+    <div class="tr-sheet-body">
+      <div id="dtSheetPasos" class="tr-steps-inline"></div>
+      <p id="dtSheetDetalle" class="fn-muted" style="margin:0;font-size:.86rem" hidden></p>
+      <ul id="dtSheetMeta" class="tr-detail-list"></ul>
+      <form class="fn-form" id="dtMantForm"></form>
+      <div>
+        <strong class="tr-sheet-section-lbl">Historial de avances</strong>
+        <ul class="fn-linea" id="dtSheetHistorial"></ul>
+      </div>
+    </div>
+
+    <div class="tr-sheet-foot">
+      <button type="button" class="tr-btn tr-btn--sm" id="dtSheetCerrarBtn">Cerrar</button>
+    </div>
+  </dialog>
+
+  <dialog class="tr-map-modal" id="dtMapaModal" aria-labelledby="dtMapaTitulo">
+    <div class="tr-map-head">
+      <div>
+        <div class="tr-next-visit-top" id="dtMapaBadges"></div>
+        <h2 id="dtMapaTitulo">Ubicación de la cita</h2>
+        <small id="dtMapaSub"></small>
+      </div>
+      <button type="button" class="tr-btn tr-btn--icon-sm" id="dtMapaCerrarX" aria-label="Cerrar mapa">
+        <i class="bi bi-x-lg" aria-hidden="true"></i>
+      </button>
+    </div>
+
+    <div class="tr-map-body">
+      <div class="tr-map-frame">
+        <div id="dtMapaCanvas" role="region" aria-label="Mapa de ubicación de la cita"></div>
+        <div class="tr-map-overlay" id="dtMapaEstado" hidden></div>
+      </div>
+    </div>
+
+    <div class="tr-map-foot">
+      <span class="tr-map-coords" id="dtMapaCoords"></span>
+      <div class="tr-map-foot-actions">
+        <button type="button" class="tr-btn tr-btn--sm" id="dtMapaMiUbicacion">
+          <i class="bi bi-crosshair" aria-hidden="true"></i> Mi ubicación
+        </button>
+        <a class="tr-btn tr-btn--sm tr-btn--primary" id="dtMapaMapsLink" target="_blank" rel="noopener" hidden>
+          <i class="bi bi-sign-turn-right" aria-hidden="true"></i> Cómo llegar
+        </a>
+        <button type="button" class="tr-btn tr-btn--sm" id="dtMapaCerrarBtn">Cerrar</button>
+      </div>
+    </div>
+  </dialog>
 </section>
 
-<style is:global>
-  .dt-notif-lista { list-style:none; margin:0; padding:0; display:grid; gap:10px; }
-  .dt-notif-item {
-    display:grid; grid-template-columns:1fr auto; gap:10px; align-items:start;
-    padding:12px 14px; border:1px solid var(--tr-linea, #e2e8f0); border-radius:12px; background:#fff;
-    transition:border-color .15s, background .15s;
-  }
-  .dt-notif-item:hover { border-color:var(--tr-oro, #0d9488); }
-  .dt-notif-item--nueva {
-    border-color:rgba(13, 148, 136, 0.28);
-    border-left:4px solid var(--tr-oro, #0d9488);
-    background:var(--tr-acento-suave, #f0fdfa);
-  }
-  .dt-notif-cuerpo { display:grid; gap:3px; min-width:0; }
-  .dt-notif-cuerpo strong { font-size:.9rem; display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
-  .dt-notif-cuerpo p { margin:0; font-size:.83rem; color:var(--fn-muted); overflow-wrap:anywhere; }
-  .dt-notif-cuerpo small { font-size:.75rem; color:var(--fn-muted); }
-</style>
-
 <script>
-  import { api, esc, fechaHora, aviso } from "./comun";
+  import { api, esc, fechaHora, aviso, urlComoLlegar } from "./comun";
 
-  const statsEl = document.getElementById("dashTrabStats")!;
-  const notifLista = document.getElementById("dtNotifLista")!;
-  const notifSub = document.getElementById("dtNotifSub")!;
-  const saludoEl = document.getElementById("dtSaludo")!;
-  const constTagEl = document.getElementById("dtConstructoraTag")!;
   const fechaTagEl = document.getElementById("dtFechaTag")!;
+  const kpiHoyEl = document.getElementById("dtKpiHoy")!;
+  const kpiHoyNotaEl = document.getElementById("dtKpiHoyNota")!;
+  const kpiPendEl = document.getElementById("dtKpiPend")!;
+  const kpiProgEl = document.getElementById("dtKpiProg")!;
+  const kpiFinEl = document.getElementById("dtKpiFin")!;
+  const nextVisitEl = document.getElementById("dtNextVisit")!;
+  const btnSiguienteEl = document.getElementById("dtBtnSiguiente") as HTMLButtonElement;
+  const tablaBodyEl = document.getElementById("dtTablaBody")!;
+  const buscarEl = document.getElementById("dtBuscar") as HTMLInputElement;
+  const filtrosEl = document.getElementById("dtFiltros")!;
+
+  const sheetEl = document.getElementById("dtSheetMant") as HTMLDialogElement;
+  const sheetTituloEl = document.getElementById("dtSheetTitulo")!;
+  const sheetSubEl = document.getElementById("dtSheetSub")!;
+  const sheetPasosEl = document.getElementById("dtSheetPasos")!;
+  const sheetDetalleEl = document.getElementById("dtSheetDetalle")!;
+  const sheetMetaEl = document.getElementById("dtSheetMeta")!;
+  const sheetFormEl = document.getElementById("dtMantForm") as HTMLFormElement;
+  const sheetHistEl = document.getElementById("dtSheetHistorial")!;
+
+  const mapaModalEl = document.getElementById("dtMapaModal") as HTMLDialogElement;
+  const mapaBadgesEl = document.getElementById("dtMapaBadges")!;
+  const mapaTituloEl = document.getElementById("dtMapaTitulo")!;
+  const mapaSubEl = document.getElementById("dtMapaSub")!;
+  const mapaEstadoEl = document.getElementById("dtMapaEstado")!;
+  const mapaCoordsEl = document.getElementById("dtMapaCoords")!;
+  const mapaMapsLinkEl = document.getElementById("dtMapaMapsLink") as HTMLAnchorElement;
+  const mapaMiUbicBtn = document.getElementById("dtMapaMiUbicacion") as HTMLButtonElement;
 
   const FINAL = [3, 6];
+  const geoCache = new Map<string, { lat: number; lng: number; aprox: boolean } | null>();
+  let trabajos: any[] = [];
+  let filtroActual = "todas";
+  let busquedaActual = "";
+  let trabajoActivo: any = null;
+  let citaPrioritaria: any = null;
+  let leafletLib: any = null;
+  let mapaInst: any = null;
+  let capaMarcadores: any = null;
+  let coordCitaActual: { lat: number; lng: number; aprox: boolean } | null = null;
+  let mapaSolicitudToken = 0;
 
-  fechaTagEl.textContent = new Date().toLocaleDateString("es-CO", {
-    weekday: "short", day: "numeric", month: "short", year: "numeric",
-  });
-
-  function kpi(lbl: string, val: number, icono: string, extra = ""): string {
-    return `<div class="tr-kpi ${extra}">
-      <div class="tr-kpi-top"><span class="tr-kpi-lbl">${esc(lbl)}</span><span class="tr-kpi-ico"><i class="bi ${icono}" aria-hidden="true"></i></span></div>
-      <b class="tr-kpi-val">${Number(val)}</b>
-    </div>`;
+  function capitalizar(texto: string): string {
+    return texto ? texto.charAt(0).toUpperCase() + texto.slice(1) : texto;
   }
 
-  async function cargarDashboard() {
-    const [perfilRes, mantRes, notifRes] = await Promise.allSettled([
+  function claveDia(d: Date): string {
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  }
+
+  function fechaReferencia(item: any): Date | null {
+    const raw = item.fechaAsignacion ?? item.fechaReenvio ?? item.fechaSolicitud;
+    if (!raw) return null;
+    const f = new Date(raw);
+    return Number.isNaN(f.getTime()) ? null : f;
+  }
+
+  function formatearFechaCorta(item: any): string {
+    const f = fechaReferencia(item);
+    if (!f) return "Sin fecha";
+    const dia = capitalizar(
+      new Intl.DateTimeFormat("es-CO", { weekday: "short", day: "numeric" }).format(f).replace(".", "")
+    );
+    const hora = new Intl.DateTimeFormat("es-CO", { hour: "2-digit", minute: "2-digit", hour12: false }).format(f);
+    return `${dia}, ${hora}`;
+  }
+
+  function categoriaEstado(item: any): "pendiente" | "proceso" | "finalizada" {
+    if (FINAL.includes(item.estadoReparacionID)) return "finalizada";
+    if (item.estadoReparacionID === 2) return "proceso";
+    return "pendiente";
+  }
+
+  function pillEstado(item: any): string {
+    const cat = categoriaEstado(item);
+    const texto = item.estado ?? (cat === "finalizada" ? "Finalizada" : cat === "proceso" ? "En proceso" : "Pendiente");
+    return `<span class="tr-status-pill tr-status-pill--${cat}">${esc(texto)}</span>`;
+  }
+
+  function ubicacionTexto(item: any): string {
+    return [item.direccion, item.propiedad, item.ciudad].filter(Boolean).join(", ");
+  }
+
+  function pintarFechaHeader(constructora?: string) {
+    const hoyTexto = capitalizar(
+      new Intl.DateTimeFormat("es-CO", { weekday: "long", day: "numeric", month: "long" }).format(new Date())
+    );
+    fechaTagEl.textContent = constructora ? `${hoyTexto} · ${constructora}` : hoyTexto;
+  }
+
+  function elegirCitaPrioritaria(lista: any[]): any | null {
+    const activas = lista.filter((t) => !FINAL.includes(t.estadoReparacionID));
+    if (!activas.length) return null;
+    return [...activas].sort((a, b) => {
+      const aProc = a.estadoReparacionID === 2 ? 0 : 1;
+      const bProc = b.estadoReparacionID === 2 ? 0 : 1;
+      if (aProc !== bProc) return aProc - bProc;
+      const fa = fechaReferencia(a)?.getTime() ?? Number.MAX_SAFE_INTEGER;
+      const fb = fechaReferencia(b)?.getTime() ?? Number.MAX_SAFE_INTEGER;
+      return fa - fb;
+    })[0];
+  }
+
+  function pintarKpis() {
+    const hoyKey = claveDia(new Date());
+    const deHoy = trabajos
+      .filter((t) => {
+        const f = fechaReferencia(t);
+        return f !== null && claveDia(f) === hoyKey;
+      })
+      .sort((a, b) => (fechaReferencia(a)?.getTime() ?? 0) - (fechaReferencia(b)?.getTime() ?? 0));
+
+    const hoyPend = deHoy.filter((t) => !FINAL.includes(t.estadoReparacionID));
+    const primeraHoy = hoyPend[0] ?? deHoy[0];
+    const primeraFecha = primeraHoy ? fechaReferencia(primeraHoy) : null;
+
+    const finalizadas = trabajos.filter((t) => FINAL.includes(t.estadoReparacionID)).length;
+    const enProceso = trabajos.filter((t) => t.estadoReparacionID === 2).length;
+    const pendientes = trabajos.length - finalizadas - enProceso;
+
+    kpiHoyEl.textContent = String(deHoy.length);
+    kpiHoyNotaEl.textContent = primeraFecha
+      ? `Próxima a las ${new Intl.DateTimeFormat("es-CO", { hour: "2-digit", minute: "2-digit", hour12: false }).format(primeraFecha)}`
+      : deHoy.length
+        ? "Programadas para hoy"
+        : "Sin citas hoy";
+    kpiPendEl.textContent = String(pendientes);
+    kpiProgEl.textContent = String(enProceso);
+    kpiFinEl.textContent = String(finalizadas);
+  }
+
+  function pintarProximaCita() {
+    citaPrioritaria = elegirCitaPrioritaria(trabajos);
+    btnSiguienteEl.disabled = !citaPrioritaria;
+
+    if (!citaPrioritaria) {
+      nextVisitEl.innerHTML = `
+        <div class="tr-next-visit-meta">
+          <div class="tr-next-visit-top">
+            <span class="tr-next-visit-time">Al día</span>
+          </div>
+          <h2>Sin citas pendientes por atender</h2>
+          <div class="tr-next-visit-details">
+            <span><i class="bi bi-check-circle" aria-hidden="true"></i> Todas tus solicitudes asignadas están finalizadas o sin programación activa</span>
+          </div>
+        </div>
+        <div class="tr-next-visit-actions">
+          <a class="tr-btn tr-btn--surface" href="/trabajador/agenda">
+            <i class="bi bi-calendar3" aria-hidden="true"></i> Ver semana
+          </a>
+        </div>`;
+      return;
+    }
+
+    const ubicacion = ubicacionTexto(citaPrioritaria) || "Ubicación por confirmar";
+    const mapsUrl = urlComoLlegar(citaPrioritaria);
+    const clienteTxt = `${citaPrioritaria.cliente ?? "Cliente"}${citaPrioritaria.clienteTelefono ? " · " + citaPrioritaria.clienteTelefono : ""}`;
+
+    nextVisitEl.innerHTML = `
+      <div class="tr-next-visit-meta">
+        <div class="tr-next-visit-top">
+          <span class="tr-next-visit-time">${esc(formatearFechaCorta(citaPrioritaria))}</span>
+          ${pillEstado(citaPrioritaria)}
+        </div>
+        <h2>${esc(citaPrioritaria.servicio)}</h2>
+        <div class="tr-next-visit-details">
+          <span><i class="bi bi-geo-alt" aria-hidden="true"></i> ${esc(ubicacion)}</span>
+          <span><i class="bi bi-person" aria-hidden="true"></i> ${esc(clienteTxt)}</span>
+        </div>
+      </div>
+      <div class="tr-next-visit-actions">
+        <button type="button" class="tr-btn tr-btn--surface" data-ver-mapa="${Number(citaPrioritaria.solicitudID)}">
+          <i class="bi bi-map" aria-hidden="true"></i> Ver en mapa
+        </button>
+        ${mapsUrl ? `<a class="tr-btn tr-btn--surface" href="${esc(mapsUrl)}" target="_blank" rel="noopener"><i class="bi bi-sign-turn-right" aria-hidden="true"></i> Cómo llegar</a>` : ""}
+        <button type="button" class="tr-btn tr-btn--primary" data-gestionar="${Number(citaPrioritaria.solicitudID)}">
+          <i class="bi bi-clipboard2-check" aria-hidden="true"></i> Registrar avance
+        </button>
+      </div>`;
+  }
+
+  function pintarTabla() {
+    const q = busquedaActual.trim().toLowerCase();
+    const filtrados = trabajos.filter((t) => {
+      if (filtroActual !== "todas" && categoriaEstado(t) !== filtroActual) return false;
+      if (!q) return true;
+      const haystack = [
+        t.servicio,
+        t.propiedad,
+        t.direccion,
+        t.ciudad,
+        t.cliente,
+        t.clienteTelefono,
+        t.notas,
+      ].filter(Boolean).join(" ").toLowerCase();
+      return haystack.includes(q);
+    });
+
+    if (!filtrados.length) {
+      tablaBodyEl.innerHTML = `
+        <tr>
+          <td colspan="5" class="tr-empty-row">
+            ${trabajos.length ? "No hay mantenimientos que coincidan con los filtros actuales." : "Aún no tienes trabajos de mantenimiento asignados."}
+          </td>
+        </tr>`;
+      return;
+    }
+
+    tablaBodyEl.innerHTML = filtrados.map((t) => {
+      const id = Number(t.solicitudID);
+      const fin = FINAL.includes(t.estadoReparacionID);
+      const ubicacion = ubicacionTexto(t) || "Dirección no registrada";
+      const mapsUrl = urlComoLlegar(t);
+      return `
+        <tr>
+          <td>
+            <div class="tr-cell-main">
+              <strong>${esc(t.servicio)}</strong>
+              <span>${esc(ubicacion)}</span>
+            </div>
+          </td>
+          <td>
+            <div class="tr-cell-main">
+              <strong>${esc(t.cliente ?? "Cliente")}</strong>
+              <span>${esc(t.clienteTelefono ?? "Sin teléfono")}</span>
+            </div>
+          </td>
+          <td class="tr-cell-time">${esc(formatearFechaCorta(t))}</td>
+          <td>${pillEstado(t)}</td>
+          <td>
+            <div class="tr-row-actions">
+              <button type="button" class="tr-btn tr-btn--sm tr-btn--icon-sm" data-ver-mapa="${id}" aria-label="Ver ubicación en mapa de ${esc(t.servicio)}" title="Ver en mapa">
+                <i class="bi bi-map" aria-hidden="true"></i>
+              </button>
+              ${mapsUrl ? `<a class="tr-btn tr-btn--sm tr-btn--icon-sm" href="${esc(mapsUrl)}" target="_blank" rel="noopener" aria-label="Cómo llegar a ${esc(t.servicio)}" title="Cómo llegar"><i class="bi bi-sign-turn-right" aria-hidden="true"></i></a>` : ""}
+              <button type="button" class="tr-btn tr-btn--sm" data-gestionar="${id}">
+                ${fin ? "Ver historial" : "Gestionar"}
+              </button>
+            </div>
+          </td>
+        </tr>`;
+    }).join("");
+  }
+
+  async function abrirSheet(id: number) {
+    const item = trabajos.find((t) => Number(t.solicitudID) === id);
+    if (!item) return;
+    trabajoActivo = item;
+
+    const fin = FINAL.includes(item.estadoReparacionID);
+    const ubicacion = ubicacionTexto(item) || "Sin dirección registrada";
+    const mapsUrl = urlComoLlegar(item);
+
+    sheetTituloEl.textContent = item.servicio ?? "Mantenimiento";
+    sheetSubEl.textContent = `${item.cliente ?? "Cliente"} · ${item.estado ?? "Pendiente"}`;
+
+    sheetPasosEl.innerHTML = `
+      <span class="ok">Solicitada</span>
+      <span class="${item.constructoraID ? "ok" : ""}">Constructora</span>
+      <span class="${item.trabajadores?.length ? "ok" : ""}">Trabajadores</span>
+      <span class="${fin ? "ok" : ""}">Finalizada</span>`;
+
+    if (item.servicioDescripcion) {
+      sheetDetalleEl.textContent = item.servicioDescripcion;
+      sheetDetalleEl.hidden = false;
+    } else {
+      sheetDetalleEl.hidden = true;
+    }
+
+    const grupoTxt = item.trabajadores?.length
+      ? item.trabajadores.map((t: any) => t.nombre).join(", ")
+      : "";
+
+    sheetMetaEl.innerHTML = `
+      <li><span>Fecha programada</span><strong>${esc(formatearFechaCorta(item))}</strong></li>
+      <li><span>Cliente</span><strong>${esc(item.cliente ?? "—")}${item.clienteTelefono ? " · " + esc(item.clienteTelefono) : ""}</strong></li>
+      <li><span>Dirección</span><strong>${esc(ubicacion)}</strong></li>
+      ${item.constructora ? `<li><span>Constructora</span><strong>${esc(item.constructora)}</strong></li>` : ""}
+      ${grupoTxt ? `<li><span>Equipo</span><strong>${esc(grupoTxt)}</strong></li>` : ""}
+      ${item.notas ? `<li><span>Notas</span><strong>${esc(item.notas)}</strong></li>` : ""}
+      <li>
+        <span>Ubicación</span>
+        <strong style="display:flex;gap:8px;align-items:center;justify-content:flex-end;flex-wrap:wrap">
+          <button type="button" class="tr-btn tr-btn--sm" data-ver-mapa="${id}" style="height:28px;padding:0 10px;font-size:.78rem">
+            <i class="bi bi-map" aria-hidden="true"></i> Ver en mapa
+          </button>
+          ${mapsUrl ? `<a href="${esc(mapsUrl)}" target="_blank" rel="noopener" style="color:var(--tr-oro);text-decoration:none">Abrir en Google Maps</a>` : ""}
+        </strong>
+      </li>`;
+
+    if (fin) {
+      sheetFormEl.innerHTML = `<p class="fn-muted" style="margin:0;font-size:.86rem">Este servicio ya fue finalizado.</p>`;
+    } else {
+      sheetFormEl.innerHTML = `
+        <label>Estado del trabajo
+          <select id="dtMantEstado" name="estadoReparacionID">
+            <option value="2" ${item.estadoReparacionID === 2 ? "selected" : ""}>En proceso</option>
+            <option value="3">Finalizado</option>
+          </select>
+        </label>
+        <label>Comentario de avance
+          <textarea id="dtMantComentario" name="comentario" rows="3" maxlength="2000" placeholder="¿Qué se realizó? ¿Queda algo pendiente?"></textarea>
+        </label>
+        <div>
+          <button class="tr-btn tr-btn--primary" type="submit" id="dtGuardarAvance">
+            <i class="bi bi-check2-circle" aria-hidden="true"></i> Guardar avance
+          </button>
+        </div>`;
+    }
+
+    sheetHistEl.innerHTML = `<li class="fn-muted" style="border-color:transparent">Cargando historial…</li>`;
+    if (!sheetEl.open) sheetEl.showModal();
+
+    try {
+      const { historial } = await api(`/mantenimiento/${id}/historial`);
+      sheetHistEl.innerHTML = historial.length
+        ? historial.map((h: any) => `
+            <li>
+              ${esc(h.comentario)}${h.estado ? ` <span class="fn-chip fn-chip--prog">${esc(h.estado)}</span>` : ""}
+              <small>${esc(h.autor ?? "Sistema")} · ${esc(fechaHora(h.fecha))}</small>
+            </li>`).join("")
+        : `<li class="fn-muted" style="border-color:transparent">Sin movimientos todavía.</li>`;
+    } catch (e) {
+      sheetHistEl.innerHTML = `<li class="fn-muted" style="border-color:transparent">${esc((e as Error).message)}</li>`;
+    }
+  }
+
+  async function cargarTrabajos() {
+    const mantRes = await api("/mantenimiento/trabajador");
+    trabajos = mantRes.trabajos ?? [];
+    pintarKpis();
+    pintarProximaCita();
+    pintarTabla();
+  }
+
+  async function inicializar() {
+    pintarFechaHeader();
+    const [perfilRes, mantRes] = await Promise.allSettled([
       fetch("/backend/auth/perfil", { credentials: "same-origin" }).then((r) => (r.ok ? r.json() : null)),
       api("/mantenimiento/trabajador"),
-      api("/notificaciones"),
     ]);
 
     if (perfilRes.status === "fulfilled" && perfilRes.value?.usuario) {
       const u = perfilRes.value.usuario;
-      if (u.nombre) saludoEl.textContent = `¡Hola, ${String(u.nombre).split(" ")[0]}!`;
-      if (u.constructoraNombre) constTagEl.textContent = u.constructoraNombre;
+      pintarFechaHeader(u.constructoraNombre);
     }
 
-    const trabajos: any[] = mantRes.status === "fulfilled" ? (mantRes.value.trabajos ?? []) : [];
-    const notificaciones: any[] = notifRes.status === "fulfilled" ? (notifRes.value.notificaciones ?? []) : [];
-    const noLeidas: number = notifRes.status === "fulfilled" ? Number(notifRes.value.noLeidas ?? 0) : 0;
-
-    const total = trabajos.length;
-    const finalizados = trabajos.filter((t) => FINAL.includes(t.estadoReparacionID)).length;
-    const enProceso = trabajos.filter((t) => t.estadoReparacionID === 2).length;
-    const pendientes = total - finalizados - enProceso;
-
-    statsEl.innerHTML =
-      kpi("Trabajos asignados", total, "bi-briefcase-fill", "tr-kpi--destacado") +
-      kpi("Pendientes", pendientes, "bi-hourglass-split", pendientes ? "tr-kpi--alerta" : "") +
-      kpi("En proceso", enProceso, "bi-tools", "tr-kpi--prog") +
-      kpi("Finalizados", finalizados, "bi-check-circle-fill", "tr-kpi--ok") +
-      kpi("Sin leer", noLeidas, "bi-bell-fill", noLeidas ? "tr-kpi--alerta" : "");
-
-    pintarNotificaciones(notificaciones.slice(0, 5), noLeidas);
+    if (mantRes.status === "fulfilled") {
+      trabajos = mantRes.value.trabajos ?? [];
+      pintarKpis();
+      pintarProximaCita();
+      pintarTabla();
+    } else {
+      const msg = esc((mantRes.reason as Error)?.message ?? "No se pudieron cargar los mantenimientos");
+      kpiHoyEl.textContent = "0";
+      kpiHoyNotaEl.textContent = "Error de carga";
+      tablaBodyEl.innerHTML = `<tr><td colspan="5" class="tr-empty-row">${msg}</td></tr>`;
+    }
   }
 
-  function pintarNotificaciones(ultimas: any[], noLeidas: number) {
-    notifSub.textContent = noLeidas
-      ? `${noLeidas} ${noLeidas === 1 ? "notificación sin leer" : "notificaciones sin leer"}`
-      : "Al día con tus notificaciones";
+  filtrosEl.addEventListener("click", (ev) => {
+    const btn = (ev.target as HTMLElement).closest<HTMLButtonElement>("[data-filtro]");
+    if (!btn?.dataset.filtro) return;
+    filtroActual = btn.dataset.filtro;
+    filtrosEl.querySelectorAll<HTMLButtonElement>("[data-filtro]").forEach((b) => {
+      b.setAttribute("aria-pressed", String(b === btn));
+    });
+    pintarTabla();
+  });
 
-    if (!ultimas.length) {
-      notifLista.innerHTML = `
-        <li class="fn-vacio" style="padding:22px 12px">
-          <i class="bi bi-bell-slash" aria-hidden="true"></i>
-          No tienes notificaciones todavía.
-        </li>`;
+  buscarEl.addEventListener("input", () => {
+    busquedaActual = buscarEl.value;
+    pintarTabla();
+  });
+
+  btnSiguienteEl.addEventListener("click", () => {
+    if (citaPrioritaria) abrirSheet(Number(citaPrioritaria.solicitudID));
+  });
+
+  function coordenadasDirectas(item: any): { lat: number; lng: number; aprox: boolean } | null {
+    const lat = Number(item.latitud);
+    const lng = Number(item.longitud);
+    if (
+      item.latitud != null &&
+      item.longitud != null &&
+      Number.isFinite(lat) &&
+      Number.isFinite(lng) &&
+      (lat !== 0 || lng !== 0)
+    ) {
+      return { lat, lng, aprox: false };
+    }
+    return null;
+  }
+
+  async function resolverCoordenadas(item: any): Promise<{ lat: number; lng: number; aprox: boolean } | null> {
+    const directas = coordenadasDirectas(item);
+    if (directas) return directas;
+
+    const consultas = [
+      [item.direccion, item.ciudad].filter(Boolean).join(", "),
+      [item.propiedad, item.ciudad].filter(Boolean).join(", "),
+    ].filter((q, idx, arr) => q.trim().length > 0 && arr.indexOf(q) === idx);
+
+    for (const q of consultas) {
+      if (geoCache.has(q)) {
+        const cached = geoCache.get(q);
+        if (cached) return cached;
+        continue;
+      }
+      try {
+        const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(q + ", Colombia")}`;
+        const res = await fetch(url, { headers: { Accept: "application/json" } });
+        if (res.ok) {
+          const data = await res.json().catch(() => []);
+          const hit = Array.isArray(data) ? data[0] : null;
+          const lat = Number(hit?.lat);
+          const lng = Number(hit?.lon);
+          if (Number.isFinite(lat) && Number.isFinite(lng)) {
+            const val = { lat, lng, aprox: true };
+            geoCache.set(q, val);
+            return val;
+          }
+        }
+      } catch {
+        /* fallback al siguiente intento */
+      }
+      geoCache.set(q, null);
+    }
+    return null;
+  }
+
+  function distanciaKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
+    const rad = Math.PI / 180;
+    const dLat = (lat2 - lat1) * rad;
+    const dLon = (lon2 - lon1) * rad;
+    const a =
+      Math.sin(dLat / 2) ** 2 +
+      Math.cos(lat1 * rad) * Math.cos(lat2 * rad) * Math.sin(dLon / 2) ** 2;
+    return 6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  }
+
+  async function cargarLeaflet() {
+    if (!leafletLib) {
+      // @ts-ignore Leaflet sin tipos globales
+      leafletLib = (await import("leaflet")).default;
+      await import("leaflet/dist/leaflet.css");
+    }
+    return leafletLib;
+  }
+
+  async function abrirMapa(id: number) {
+    const item = trabajos.find((t) => Number(t.solicitudID) === id);
+    if (!item) return;
+
+    const token = ++mapaSolicitudToken;
+    coordCitaActual = null;
+    mapaMiUbicBtn.disabled = true;
+
+    const ubicacion = ubicacionTexto(item) || "Dirección por confirmar";
+    const mapsUrl = urlComoLlegar(item);
+
+    mapaBadgesEl.innerHTML = `<span class="tr-next-visit-time">${esc(formatearFechaCorta(item))}</span>${pillEstado(item)}`;
+    mapaTituloEl.textContent = item.servicio ?? "Ubicación de la cita";
+    mapaSubEl.textContent = `${ubicacion}${item.cliente ? " · " + item.cliente : ""}`;
+    mapaCoordsEl.textContent = "Consultando coordenadas…";
+
+    if (mapsUrl) {
+      mapaMapsLinkEl.href = mapsUrl;
+      mapaMapsLinkEl.hidden = false;
+    } else {
+      mapaMapsLinkEl.hidden = true;
+    }
+
+    mapaEstadoEl.textContent = "Ubicando cita en el mapa…";
+    mapaEstadoEl.hidden = false;
+
+    if (sheetEl.open) sheetEl.close();
+    if (!mapaModalEl.open) mapaModalEl.showModal();
+
+    const [L, coords] = await Promise.all([cargarLeaflet(), resolverCoordenadas(item)]);
+    if (token !== mapaSolicitudToken || !mapaModalEl.open) return;
+
+    if (!coords) {
+      mapaEstadoEl.textContent = "No hay coordenadas registradas ni pudimos ubicar esta dirección automáticamente.";
+      mapaEstadoEl.hidden = false;
+      mapaCoordsEl.textContent = "Sin coordenadas disponibles";
       return;
     }
 
-    notifLista.innerHTML = ultimas.map((n) => `
-      <li class="dt-notif-item ${!n.leida ? "dt-notif-item--nueva" : ""}">
-        <div class="dt-notif-cuerpo">
-          <strong>
-            ${esc(n.titulo)}
-            ${!n.leida ? `<span class="fn-chip fn-chip--pend">Nueva</span>` : ""}
-          </strong>
-          ${n.mensaje ? `<p>${esc(n.mensaje)}</p>` : ""}
-          <small><i class="bi bi-clock" aria-hidden="true"></i> ${esc(fechaHora(n.fechaCreacion))}</small>
-        </div>
-        ${!n.leida
-          ? `<button class="fn-btn fn-btn--sec fn-btn--mini" type="button" data-leer="${Number(n.notificacionID)}" title="Marcar como leída"><i class="bi bi-check2"></i></button>`
-          : ""}
-      </li>
-    `).join("");
+    coordCitaActual = coords;
+    mapaEstadoEl.hidden = true;
+    mapaMiUbicBtn.disabled = false;
+
+    if (!mapaInst) {
+      mapaInst = L.map("dtMapaCanvas", { zoomControl: true }).setView([coords.lat, coords.lng], 16);
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        maxZoom: 19,
+        attribution: "&copy; OpenStreetMap",
+      }).addTo(mapaInst);
+      capaMarcadores = L.layerGroup().addTo(mapaInst);
+    }
+
+    capaMarcadores.clearLayers();
+    const pinCita = L.divIcon({
+      className: "",
+      html: `<div class="tr-map-pin"></div>`,
+      iconSize: [26, 26],
+      iconAnchor: [13, 13],
+      popupAnchor: [0, -14],
+    });
+
+    const marker = L.marker([coords.lat, coords.lng], { icon: pinCita }).addTo(capaMarcadores);
+    marker
+      .bindPopup(
+        `<strong>${esc(item.servicio ?? "Cita")}</strong><br>${esc(ubicacion)}${item.cliente ? `<br>${esc(item.cliente)}` : ""}`
+      )
+      .openPopup();
+
+    mapaInst.setView([coords.lat, coords.lng], 16);
+    requestAnimationFrame(() => mapaInst?.invalidateSize());
+    setTimeout(() => mapaInst?.invalidateSize(), 140);
+
+    const etiquetaTipo = coords.aprox ? "Ubicación aproximada por dirección" : "Ubicación exacta";
+    mapaCoordsEl.textContent = `${etiquetaTipo} · ${coords.lat.toFixed(5)}, ${coords.lng.toFixed(5)}`;
   }
 
-  notifLista.addEventListener("click", async (ev) => {
-    const btn = (ev.target as HTMLElement).closest<HTMLButtonElement>("[data-leer]");
-    if (!btn) return;
-    btn.disabled = true;
+  document.getElementById("dashTrabRoot")!.addEventListener("click", (ev) => {
+    const btnMapa = (ev.target as HTMLElement).closest<HTMLElement>("[data-ver-mapa]");
+    if (btnMapa) {
+      abrirMapa(Number(btnMapa.dataset.verMapa));
+      return;
+    }
+    const btn = (ev.target as HTMLElement).closest<HTMLElement>("[data-gestionar]");
+    if (btn) abrirSheet(Number(btn.dataset.gestionar));
+  });
+
+  document.getElementById("dtMapaCerrarX")!.addEventListener("click", () => mapaModalEl.close());
+  document.getElementById("dtMapaCerrarBtn")!.addEventListener("click", () => mapaModalEl.close());
+  mapaModalEl.addEventListener("click", (ev) => {
+    if (ev.target === mapaModalEl) mapaModalEl.close();
+  });
+
+  mapaMiUbicBtn.addEventListener("click", () => {
+    if (!mapaInst || !leafletLib || !capaMarcadores || !coordCitaActual) return;
+    if (!("geolocation" in navigator)) {
+      aviso("Tu navegador no soporta geolocalización", "error");
+      return;
+    }
+    mapaMiUbicBtn.disabled = true;
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        mapaMiUbicBtn.disabled = false;
+        if (!mapaModalEl.open || !coordCitaActual) return;
+        const miLat = pos.coords.latitude;
+        const miLng = pos.coords.longitude;
+        const pinYo = leafletLib.divIcon({
+          className: "",
+          html: `<div class="tr-map-pin--yo"></div>`,
+          iconSize: [16, 16],
+          iconAnchor: [8, 8],
+        });
+        leafletLib.marker([miLat, miLng], { icon: pinYo }).addTo(capaMarcadores).bindPopup("Tu ubicación actual");
+        mapaInst.fitBounds(
+          [
+            [coordCitaActual.lat, coordCitaActual.lng],
+            [miLat, miLng],
+          ],
+          { padding: [48, 48], maxZoom: 16 }
+        );
+        const km = distanciaKm(miLat, miLng, coordCitaActual.lat, coordCitaActual.lng);
+        const distTxt = km < 1 ? `${Math.round(km * 1000)} m` : `${km.toFixed(1)} km`;
+        mapaCoordsEl.textContent = `A ~${distTxt} en línea recta · ${coordCitaActual.lat.toFixed(5)}, ${coordCitaActual.lng.toFixed(5)}`;
+      },
+      (err) => {
+        mapaMiUbicBtn.disabled = false;
+        aviso(err.code === 1 ? "Permiso de ubicación denegado" : "No se pudo obtener tu ubicación actual", "error");
+      },
+      { enableHighAccuracy: true, timeout: 8000 }
+    );
+  });
+
+  document.getElementById("dtSheetCerrarX")!.addEventListener("click", () => sheetEl.close());
+  document.getElementById("dtSheetCerrarBtn")!.addEventListener("click", () => sheetEl.close());
+  sheetEl.addEventListener("click", (ev) => {
+    if (ev.target === sheetEl) sheetEl.close();
+  });
+
+  sheetFormEl.addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    if (!trabajoActivo) return;
+    const id = Number(trabajoActivo.solicitudID);
+    const boton = document.getElementById("dtGuardarAvance") as HTMLButtonElement | null;
+    if (boton) boton.disabled = true;
+
     try {
-      await api(`/notificaciones/${Number(btn.dataset.leer)}/leida`, "PATCH");
-      aviso("Notificación marcada como leída");
-      await cargarDashboard();
+      const estadoReparacionID = Number((document.getElementById("dtMantEstado") as HTMLSelectElement).value);
+      const comentario = (document.getElementById("dtMantComentario") as HTMLTextAreaElement).value.trim();
+      const r = await api(`/mantenimiento/trabajador/${id}/avance`, "POST", { comentario, estadoReparacionID });
+      aviso(r.mensaje);
+      await cargarTrabajos();
+      await abrirSheet(id);
     } catch (e) {
       aviso((e as Error).message, "error");
-      btn.disabled = false;
+    } finally {
+      if (boton) boton.disabled = false;
     }
   });
 
-  cargarDashboard().catch(() => {
-    notifSub.textContent = "Error al cargar";
-  });
+  inicializar();
 </script>

@@ -2,6 +2,12 @@
 import Layout from "../layouts/LayoutVistas.astro";
 import "../components/funciones/funciones.css";
 import "../components/funciones/panelUnificado.css";
+import { getTokenSSR, obtenerRolDesdeToken } from "../utils/auth";
+
+const rolActual = obtenerRolDesdeToken(getTokenSSR(Astro.cookies));
+if (rolActual === "Trabajador") {
+  return Astro.redirect("/trabajador?notificaciones=1");
+}
 ---
 <Layout>
   <section class="fn pl-page" style="max-width:1240px">
