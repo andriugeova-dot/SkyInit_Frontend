@@ -276,7 +276,6 @@ import "../funciones/funciones.css";
 
   let eventos: EventoUsuario[] = [];
   let lunes = inicioSemana(new Date());
-  const HORAS = Array.from({ length: 13 }, (_, i) => i + 7); // 07:00 a 19:00
 
   function inicioSemana(d: Date) {
     const r = new Date(d);
@@ -304,6 +303,17 @@ import "../funciones/funciones.css";
     const hoy = new Date();
     hoy.setHours(0, 0, 0, 0);
 
+    let horaMin = 7;
+    let horaMax = 19;
+    for (const ev of eventos) {
+      const f = new Date(ev.fechaISO);
+      if (!Number.isNaN(f.getTime()) && dias.some((d) => f.toDateString() === d.toDateString())) {
+        if (f.getHours() < horaMin) horaMin = f.getHours();
+        if (f.getHours() > horaMax) horaMax = f.getHours();
+      }
+    }
+    const horas = Array.from({ length: horaMax - horaMin + 1 }, (_, i) => i + horaMin);
+
     tituloCal.textContent = `${dias[0].toLocaleDateString("es-CO", { day: "numeric", month: "short" })} – ${dias[6].toLocaleDateString("es-CO", { day: "numeric", month: "short", year: "numeric" })}`;
 
     let html =
@@ -317,16 +327,13 @@ import "../funciones/funciones.css";
         )
         .join("");
 
-    for (const h of HORAS) {
+    for (const h of horas) {
       html += `<div class="cal-hora">${String(h).padStart(2, "0")}:00</div>`;
       for (const d of dias) {
         const delBloque = eventos.filter((ev) => {
           const f = new Date(ev.fechaISO);
           if (Number.isNaN(f.getTime())) return false;
-          return (
-            f.toDateString() === d.toDateString() &&
-            (f.getHours() === h || (h === 7 && f.getHours() < 7) || (h === 19 && f.getHours() > 19))
-          );
+          return f.toDateString() === d.toDateString() && f.getHours() === h;
         });
 
         html +=

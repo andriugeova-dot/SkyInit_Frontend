@@ -76,7 +76,7 @@ const textos = {
     const boton = modo === "admin"
       ? `<button class="fn-btn fn-btn--mini" data-abrir="${Number(s.solicitudID)}" type="button"><i class="bi bi-send" aria-hidden="true"></i> ${s.constructoraID ? "Ver / cambiar constructora" : "Reenviar a constructora"}</button>`
       : modo === "constructora"
-      ? `<button class="fn-btn fn-btn--mini" data-abrir="${Number(s.solicitudID)}" type="button"><i class="bi bi-people" aria-hidden="true"></i> ${s.trabajadores.length ? "Ver / cambiar grupo" : "Asignar trabajadores"}</button>`
+      ? `<button class="fn-btn fn-btn--mini" data-abrir="${Number(s.solicitudID)}" type="button"><i class="bi bi-people" aria-hidden="true"></i> ${s.trabajadores.length ? "Ver / cambiar asignación" : "Asignar trabajadores"}</button>`
       : `<button class="fn-btn fn-btn--mini" data-abrir="${Number(s.solicitudID)}" type="button"><i class="bi bi-clipboard-check" aria-hidden="true"></i> ${fin ? "Ver historial" : "Registrar avance"}</button>`;
     const mapsUrl = urlComoLlegar(s);
     const btnMapa = mapsUrl ? `<a class="fn-btn fn-btn--sec fn-btn--mini" href="${esc(mapsUrl)}" target="_blank" rel="noopener"><i class="bi bi-geo-alt-fill" aria-hidden="true"></i> Cómo llegar</a>` : "";
@@ -88,9 +88,10 @@ const textos = {
         ${li("bi-geo-alt", [s.propiedad, s.direccion, s.ciudad].filter(Boolean).join(", "))}
         ${li("bi-chat-left-text", s.notas)}
         ${li("bi-calendar3", "Solicitada el " + fechaHora(s.fechaSolicitud))}
+        ${li("bi-clock", s.fechaProgramada ? "Programado: " + fechaHora(s.fechaProgramada) : "Sin programar")}
         ${modo !== "admin" ? li("bi-building", s.inmobiliaria) : ""}
         ${li("bi-hammer", s.constructora ? "Constructora: " + s.constructora : "")}
-        ${li("bi-people", s.trabajadores.length ? "Grupo: " + s.trabajadores.map((t: any) => t.nombre).join(", ") : "")}
+        ${li("bi-people", s.trabajadores.length === 1 ? "Trabajador: " + s.trabajadores[0].nombre : s.trabajadores.length > 1 ? "Grupo: " + s.trabajadores.map((t: any) => t.nombre).join(", ") : "")}
       </ul>
       <div class="fn-acciones">${boton}${btnMapa}</div></article>`;
   }
@@ -144,12 +145,45 @@ const textos = {
       const { trabajadores } = await api("/organizacion/trabajadores");
       const activos = trabajadores.filter((t: any) => t.estadoCuenta === "Activa");
       const ya = new Set(actual.trabajadores.map((t: any) => t.usuarioID));
+      const tipoDefault = actual.trabajadores.length >= 2 ? "grupo" : "individual";
+      let fechaProgVal = "";
+      if (actual.fechaProgramada) {
+        const fp = new Date(actual.fechaProgramada);
+        if (!Number.isNaN(fp.getTime())) {
+          fp.setMinutes(fp.getMinutes() - fp.getTimezoneOffset());
+          fechaProgVal = fp.toISOString().slice(0, 16);
+        }
+      }
       form.innerHTML = activos.length ? `
-        <fieldset style="border:0;padding:0;margin:0;display:grid;gap:6px"><legend style="font-size:.85rem;font-weight:600">Grupo de trabajadores</legend>
-          ${activos.map((t: any) => `<label class="mant-check"><input type="checkbox" name="trab" value="${Number(t.usuarioID)}" ${ya.has(t.usuarioID) ? "checked" : ""} /> ${esc(t.nombre)} <small class="fn-muted">(${Number(t.tareasAbiertas)} tareas abiertas)</small></label>`).join("")}
+        <label>Fecha y hora del trabajo
+          <input type="datetime-local" id="mantFechaProgramada" value="${esc(fechaProgVal)}" />
+        </label>
+        <fieldset style="border:0;padding:0;margin:0;display:grid;gap:6px"><legend style="font-size:.85rem;font-weight:600">Tipo de asignación</legend>
+          <label class="mant-check"><input type="radio" name="tipoAsig" value="individual" ${tipoDefault === "individual" ? "checked" : ""} /> Un trabajador</label>
+          <label class="mant-check"><input type="radio" name="tipoAsig" value="grupo" ${tipoDefault === "grupo" ? "checked" : ""} /> Grupo de trabajadores</label>
         </fieldset>
-        <div><button class="fn-btn" type="submit"><i class="bi bi-people" aria-hidden="true"></i> Guardar grupo</button></div>`
+        <fieldset style="border:0;padding:0;margin:0;display:grid;gap:6px" id="mantTrabFieldset"><legend style="font-size:.85rem;font-weight:600" id="mantTrabLegend">${tipoDefault === "individual" ? "Selecciona un trabajador" : "Selecciona los trabajadores"}</legend>
+          ${activos.map((t: any) => `<label class="mant-check"><input type="${tipoDefault === "individual" ? "radio" : "checkbox"}" name="trab" value="${Number(t.usuarioID)}" ${ya.has(t.usuarioID) ? "checked" : ""} /> ${esc(t.nombre)} <small class="fn-muted">(${Number(t.tareasAbiertas)} tareas abiertas)</small></label>`).join("")}
+        </fieldset>
+        <div><button class="fn-btn" type="submit"><i class="bi bi-people" aria-hidden="true"></i> Guardar asignación</button></div>`
         : `<p class="fn-muted" style="margin:0">No tienes trabajadores activos. Créalos en el módulo Trabajadores.</p>`;
+      // Cambiar entre radio y checkbox al seleccionar tipo de asignación
+      form.querySelectorAll<HTMLInputElement>('input[name="tipoAsig"]').forEach((r) => r.addEventListener("change", () => {
+        const esIndividual = (form.querySelector<HTMLInputElement>('input[name="tipoAsig"]:checked')!).value === "individual";
+        const fieldset = document.getElementById("mantTrabFieldset")!;
+        document.getElementById("mantTrabLegend")!.textContent = esIndividual ? "Selecciona un trabajador" : "Selecciona los trabajadores";
+        const checks = [...fieldset.querySelectorAll<HTMLInputElement>('input[name="trab"]')];
+        const checkedVals = checks.filter((c) => c.checked).map((c) => c.value);
+        fieldset.querySelectorAll("label.mant-check").forEach((lbl) => {
+          const old = lbl.querySelector<HTMLInputElement>('input[name="trab"]')!;
+          const inp = document.createElement("input");
+          inp.type = esIndividual ? "radio" : "checkbox";
+          inp.name = "trab";
+          inp.value = old.value;
+          inp.checked = esIndividual ? old.value === checkedVals[0] : checkedVals.includes(old.value);
+          old.replaceWith(inp);
+        });
+      }));
     } else {
       form.innerHTML = `
         <label>Estado del trabajo
@@ -190,9 +224,22 @@ const textos = {
     try {
       let r;
       if (modo === "admin") r = await api(`/mantenimiento/admin/${id}/reenviar`, "POST", { constructoraID: Number((document.getElementById("mantConstructora") as HTMLSelectElement).value) });
-      else if (modo === "constructora") r = await api(`/mantenimiento/constructora/${id}/asignar`, "POST", { trabajadores: [...form.querySelectorAll<HTMLInputElement>('input[name="trab"]:checked')].map((c) => Number(c.value)) });
+      else if (modo === "constructora") {
+        const seleccionados = [...form.querySelectorAll<HTMLInputElement>('input[name="trab"]:checked')].map((c) => Number(c.value));
+        const tipoRadio = form.querySelector<HTMLInputElement>('input[name="tipoAsig"]:checked');
+        const modoAsig = tipoRadio?.value === "grupo" ? "grupo" : "individual";
+        if (modoAsig === "individual" && seleccionados.length !== 1) { aviso("Selecciona exactamente un trabajador", "error"); return; }
+        if (modoAsig === "grupo" && seleccionados.length < 2) { aviso("Para un grupo selecciona al menos 2 trabajadores", "error"); return; }
+        const fechaProgInput = (document.getElementById("mantFechaProgramada") as HTMLInputElement | null)?.value;
+        r = await api(`/mantenimiento/constructora/${id}/asignar`, "POST", {
+          modo: modoAsig,
+          trabajadores: seleccionados,
+          ...(fechaProgInput ? { fechaProgramada: new Date(fechaProgInput).toISOString() } : {}),
+        });
+      }
       else r = await api(`/mantenimiento/trabajador/${id}/avance`, "POST", { comentario: (document.getElementById("mantComentario") as HTMLTextAreaElement).value.trim(), estadoReparacionID: Number((document.getElementById("mantEstado") as HTMLSelectElement).value) });
       aviso(r.mensaje); await cargar(); await abrir(id);
+      window.dispatchEvent(new CustomEvent("skyinit:mantenimiento-actualizado"));
     } catch (e) { aviso((e as Error).message, "error"); }
   });
   cargar();

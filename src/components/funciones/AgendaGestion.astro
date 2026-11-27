@@ -114,7 +114,16 @@ const { mostrarCabecera = true } = Astro.props;
   let visitasVisibles: any[] = [];
   let editando: any = null;
   let lunes = inicioSemana(new Date());
-  const HORAS = Array.from({ length: 13 }, (_, i) => i + 7); // 7:00 a 19:00
+  const MSG_HORARIO = "Las visitas solo se pueden agendar entre 7:00 a. m. y 7:00 p. m.";
+  const fmtHoraCo = new Intl.DateTimeFormat("en-US", { timeZone: "America/Bogota", hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
+  function enHorarioAtencion(fecha: Date): boolean {
+    if (Number.isNaN(fecha.getTime())) return false;
+    const partes = fmtHoraCo.formatToParts(fecha);
+    const h = Number(partes.find((p) => p.type === "hour")?.value);
+    const m = Number(partes.find((p) => p.type === "minute")?.value);
+    const mins = h * 60 + m;
+    return mins >= 7 * 60 && mins <= 19 * 60;
+  }
 
   function inicioSemana(d: Date) { const r = new Date(d); r.setHours(0, 0, 0, 0); r.setDate(r.getDate() - ((r.getDay() + 6) % 7)); return r; }
   const aLocal = (d: Date) => { const c = new Date(d); c.setMinutes(c.getMinutes() - c.getTimezoneOffset()); return c.toISOString().slice(0, 16); };
@@ -123,13 +132,22 @@ const { mostrarCabecera = true } = Astro.props;
   function pintarCalendario() {
     const dias = Array.from({ length: 7 }, (_, i) => { const d = new Date(lunes); d.setDate(d.getDate() + i); return d; });
     const hoy = new Date(); hoy.setHours(0, 0, 0, 0);
+    let horaMin = 7, horaMax = 19;
+    for (const v of visitas) {
+      const f = new Date(v.fechaVisita);
+      if (!Number.isNaN(f.getTime()) && dias.some((d) => f.toDateString() === d.toDateString())) {
+        if (f.getHours() < horaMin) horaMin = f.getHours();
+        if (f.getHours() > horaMax) horaMax = f.getHours();
+      }
+    }
+    const horas = Array.from({ length: horaMax - horaMin + 1 }, (_, i) => i + horaMin);
     $("calTitulo").textContent = `${dias[0].toLocaleDateString("es-CO", { day: "numeric", month: "short" })} – ${dias[6].toLocaleDateString("es-CO", { day: "numeric", month: "short", year: "numeric" })}`;
     let html = `<div class="cal-cab"></div>` + dias.map((d) =>
       `<div class="cal-cab ${d.getTime() === hoy.getTime() ? "cal-cab--hoy" : ""}">${esc(d.toLocaleDateString("es-CO", { weekday: "short", day: "numeric" }))}</div>`).join("");
-    for (const h of HORAS) {
+    for (const h of horas) {
       html += `<div class="cal-hora">${String(h).padStart(2, "0")}:00</div>`;
       for (const d of dias) {
-        const citas = visitas.filter((v) => { const f = new Date(v.fechaVisita); return f.toDateString() === d.toDateString() && (f.getHours() === h || (h === 7 && f.getHours() < 7) || (h === 19 && f.getHours() > 19)); });
+        const citas = visitas.filter((v) => { const f = new Date(v.fechaVisita); return f.toDateString() === d.toDateString() && f.getHours() === h; });
         const inicio = new Date(d); inicio.setHours(h, 0, 0, 0);
         html += `<div class="cal-celda" data-nueva="${aLocal(inicio)}" role="gridcell">` + citas.map((v) =>
           `<button type="button" class="cal-cita ${({ Pendiente: "cal-cita--pend", Confirmada: "cal-cita--conf", Finalizada: "cal-cita--fin", Cancelada: "cal-cita--cancel" } as Record<string, string>)[v.estado] ?? ""}" title="${esc(v.estado)}" data-cita="${Number(v.agendaID)}">
@@ -247,7 +265,9 @@ const { mostrarCabecera = true } = Astro.props;
   $("formCita").addEventListener("submit", async (ev) => {
     ev.preventDefault();
     const v = (id: string) => $<HTMLInputElement>(id).value.trim();
-    const fechaVisita = new Date(v("citaFecha")).toISOString();
+    const fechaObj = new Date(v("citaFecha"));
+    if (!enHorarioAtencion(fechaObj)) { aviso(MSG_HORARIO, "error"); return; }
+    const fechaVisita = fechaObj.toISOString();
     try {
       if (editando) {
         await api(`/agenda/${editando.agendaID}`, "PUT", { fechaVisita, notas: v("citaNotas") || null,

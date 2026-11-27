@@ -37,6 +37,7 @@ const { mostrarCabecera = true } = Astro.props;
     <div class="cal-wrap">
       <div class="cal" id="cal" role="grid" aria-label="Agenda semanal"></div>
     </div>
+    <div id="calSinProg" class="cal-sinprog" hidden></div>
   </div>
 
   <section class="tr-panel-section" aria-label="Todas las citas">
@@ -119,6 +120,10 @@ const { mostrarCabecera = true } = Astro.props;
     border-top:1px solid var(--fn-line); padding-top:12px; display:grid; gap:10px;
   }
   .cal-avance-box h3 { margin:0; font-size:.95rem; font-weight:700; }
+  .cal-sinprog { margin-top:14px; padding-top:12px; border-top:1px solid var(--fn-line); display:grid; gap:8px; }
+  .cal-sinprog[hidden] { display:none !important; }
+  .cal-sinprog h3 { margin:0; font-size:.9rem; font-weight:700; color:var(--fn-muted); }
+  .cal-sinprog-lista { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:8px; }
 </style>
 
 <script>
@@ -136,7 +141,6 @@ const { mostrarCabecera = true } = Astro.props;
   const selEstado = document.getElementById("calFiltroEstado") as HTMLSelectElement;
 
   const FINAL = [3, 6];
-  const HORAS = Array.from({ length: 13 }, (_, i) => i + 7);
   let trabajos: any[] = [];
   let visiblesActuales: { item: any; idx: number; fecha: Date | null }[] = [];
   let lunes = inicioSemana(new Date());
@@ -149,7 +153,7 @@ const { mostrarCabecera = true } = Astro.props;
   }
 
   function fechaCitaDe(t: any): Date | null {
-    const raw = t.fechaAsignacion ?? t.fechaReenvio ?? t.fechaSolicitud;
+    const raw = t.fechaProgramada;
     if (!raw) return null;
     const d = new Date(raw);
     return Number.isNaN(d.getTime()) ? null : d;
@@ -182,11 +186,21 @@ const { mostrarCabecera = true } = Astro.props;
     hoy.setHours(0, 0, 0, 0);
     calTitulo.textContent = `${dias[0].toLocaleDateString("es-CO", { day: "numeric", month: "short" })} – ${dias[6].toLocaleDateString("es-CO", { day: "numeric", month: "short", year: "numeric" })}`;
 
+    let horaMin = 7, horaMax = 19;
+    for (const t of trabajos) {
+      const f = fechaCitaDe(t);
+      if (f && dias.some((d) => f.toDateString() === d.toDateString())) {
+        if (f.getHours() < horaMin) horaMin = f.getHours();
+        if (f.getHours() > horaMax) horaMax = f.getHours();
+      }
+    }
+    const horas = Array.from({ length: horaMax - horaMin + 1 }, (_, i) => i + horaMin);
+
     let html = `<div class="cal-cab"></div>` + dias.map((d) =>
       `<div class="cal-cab ${d.getTime() === hoy.getTime() ? "cal-cab--hoy" : ""}">${esc(d.toLocaleDateString("es-CO", { weekday: "short", day: "numeric" }))}</div>`
     ).join("");
 
-    for (const h of HORAS) {
+    for (const h of horas) {
       html += `<div class="cal-hora">${String(h).padStart(2, "0")}:00</div>`;
       for (const d of dias) {
         const citas = trabajos
@@ -194,7 +208,7 @@ const { mostrarCabecera = true } = Astro.props;
           .filter((x): x is { item: any; idx: number; fecha: Date } =>
             x.fecha !== null &&
             x.fecha.toDateString() === d.toDateString() &&
-            (x.fecha.getHours() === h || (h === 7 && x.fecha.getHours() < 7) || (h === 19 && x.fecha.getHours() > 19))
+            x.fecha.getHours() === h
           );
 
         html += `<div class="cal-celda" role="gridcell">` + citas.map(({ item, idx, fecha }) => {
@@ -207,6 +221,21 @@ const { mostrarCabecera = true } = Astro.props;
       }
     }
     cal.innerHTML = html;
+
+    const sinProgCont = document.getElementById("calSinProg")!;
+    const sinProg = trabajos
+      .map((item, idx) => ({ item, idx, fecha: fechaCitaDe(item) }))
+      .filter((x) => !x.fecha);
+    sinProgCont.hidden = sinProg.length === 0;
+    sinProgCont.innerHTML = sinProg.length
+      ? `<h3>Sin programar (${sinProg.length})</h3><div class="cal-sinprog-lista">` + sinProg.map(({ item, idx }) => {
+          const est = estadoDe(item);
+          const sub = item.propiedad || item.cliente || "";
+          return `<button type="button" class="cal-cita cal-cita--${est}" data-cita="${idx}">
+            <b>${esc(item.servicio)}</b>${sub ? esc(sub) + "<br>" : ""}<em style="font-style:normal;opacity:.8">${esc(item.estado ?? "Pendiente")}</em>
+          </button>`;
+        }).join("") + `</div>`
+      : "";
   }
 
   function pintarLista() {
@@ -391,6 +420,7 @@ const { mostrarCabecera = true } = Astro.props;
   document.getElementById("calPrev")!.addEventListener("click", () => { lunes.setDate(lunes.getDate() - 7); pintarCalendario(); });
   document.getElementById("calNext")!.addEventListener("click", () => { lunes.setDate(lunes.getDate() + 7); pintarCalendario(); });
   document.getElementById("calHoy")!.addEventListener("click", () => { lunes = inicioSemana(new Date()); pintarCalendario(); });
+  window.addEventListener("skyinit:mantenimiento-actualizado", () => cargarDatos());
 
   cargarDatos();
 </script>

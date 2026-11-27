@@ -91,6 +91,16 @@ const { modo, mostrarCabecera = true } = Astro.props;
 
   const unificado = root.dataset.unificado === "1";
   let visitasCache: any[] = [];
+  const MSG_HORARIO = "Las visitas solo se pueden agendar entre 7:00 a. m. y 7:00 p. m.";
+  const fmtHoraCo = new Intl.DateTimeFormat("en-US", { timeZone: "America/Bogota", hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
+  function enHorarioAtencion(fecha: Date): boolean {
+    if (Number.isNaN(fecha.getTime())) return false;
+    const partes = fmtHoraCo.formatToParts(fecha);
+    const h = Number(partes.find((p) => p.type === "hour")?.value);
+    const m = Number(partes.find((p) => p.type === "minute")?.value);
+    const mins = h * 60 + m;
+    return mins >= 7 * 60 && mins <= 19 * 60;
+  }
 
   async function cargar() {
     try {
@@ -175,10 +185,12 @@ const { modo, mostrarCabecera = true } = Astro.props;
     ev.preventDefault();
     const id = (document.getElementById("reprogId") as HTMLInputElement).value;
     const fechaVal = (document.getElementById("reprogFecha") as HTMLInputElement).value;
+    const fechaObj = new Date(fechaVal);
+    if (!enHorarioAtencion(fechaObj)) { aviso(MSG_HORARIO, "error"); return; }
     const notasVal = (document.getElementById("reprogNotas") as HTMLTextAreaElement).value.trim();
     try {
       const r = await api(`/agenda/${id}/reprogramar`, "PATCH", {
-        fechaVisita: new Date(fechaVal).toISOString(),
+        fechaVisita: fechaObj.toISOString(),
         notas: notasVal || null,
       });
       dlgReprog.close(); aviso(r.mensaje); cargar();
@@ -203,10 +215,12 @@ const { modo, mostrarCabecera = true } = Astro.props;
     document.getElementById("btnCerrarVisita")!.addEventListener("click", () => dlg.close());
     document.getElementById("formVisita")!.addEventListener("submit", async (ev) => {
       ev.preventDefault();
+      const fechaObj = new Date(fecha.value);
+      if (!enHorarioAtencion(fechaObj)) { aviso(MSG_HORARIO, "error"); return; }
       try {
         const r = await api("/agenda", "POST", {
           propiedadID: Number(sel.value),
-          fechaVisita: new Date(fecha.value).toISOString(),
+          fechaVisita: fechaObj.toISOString(),
           notas: (document.getElementById("visitaNotas") as HTMLTextAreaElement).value.trim() || undefined,
         });
         dlg.close(); aviso(r.mensaje); cargar();
